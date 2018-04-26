@@ -1,0 +1,14 @@
+{
+  "name": "rest-batcher",
+  "version": "1.0.0",
+  "description": "A resource access indexer and batcher",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
