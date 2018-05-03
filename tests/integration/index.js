@@ -2,13 +2,14 @@ const expect = require('chai').expect;
 const dao = require('./dao');
 const store = require('../../src');
 
-
+// Variables:
+// Cache (true/false)
+// Batch (true/false)
+// Retry (true/false)
 describe('Rest-store', () => {
     describe('Happy responses', () => {
         let testStore;
         afterEach(() => testStore = null);
-        context('Cache: true', () => {})
-        context('')
         beforeEach(() => {
             testStore = store({
                 getter: {
@@ -16,8 +17,6 @@ describe('Rest-store', () => {
                 }
             });
         });
-
-        
     });
 
     describe('Empty responses', () => {

@@ -1,14 +1,18 @@
 {
-  "name": "rest-batcher",
+  "name": "rest-store",
   "version": "1.0.0",
-  "description": "A resource access indexer and batcher",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
+  "description": "A data access request manager",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "mocha ./tests/unit --exit",
+    "test:integration": "mocha ./tests/integration --exit"
   },
-  "author": "",
-  "license": "ISC"
+  "author": "frederic charette<fredericcharette@gmail.com>",
+  "license": "Apache 2.0",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.1.1",
+    "sinon": "^5.0.3"
+  }
 }

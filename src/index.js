@@ -4,7 +4,7 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const abatch = require('./batch');
+const abatch = require('./queue');
 const { requiredParam } = require('./utils');
 const EventEmitter = require('events').EventEmitter;
 

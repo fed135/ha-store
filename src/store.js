@@ -8,9 +8,10 @@
  * Store constructor
  * @param {object} config The options for the store
  * @param {EventEmitter} emitter The event-emitter instance for the batcher
+ * @param {Map} store A store instance to replace the default in-memory Map
  */
-function localStore(config, emitter) {
-  const store = new Map();
+function localStore(config, emitter, store) {
+  store = store || new Map();
   
   /**
    * Performs a query that returns a single entities to be cached
@@ -60,26 +61,30 @@ function localStore(config, emitter) {
     return store.delete(key);
   }
 
+  /**
+   * Attempts to invalidate a key once it's cache step time expires
+   * @param {string} key The key to be evaluated for invalidation
+   */
   function lru(key) {
     const record = store.get(key);
     if (record) {
       if (record.value && record.timer) {
         const now = Date.now();
         if (now + config.cache.step <= record.timestamp + config.cache.ttl && record.bump === true) {
-          emitter.emit('bumpCache', { key, timestamp: record.timestamp, expires: now + config.cache.step });
+          emitter.emit('cacheBump', { key, timestamp: record.timestamp, expires: now + config.cache.step });
           clearTimeout(record.timer);
           value.timer = setTimeout(() => clear(key), config.cache.step);
           record.bump = false;
         }
         else {
-          emitter.emit('clearCache', { key, timestamp: record.timestamp, expires: now });
+          emitter.emit('cacheClear', { key, timestamp: record.timestamp, expires: now });
           clear(key);
         }
       }
     }
   }
 
-  return { get, set, has, clear };
+  return { get, set, has, clear, lru };
 }
 
 /* Exports -------------------------------------------------------------------*/

@@ -128,7 +128,7 @@ function queue(config, emitter) {
     return `${context}::${id}`;
   }
 
-  return { add, skip, store };
+  return { add, skip, store, complete, contextKey, retry, query };
 }
 
 module.exports = batcher;
