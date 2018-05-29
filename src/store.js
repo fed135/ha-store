@@ -22,7 +22,7 @@ function localStore(config, emitter, store) {
   function get(key) {
     const record = store.get(key);
     if (record) {
-      if (record.value && record.timer) {
+      if (record.value !== undefined && record.timer !== undefined) {
         record.bump = true;
       }
     }
@@ -40,7 +40,8 @@ function localStore(config, emitter, store) {
       value.timestamp = Date.now();
       value.timer = setTimeout(() => lru(key), config.cache.step);
     }
-    return store.set(key, value);
+    store.set(key, value);
+    return value;
   }
 
   /**
@@ -49,7 +50,7 @@ function localStore(config, emitter, store) {
    * @returns {boolean} Wether the key is in the store or not 
    */
   function has(key) {
-    return store.has(key);
+    return !!store.has(key);
   }
 
   /**
@@ -58,7 +59,7 @@ function localStore(config, emitter, store) {
    * @returns {boolean} Wether the key was removed or not 
    */
   function clear(key) {
-    return store.delete(key);
+    return !!store.delete(key);
   }
 
   /**
@@ -73,7 +74,7 @@ function localStore(config, emitter, store) {
         if (now + config.cache.step <= record.timestamp + config.cache.ttl && record.bump === true) {
           emitter.emit('cacheBump', { key, timestamp: record.timestamp, expires: now + config.cache.step });
           clearTimeout(record.timer);
-          value.timer = setTimeout(() => clear(key), config.cache.step);
+          record.timer = setTimeout(() => clear(key), config.cache.step);
           record.bump = false;
         }
         else {
@@ -84,7 +85,11 @@ function localStore(config, emitter, store) {
     }
   }
 
-  return { get, set, has, clear, lru };
+  function size() {
+    return store.size;
+  }
+
+  return { get, set, has, clear, lru, size };
 }
 
 /* Exports -------------------------------------------------------------------*/

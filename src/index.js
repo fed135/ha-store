@@ -4,9 +4,27 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const abatch = require('./queue');
+const q = require('./queue');
 const { requiredParam } = require('./utils');
 const EventEmitter = require('events').EventEmitter;
+
+/* Local variable ------------------------------------------------------------*/
+
+const baseConfig = {
+    batch: {
+        tick: 50,
+        limit: 100,
+    },
+    retry: {
+        max: 3,
+        scale: 2.5,
+        base: 5,
+    },
+    cache: {
+        step: 1000,
+        ttl: 30000,
+    },
+}
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -16,57 +34,57 @@ const EventEmitter = require('events').EventEmitter;
  */
 function batcher(config = {
     getter: requiredParam('getter', '<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)> }'),
-    uniqueOptions = [],
-    cache = {
-        enabled: true,
-        step: 1000,
-        ttl: 10000,
-    },
-    batch = {
-        enabled: false,
-        tick: 40,
-        limit: 100,
-    },
-    retry = {
-        enabled: true,
-        max: 3,
-        scale: {
-            mult: 2.5,
-            base: 5,
-        }
-    }
+    uniqueOptions: [],
+    cache: baseConfig.cache,
+    batch: baseConfig.batch,
+    retry: baseConfig.retry
 }) {
     // Local variables
-    const emitter = new EventEmitter();
-    const queue = abatch(config, emitter);
+    const _emitter = new EventEmitter();
+    const _queue = q(config, _emitter);
 
-    if (config.batch.enabled === true) _checkGetterConfig('many');
+    // Parameter validation
+    if (config.batch !== null && config.batch !== false) {
+        if (typeof config.batch !== 'object') config.batch = {};
+        config.batch = Object.assign({}, baseConfig.batch, config.batch);
+    }
 
-    /**
-     * Gets a single record from source
-     * @param {string|number} id The id of the record to fetch
-     * @param {object} params (Optional) The Request parameters
-     * @param {object} overrides (Optional) Batcher options for this call
-     * @returns {Promise} The eventual single record
-     */
-    function one(id, params = {}, overrides = {}) {
-        let method = queue.add;
-        if (overrides.batch === false || config.batch.enabled === false) {
-            method = queue.skip;
-        }
+    if (config.retry !== null && config.retry !== false) {
+        if (typeof config.retry !== 'object') config.retry = {};
+        config.retry = Object.assign({}, baseConfig.retry, config.retry);
+    }
 
-        return method(id, params);
+    if (config.cache !== null && config.cache !== false) {
+        if (typeof config.cache !== 'object') config.cache = {};
+        config.cache = Object.assign({}, baseConfig.cache, config.cache);
     }
 
     /**
      * Gets a list of records from source
-     * @param {array<string|number>} ids The id of the record to fetch
+     * @param {string|number|array<string|number>} ids The id of the record to fetch
      * @param {object} params (Optional)The Request parameters
-     * @param {object} overrides (Optional) Batcher options for this call
      * @returns {Promise} The eventual single record
      */
-    function many(ids, params = {}, overrides = {}) {
-        return Promise.all(ids.map(id => one(id, params, overrides)));
+    function get(ids, params = {}) {
+        if (Array.isArray(ids)) return Promise.all(ids.map(id => get(id, params)));
+        let method = _queue.add;
+        if (!config.batch) {
+            method = _queue.skip;
+        }
+
+        return method(ids, params);
+    }
+
+    /**
+     * Inserts results into cache manually
+     * @param {*} items Raw results from a data-source to load into cache
+     * @param {array<string|number>} ids The id(s) to extract from the raw dataset
+     * @param {object} params (Optional)The Request parameters
+     * @returns {Promise} The eventual single record
+     */
+    function set(items, ids, params = {}) {
+        if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ')
+        return _queue.complete(_queue.contextKey(params), ids, params, items);
     }
 
     /**
@@ -77,7 +95,7 @@ function batcher(config = {
      */
     function has(ids, params) {
         if (Array.isArray(ids)) return ids.every(id => has(id, params));
-        return queue.store.has(queue.store.key(ids, params));
+        return _queue.has(ids, params);
     }
 
     /**
@@ -88,10 +106,18 @@ function batcher(config = {
      */
     function clear(ids, params) {
         if (Array.isArray(ids)) return ids.map(id => clear(id, params));
-        return queue.store.clear(queue.store.key(ids, params));
+        return _queue.clear(ids, params);
     }
 
-    return Object.assign({ one, many, has, clear }, emitter);
+    /**
+     * Returns the amount of records and contexts in memory
+     * @returns {object}
+     */
+    function size() {
+        return _queue.size();
+    }
+
+    return Object.assign({ get, set, has, clear, size, config, _queue }, _emitter);
 }
 
 /* Exports -------------------------------------------------------------------*/

@@ -1,5 +1,5 @@
 const expect = require('chai').expect;
-const dao = require('./dao');
+const dao = require('./utils/dao');
 const store = require('../../src');
 
 // Variables:
