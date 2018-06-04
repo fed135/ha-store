@@ -1,30 +1,37 @@
 function getAssets(ids, { language }) {
     return new Promise((resolve, reject) => {
-        setTimeout(() => resolve(ids.map(id => ({ id, language }))), 50 + (ids.length * 5));
+        setTimeout(() => resolve(ids.map(id => ({ id, language }))), 5 + (ids.length * 2));
     });
 }
 
-function getEmptyGroup({ group, language }) {
+function getEmptyGroup(ids, { language }) {
     return new Promise((resolve, reject) => {
-        setTimeout(() => resolve([]), 100);
+        setTimeout(() => resolve([]), 10);
     });
 }
 
-function getErroredRequest({}) {
+function getPartialGroup(ids, { language }) {
     return new Promise((resolve, reject) => {
-        setTimeout(() => { throw new Error('Something went wrong'); }, 100);
+        setTimeout(() => resolve([{ id: ids[0], language }]), 5);
     });
 }
 
-function getFailedRequest({}) {
+function getErroredRequest(ids, { language }) {
     return new Promise((resolve, reject) => {
-        setTimeout(() => reject({ error: 'Something went wrong' }), 100);
+        throw new Error('Something went wrong');
+    });
+}
+
+function getFailedRequest(ids, { language }) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => reject({ error: 'Something went wrong' }), 10);
     });
 }
 
 module.exports = {
     getAssets,
     getEmptyGroup,
+    getPartialGroup,
     getErroredRequest,
     getFailedRequest,
 };

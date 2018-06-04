@@ -16,7 +16,7 @@ const baseConfig = {
         limit: 100,
     },
     retry: {
-        max: 3,
+        limit: 3,
         scale: 2.5,
         base: 5,
     },
@@ -66,13 +66,15 @@ function batcher(config = {
      * @returns {Promise} The eventual single record
      */
     function get(ids, params = {}) {
-        if (Array.isArray(ids)) return Promise.all(ids.map(id => get(id, params)));
-        let method = _queue.add;
         if (!config.batch) {
-            method = _queue.skip;
+            return _queue.skip(ids, params)
+                .then((results) => {
+                    if (!Array.isArray(ids) && Array.isArray(results)) return results[0];
+                    return results;
+                });
         }
-
-        return method(ids, params);
+        if (Array.isArray(ids)) return Promise.all(ids.map(id => get(id, params)));
+        return _queue.add(ids, params);
     }
 
     /**
