@@ -1,8 +1,4 @@
 <h1 align="center">
-  <a title="The resource Manager" href="http://kalm.js.org">
-    <img alt="Kalm" width="320px" src="http://res.cloudinary.com/kalm/image/upload/v1487202241/kalm_header.png" />
-    <br/><br/>
-  </a>
   REST-store
 </h1>
 <h3 align="center">
@@ -24,29 +20,23 @@ Want to make your app faster and don't want to spend on extra infrastructure ?
 
 **REST-store** is: 
 
-An in-memory, self-adjustting microcache: 
+A configurable, self-adjustting microcache: 
 
 - Helps reduce the number of requests for 'hot' information
 - No noticeable footprint 
-- No need for extra caching architecture (redis/memcache)
+- No need for extra caching architecture
 
-Adds request dedupping, batching, retrying and circuit-breaking:
+Adds request dedupping, batching and retrying:
 
 - Process-wide request profiling and mapping
 - Greatly reduces the number of requests
 - Fully configurable
 
-## Use cases
-
-// Sample data query distribution graph
-
-// Call reduction graph
-
-// Median response time graph
 
 ## Installing
 
 `npm install rest-store`
+
 
 ## Usage
 
@@ -75,26 +65,21 @@ function getItemById(id, params) {
 ## Options
 
 Name | Required | Default | Description
---- | --- | --- |
+--- | --- | --- | ---
 getter | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)>`
 uniqueOptions | false | `[]` | The list of parameters that, when passed, alter the results of the items requested. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
 cache | false | ```{
-  enabled: true,
   step: 1000,
-  ttl: 10000,
+  ttl: 30000,
 }``` | Caching options for the data
 batch | false | ```{
-  enabled: false,
-  tick: 40,
+  tick: 50,
   limit: 100,
 }``` | Batching options for the requests
 retry | false | ```{
-  enabled: true,
-  max: 3,
-  scale: {
-    mult: 2.5,
-    base: 5,
-  }
+  limit: 3,
+  scale: 2.5,
+  base: 5,
 }``` | Retry options for the requests
 
 
@@ -113,23 +98,29 @@ batchSuccess | Indicates that the batch request was successful.
 bumpCache | When a call for an item fully loaded in the microcache succeeds, it's ttl gets extended.
 clearCache | When an item in the microcache has reached it's ttl and is now being evicted.
 
+
 ## Testing
 
 `npm test`
 
-## References
 
-[White paper - Microcaching]()
+## Roadmap
+
+- Implement circuit-breaking
+- Release a redis adapter for the microcache
+- Link White Paper + graphs for improvements (avg latency, avg ext calls, avg cost savings)
+
 
 ## Contribute
 
-Please do! This is an open source project - if you see something that you want, [open an issue](//github.com/kalm/kalm.js/issues/new) or file a pull request.
+Please do! This is an open source project - if you see something that you want, [open an issue](https://github.com/fed135/rest-store/issues/new) or file a pull request.
 
 If you have a major change, it would be better to open an issue first so that we can talk about it. 
 
 I am always looking for more maintainers, as well. Get involved. 
 
+
 ## License 
 
-[Apache 2.0](LICENSE) (c) 2017 Frederic Charette
+[Apache 2.0](LICENSE) (c) 2018 Frederic Charette
 

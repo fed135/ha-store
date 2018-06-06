@@ -43,7 +43,7 @@ describe('index', () => {
         expect(test.config).to.deep.contain({
             cache: { ttl: 30000, step: 1000 },
             batch: { limit: 100, tick: 50 },
-            retry: { max: 3, scale: 2.5, base: 5 },
+            retry: { limit: 3, scale: 2.5, base: 5 },
         });
     });
 
@@ -53,13 +53,13 @@ describe('index', () => {
             uniqueOptions: ['a', 'b', 'c'],
             cache: { ttl: 2 },
             batch: { limit: 12 },
-            retry: { max: 35 },
+            retry: { limit: 35 },
         });
         expect(test).to.contain.keys(['get', 'set', 'has', 'clear', 'config']);
         expect(test.config).to.deep.contain({
             cache: { ttl: 2, step: 1000 },
             batch: { limit: 12, tick: 50 },
-            retry: { max: 35, scale: 2.5, base: 5 },
+            retry: { limit: 35, scale: 2.5, base: 5 },
         });
     });
 

@@ -3,9 +3,8 @@ node_js:
   - "10"
   - "8"
   - "6"
-install:
-  - npm ci
-script: 
-  - npm test 
-  - npm run bench
 sudo: false
+script: "bash ./scripts/deploy.sh"
+env:
+  global:
+    NPM_AUTH_KEY: "12345"
