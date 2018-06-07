@@ -5,7 +5,12 @@ node_js:
   - "6"
 sudo: false
 script: "npm test"
-after_success: "bash ./scripts/deploy.sh"
 env:
   global:
     NPM_AUTH_KEY: "12345"
+jobs:
+  include:
+    - stage: npm release
+      node_js: "10"
+      script: "bash ./scripts/deploy.sh"
+      if: branch = master
