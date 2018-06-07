@@ -6,20 +6,14 @@ TARGET_BRANCH="master"
 # Pull requests and commits to other branches shouldn't try to deploy, just build to verify
 echo "$TRAVIS_PULL_REQUEST - $TRAVIS_BRANCH - $TARGET_BRANCH";
 if [ "$TRAVIS_PULL_REQUEST" != "false" -o "$TRAVIS_BRANCH" != "$TARGET_BRANCH" ]; then
-    echo "Skipping deploy; just testing."
-    npm test
+    echo "Nothing to deploy"
     exit 0
 fi
-
-# Run our test script
-echo "========================================================"
-echo "Testing"
-npm test
 
 # Now we figure out what type of version we are deploying (PR labels)
 echo "========================================================"
 echo "Versionning"
-printenv
+printenv | grep "TRAVIS"
 
 # Publish to npmjs
 echo "========================================================"

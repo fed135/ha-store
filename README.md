@@ -68,19 +68,9 @@ Name | Required | Default | Description
 --- | --- | --- | ---
 getter | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)>`
 uniqueOptions | false | `[]` | The list of parameters that, when passed, alter the results of the items requested. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
-cache | false | ```{
-  step: 1000,
-  ttl: 30000,
-}``` | Caching options for the data
-batch | false | ```{
-  tick: 50,
-  limit: 100,
-}``` | Batching options for the requests
-retry | false | ```{
-  limit: 3,
-  scale: 2.5,
-  base: 5,
-}``` | Retry options for the requests
+cache | false | ```{ step: 1000, ttl: 30000 }``` | Caching options for the data
+batch | false | ```{ tick: 50, limit: 100 }``` | Batching options for the requests
+retry | false | ```{ limit: 3, scale: 2.5, base: 5 }``` | Retry options for the requests
 
 
 ## Monitoring and events
