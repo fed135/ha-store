@@ -1,7 +1,7 @@
 {
-  "name": "rest-store",
+  "name": "ha-store",
   "version": "1.0.0",
-  "description": "A data access request manager",
+  "description": "A better solution for entity management",
   "main": "src/index.js",
   "scripts": {
     "test": "npm run test:unit && npm run test:integration",

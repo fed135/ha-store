@@ -1,16 +1,16 @@
 <h1 align="center">
-  REST-store
+  High-Availability store
 </h1>
 <h3 align="center">
-  The resource Manager
+  A better solution for entity management
   <br/><br/><br/>
 </h3>
 <br/>
 
-[![rest-store](https://img.shields.io/npm/v/rest-store.svg)](https://www.npmjs.com/package/rest-store)
+[![ha-store](https://img.shields.io/npm/v/ha-store.svg)](https://www.npmjs.com/package/ha-store)
 [![Node](https://img.shields.io/badge/node->%3D8.0-blue.svg)](https://nodejs.org)
-[![Build Status](https://travis-ci.org/fed135/rest-store.svg?branch=master)](https://travis-ci.org/fed135/rest-store.js)
-[![Dependencies Status](https://david-dm.org/fed135/rest-store.js.svg)](https://david-dm.org/fed135/rest-store.js)
+[![Build Status](https://travis-ci.org/fed135/ha-store.svg?branch=master)](https://travis-ci.org/fed135/ha-store.js)
+[![Dependencies Status](https://david-dm.org/fed135/ha-store.js.svg)](https://david-dm.org/fed135/ha-store.js)
 
 ---
 
@@ -18,7 +18,7 @@
 
 Want to make your app faster and don't want to spend on extra infrastructure ? 
 
-**REST-store** is: 
+**HA-store** is: 
 
 A configurable, self-adjustting microcache: 
 
@@ -35,7 +35,7 @@ Adds request dedupping, batching and retrying:
 
 ## Installing
 
-`npm install rest-store`
+`npm install ha-store`
 
 
 ## Usage
@@ -50,7 +50,7 @@ function getItems(ids, params) {
 
 **Store**
 ```node
-const store = require('rest-store');
+const store = require('ha-store');
 const itemStore = store({ getter: { method: getItems }});
 ```
 
@@ -85,7 +85,7 @@ retry | false | ```{
 
 ## Monitoring and events
 
-REST-store emits events to track cache hits, miss and outbound requests.
+HA-store emits events to track cache hits, miss and outbound requests.
 
 Event | Description
 --- | ---
@@ -113,7 +113,7 @@ clearCache | When an item in the microcache has reached it's ttl and is now bein
 
 ## Contribute
 
-Please do! This is an open source project - if you see something that you want, [open an issue](https://github.com/fed135/rest-store/issues/new) or file a pull request.
+Please do! This is an open source project - if you see something that you want, [open an issue](https://github.com/fed135/ha-store/issues/new) or file a pull request.
 
 If you have a major change, it would be better to open an issue first so that we can talk about it. 
 
