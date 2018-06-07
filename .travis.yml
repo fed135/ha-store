@@ -5,7 +5,7 @@ node_js:
   - "6"
 sudo: false
 script: "npm test"
-after_script: "bash ./scripts/deploy.sh"
+after_success: "bash ./scripts/deploy.sh"
 env:
   global:
     NPM_AUTH_KEY: "12345"
