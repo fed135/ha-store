@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha1",
   "description": "A better solution for entity management",
   "main": "src/index.js",
   "scripts": {
