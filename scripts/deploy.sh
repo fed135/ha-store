@@ -2,6 +2,7 @@
 set -e # Exit with nonzero exit code if anything fails
 
 TARGET_BRANCH="master"
+printenv | grep "TRAVIS"
 
 # Pull requests and commits to other branches shouldn't try to deploy, just build to verify
 echo "$TRAVIS_PULL_REQUEST - $TRAVIS_BRANCH - $TARGET_BRANCH";
@@ -13,7 +14,6 @@ fi
 # Now we figure out what type of version we are deploying (PR labels)
 echo "========================================================"
 echo "Versionning"
-printenv | grep "TRAVIS"
 
 # Publish to npmjs
 echo "========================================================"
