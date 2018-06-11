@@ -1,5 +1,8 @@
 /**
  * A-Store
+ * 
+ * TODO: Decouple record data with entity data in order to save the latter in
+ *       a seperate datastore, if the user wants
  */
 
 /* Methods -------------------------------------------------------------------*/
@@ -79,7 +82,7 @@ function localStore(config, emitter, store) {
         }
         else {
           emitter.emit('cacheClear', { key, timestamp: record.timestamp, expires: now });
-          clear(key);
+          process.nextTick(() => clear(key));
         }
       }
     }

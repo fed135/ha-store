@@ -24,12 +24,8 @@ const config = {
 describe('queue', () => {
   let testQueue;
 
-  describe('#get', () => {
+  describe('#add', () => {
     beforeEach(() => {
-      
-    });
-    
-    it('should return a value if there\'s a value saved', () => {
       
     });
   });

@@ -37,11 +37,11 @@ function batcher(config = {
     uniqueOptions: [],
     cache: baseConfig.cache,
     batch: baseConfig.batch,
-    retry: baseConfig.retry
-}) {
+    retry: baseConfig.retry,
+}, emitter) {
     // Local variables
-    const _emitter = new EventEmitter();
-    const _queue = q(config, _emitter);
+    const _emitter = emitter || new EventEmitter();
+    const _queue = q(config, _emitter, config.store);
 
     // Parameter validation
     if (config.batch !== null && config.batch !== false) {
@@ -57,6 +57,10 @@ function batcher(config = {
     if (config.cache !== null && config.cache !== false) {
         if (typeof config.cache !== 'object') config.cache = {};
         config.cache = Object.assign({}, baseConfig.cache, config.cache);
+    }
+
+    if (emitter && !emitter.emit) {
+        throw new Error(`${emitter} is not an Event Emitter`);
     }
 
     /**

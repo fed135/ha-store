@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const dao = require('./utils/dao');
 const store = require('../../src');
 
-describe.only('Batching', () => {
+describe('Batching', () => {
     describe('Happy responses', () => {
         let testStore;
         let mockSource;
@@ -71,6 +71,24 @@ describe.only('Batching', () => {
                     mockSource.expects('getAssets')
                         .once().withArgs(['abc'], { language: 'en' })
                         .once().withArgs(['foo', 'bar'], { language: 'fr' });
+                });
+        });
+
+        it('should properly bucket large requests', () => {
+            testStore.config.batch = { limit: 2 };
+            return testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
+                .then((result) => {
+                    expect(result).to.deep.equal([
+                        { id: 'foo', language: 'en' },
+                        { id: 'bar', language: 'en' },
+                        { id: 'abc', language: 'en' },
+                        { id: 'def', language: 'en' },
+                        { id: 'ghi', language: 'en' },
+                    ]);
+                    mockSource.expects('getAssets')
+                        .once().withArgs(['foo', 'bar'], { language: 'en' })
+                        .once().withArgs(['abc', 'def'], { language: 'en' })
+                        .once().withArgs(['ghi'], { language: 'en' });
                 });
         });
 

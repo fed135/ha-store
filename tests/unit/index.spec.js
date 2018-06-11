@@ -222,7 +222,7 @@ describe('index', () => {
         const test = root({ getter: { method: () => {} } });
         const queueMock = sinon.mock(test._queue);
         test.get('123abc');
-        expect(test.size()).to.deep.equal({ contexts: 1, records: 1 });
+        expect(test.size()).to.deep.equal({ contexts: 1, records: 0 });
         queueMock.expects('size').once();
     });
   });

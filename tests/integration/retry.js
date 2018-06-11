@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const dao = require('./utils/dao');
 const store = require('../../src');
 
-describe.only('Retrying', () => {
+describe('Retrying', () => {
 
     describe('Empty responses', () => {
         let testStore;
@@ -140,7 +140,7 @@ describe.only('Retrying', () => {
             testStore.config.retry = false;
             return testStore.get('abc')
                 .then(null, (error) => {
-                    expect(error).to.deep.equal({ error: 'Something went wrong' });
+                    expect(error).to.be.instanceof(Error);
                     mockSource.expects('getErroredRequest')
                         .exactly(1).withArgs(['abc']);
                 });
