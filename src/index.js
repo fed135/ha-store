@@ -123,7 +123,7 @@ function batcher(config = {
         return _queue.size();
     }
 
-    return Object.assign({ get, set, has, clear, size, config, _queue }, _emitter);
+    return Object.assign(_emitter, { get, set, has, clear, size, config, _queue });
 }
 
 /* Exports -------------------------------------------------------------------*/

@@ -91,7 +91,6 @@ function queue(config, emitter, userStore) {
   function query(key, ids) {
     const context = contexts.get(key);
     if (context !== undefined) {
-      clearTimeout(context.timer);
       let targetIds = [];
       // Force-bucket
       if (ids) {
@@ -101,6 +100,8 @@ function queue(config, emitter, userStore) {
         }
       }
       else {
+        clearTimeout(context.timer);
+        context.timer = null;
         targetIds = context.ids.splice(0, config.batch.limit);
         if (context.ids.length > 0) {
           query(key);
@@ -131,7 +132,7 @@ function queue(config, emitter, userStore) {
       context.attempts = context.attempts + 1;
       if (config.retry && config.retry.limit >= context.attempts) {
         context.scale = context.scale * config.retry.scale;
-        context.timer = setTimeout(() => query(key, ids), context.scale);
+        setTimeout(() => query(key, ids), context.scale);
       }
       else {
         emitter.emit('retryCancelled', { key, ids, params, error: err });

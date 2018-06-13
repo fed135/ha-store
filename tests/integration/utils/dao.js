@@ -1,6 +1,6 @@
 function getAssets(ids, { language }) {
     return new Promise((resolve, reject) => {
-        setTimeout(() => resolve(ids.map(id => ({ id, language }))), 5 + (ids.length * 2));
+        setTimeout(() => resolve(ids.map(id => ({ id, language }))), 20);
     });
 }
 
