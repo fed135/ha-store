@@ -18,6 +18,7 @@ const config = {
     ttl: 100,
   },
 };
+const recordKey = (id) => `${id}`;
 
 /* Tests ---------------------------------------------------------------------*/
 
@@ -29,7 +30,6 @@ describe('store', () => {
   let testEmitter;
   let valueRecord;
   let evictableRecord;
-  let promiseRecord;
 
   describe('#get', () => {
     beforeEach(() => {
@@ -40,30 +40,26 @@ describe('store', () => {
       testStore = store(config, testEmitter, testMap);
       valueRecord = { value: 'foo' };
       evictableRecord = { value: 'bar', timer: 0 };
-      promiseRecord = { promise: new Promise(()=>{}) };
-      
-      testStore.set('testValue', valueRecord);
-      testStore.set('testEvictable', evictableRecord);
-      testStore.set('testPromise', promiseRecord);
     });
     
-    it('should return a value if there\'s a value saved', () => {
-      expect(testStore.get('testValue')).to.deep.equal({ value: 'foo' });
+    it('should return a value if there\'s a value saved', async () => {
+      testStore.set(recordKey, ['testValue'], { testValue: 'foo' });
+      const val = await testStore.get('testValue');
+      expect(val).to.deep.equal({ value: 'foo' });
       mapMock.expects('get').once().withArgs('testValue');
     });
 
-    it('should return a value and bump status if there\'s an evictable value saved', () => {
-      expect(testStore.get('testEvictable')).to.deep.equal({ value: 'bar', bump: true, timer: 0 });
+    it('should return a value and bump status if there\'s an evictable value saved', async () => {
+      testStore.set(recordKey, ['testEvictable'], { testEvictable: 'bar' }, { step: 0 });
+      const record = await testStore.get('testEvictable');
+      expect(record).to.contain.keys(['value', 'bump', 'step', 'timer', 'timestamp']);
+      expect(record.value).to.equal('bar');
       mapMock.expects('get').once().withArgs('testEvictable');
     });
 
-    it('should return a promise if there\'s a promise saved', () => {
-      expect(testStore.get('testPromise').promise).to.be.instanceOf(Promise);
-      mapMock.expects('get').once().withArgs('testPromise');
-    });
-
-    it('should return a null if the key is missing', () => {
-      expect(testStore.get('test')).to.be.undefined;
+    it('should return a null if the key is missing', async () => {
+      const val = await testStore.get('test');
+      expect(val).to.be.undefined;
       mapMock.expects('get').once().withArgs('test');
     });
   });
@@ -79,7 +75,7 @@ describe('store', () => {
 
     it('should save to the store and not schedule lru', (done) => {
       const lruMock = sinon.mock(testStore);
-      expect(testStore.set('testValue', { value: 'foo' })).to.deep.equal({ value: 'foo' });
+      testStore.set(recordKey, ['testValue'], { testValue: { value: 'foo' } });
       setTimeout(() => {
         lruMock.expects('lru').never();
         done();
@@ -88,7 +84,7 @@ describe('store', () => {
 
     it('should save to the store and schedule lru when there\'s a ttl', (done) => {
       const lruMock = sinon.mock(testStore);
-      expect(testStore.set('testLRUValue', { value: 'foo' }, { ttl: 10 })).to.have.all.keys(['value', 'timestamp', 'timer']);
+      testStore.set(recordKey, ['testLRUValue'], { testLRUValue: { value: 'foo' } }, { step: 0 });
       setTimeout(() => {
         lruMock.expects('lru').once().withArgs('testLRUValue');
         emitterMock.expects('emit').once().withArgs('cacheClear');
@@ -106,19 +102,12 @@ describe('store', () => {
       testStore = store(config, testEmitter, testMap);
 
       valueRecord = { value: 'foo' };
-      promiseRecord = { promise: new Promise(()=>{}) };
     });
 
     it('should return true if there\'s a value saved', () => {
-      testStore.set('testValue', valueRecord);
+      testStore.set(recordKey, ['testValue'], { testValue: 'foo' });
       expect(testStore.has('testValue')).to.be.true;
       mapMock.expects('has').once().withArgs('testValue');
-    });
-
-    it('should return true if there\'s a promise saved', () => {
-      testStore.set('testPromise', promiseRecord);
-      expect(testStore.has('testPromise')).to.be.true;
-      mapMock.expects('has').once().withArgs('testPromise');
     });
 
     it('should return false if the key is missing', () => {
@@ -135,17 +124,21 @@ describe('store', () => {
       emitterMock = sinon.mock(testEmitter);
       testStore = store(config, testEmitter, testMap);
 
-      promiseRecord = { promise: new Promise(()=>{}) };
-      testStore.set('testPromise', promiseRecord);
+      valueRecord = { value: 'foo' };
+      testStore.set(recordKey, ['testValue'], { testValue: valueRecord });
     });
 
-    it('should clear the record and return true if there\'s a promise saved', () => {
-      expect(testStore.clear('testPromise')).to.be.true;
-      mapMock.expects('clear').once().withArgs('testPromise');
+    it('should clear the record and return true if there\'s a value saved', async () => {
+      const prior = await testStore.get('testValue');
+      expect(prior).to.deep.equal({ value: { value: 'foo' } });
+      expect(testStore.clear('testValue')).to.be.true;
+      mapMock.expects('delete').once().withArgs('testValue');
+      const after = await testStore.get('testValue');
+      expect(after).to.be.undefined;
     });
 
-    it('should do nothing and return true if the key is missing', () => {
-      expect(testStore.clear('testPromise')).to.be.true;
+    it('should do nothing and return false if the key is missing', () => {
+      expect(testStore.clear('testPromise')).to.be.false;
       mapMock.expects('clear').once().withArgs('testPromise');
     });
   });
@@ -160,7 +153,7 @@ describe('store', () => {
     });
 
     it('should extend the cache period if bump is true', () => {
-      testStore.set('testLRUValue', { value: 'foo' }, { ttl: 10 });
+      testStore.set(recordKey, ['testLRUValue'], { testLRUValue: 'foo' }, { step: 0 });
       testStore.get('testLRUValue');
       testStore.lru('testLRUValue');
       emitterMock.expects('emit').once().withArgs('cacheBump');
@@ -177,7 +170,7 @@ describe('store', () => {
     });
 
     it('should return the amount of records in the store', () => {
-      testStore.set('testLRUValue', { value: 'foo' }, { ttl: 10 });
+      testStore.set(recordKey, ['testLRUValue'], { testLRUValue: 'foo' }, { step: 0 });
       testStore.get('testLRUValue');
       expect(testStore.size()).to.equal(1);
     });

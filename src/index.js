@@ -4,8 +4,8 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const q = require('./queue');
-const { requiredParam } = require('./utils');
+const q = require('./queue.js');
+const { requiredParam } = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 
 /* Local variable ------------------------------------------------------------*/
@@ -13,17 +13,23 @@ const EventEmitter = require('events').EventEmitter;
 const baseConfig = {
     batch: {
         tick: 50,
-        limit: 100,
+        max: 100,
     },
     retry: {
-        limit: 3,
-        scale: 2.5,
         base: 5,
+        steps: 3,
+        limit: 5000,
     },
     cache: {
-        step: 1000,
-        ttl: 30000,
+        base: 1000,
+        steps: 5,
+        limit: 30000,
     },
+    breaker: {
+        base: 1000,
+        steps: 0xffff,
+        limit: 0xffffff,
+    }
 }
 
 /* Methods -------------------------------------------------------------------*/
@@ -38,30 +44,21 @@ function batcher(config = {
     cache: baseConfig.cache,
     batch: baseConfig.batch,
     retry: baseConfig.retry,
+    breaker: baseConfig.breaker,
 }, emitter) {
-    // Local variables
-    const _emitter = emitter || new EventEmitter();
-    const _queue = q(config, _emitter, config.store);
-
     // Parameter validation
-    if (config.batch !== null && config.batch !== false) {
-        if (typeof config.batch !== 'object') config.batch = {};
-        config.batch = Object.assign({}, baseConfig.batch, config.batch);
-    }
-
-    if (config.retry !== null && config.retry !== false) {
-        if (typeof config.retry !== 'object') config.retry = {};
-        config.retry = Object.assign({}, baseConfig.retry, config.retry);
-    }
-
-    if (config.cache !== null && config.cache !== false) {
-        if (typeof config.cache !== 'object') config.cache = {};
-        config.cache = Object.assign({}, baseConfig.cache, config.cache);
-    }
+    if (config.batch !== null) config.batch = { ...baseConfig.batch, ...config.batch };
+    if (config.retry !== null) config.retry = { ...baseConfig.retry, ...config.retry };
+    if (config.cache !== null) config.cache = { ...baseConfig.cache, ...config.cache };
+    if (config.breaker !== null) config.breaker = { ...baseConfig.breaker, ...config.breaker };
 
     if (emitter && !emitter.emit) {
         throw new Error(`${emitter} is not an Event Emitter`);
     }
+
+    // Local variables
+    const _emitter = emitter || new EventEmitter();
+    const _queue = q(config, _emitter, config.store);
 
     /**
      * Gets a list of records from source
@@ -70,15 +67,18 @@ function batcher(config = {
      * @returns {Promise} The eventual single record
      */
     function get(ids, params = {}) {
-        if (!config.batch) {
-            return _queue.skip(ids, params)
+        if (config.batch === null) {
+            return _queue.direct(ids, params)
                 .then((results) => {
                     if (!Array.isArray(ids) && Array.isArray(results)) return results[0];
                     return results;
                 });
         }
         if (Array.isArray(ids)) return Promise.all(ids.map(id => get(id, params)));
-        return _queue.add(ids, params);
+        return Promise.resolve()
+            .then(() => {
+                return _queue.batch(ids, params);
+            });
     }
 
     /**
