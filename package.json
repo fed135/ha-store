@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.0.0-alpha3",
+  "version": "1.0.0-alpha4",
   "description": "A better solution for entity management",
   "main": "src/index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "test:integration": "mocha ./tests/integration --exit"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "repository": {
     "type": "git",
@@ -36,7 +36,9 @@
     "messaging",
     "queue",
     "web",
-    "entity"
+    "entity",
+    "congestion",
+    "control"
   ],
   "bugs": {
     "url": "https://github.com/fed135/ha-store/issues"

@@ -75,7 +75,7 @@ describe('Batching', () => {
         });
 
         it('should properly bucket large requests', () => {
-            testStore.config.batch = { limit: 2 };
+            testStore.config.batch = { max: 2, tick: 1 };
             return testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
                 .then((result) => {
                     expect(result).to.deep.equal([
@@ -93,7 +93,7 @@ describe('Batching', () => {
         });
 
         it('should support disabled batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             testStore.get('foo');
             return testStore.get('abc')
                 .then((result) => {
@@ -176,7 +176,7 @@ describe('Batching', () => {
         });
 
         it('should support disabled batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             testStore.get('foo');
             return testStore.get('abc')
                 .then((result) => {
@@ -252,7 +252,7 @@ describe('Batching', () => {
         });
 
         it('should properly reject with disabled batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             return testStore.get('abc')
                 .then(null, (error) => {
                     expect(error).to.deep.equal({ error: 'Something went wrong' });
@@ -299,7 +299,7 @@ describe('Batching', () => {
         });
 
         it('should properly reject with disabled batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             return testStore.get('abc')
                 .then(null, (error) => {
                     expect(error).to.deep.equal({ error: 'Something went wrong' });

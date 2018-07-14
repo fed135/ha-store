@@ -20,18 +20,10 @@ Want to make your app faster and don't want to spend on extra infrastructure ?
 
 **HA-store** is: 
 
-A configurable, self-adjustting microcache: 
-
-- Helps reduce the number of requests for 'hot' information
-- No noticeable footprint 
-- No need for extra caching architecture
-
-Adds request dedupping, batching and retrying:
-
-- Process-wide request profiling and mapping
-- Greatly reduces the number of requests
-- Fully configurable
-
+- Smart caching for 'hot' information (in-memory or using [redis-adapter](https://github.com/fed135/ha-redis-adapter))
+- Loads of features (request dedupping, batching, retrying and circuit-breaking)
+- Insightful stats and [events](#Monitoring-and-events)
+- Lightweight and has **zero dependencies**
 
 ## Installing
 
@@ -68,10 +60,13 @@ Name | Required | Default | Description
 --- | --- | --- | ---
 getter | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)>`
 uniqueOptions | false | `[]` | The list of parameters that, when passed, alter the results of the items requested. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
-cache | false | ```{ step: 1000, ttl: 30000 }``` | Caching options for the data
-batch | false | ```{ tick: 50, limit: 100 }``` | Batching options for the requests
-retry | false | ```{ limit: 3, scale: 2.5, base: 5 }``` | Retry options for the requests
+cache | false | ```{ base: 1000, step: 5, limit: 30000 }``` | Caching options for the data
+batch | false | ```{ tick: 50, max: 100 }``` | Batching options for the requests
+retry | false | ```{ base: 5, step: 3, limit: 5000 }``` | Retry options for the requests
+circuitBreaker | false | ```{ base: 1000, steps: 0xffff, limit: 0xffffff }``` | Circuit-breaker options, enabled by default and triggers after the retry limit
 
+*All options are in (ms)
+*Scaling options are represented via and exponential curve with base and limit being the 2 edge values while steps is the number of events over that curve.
 
 ## Monitoring and events
 
@@ -87,6 +82,9 @@ batchCancelled | Indicates that the batch has reached the allowed number of retr
 batchSuccess | Indicates that the batch request was successful.
 bumpCache | When a call for an item fully loaded in the microcache succeeds, it's ttl gets extended.
 clearCache | When an item in the microcache has reached it's ttl and is now being evicted.
+circuitBroken | When a batch call fails after the limit amount of retries, the circuit gets broken - all calls in the next ttl will automatically fail. It is assumed that there is a problem with the data-source.
+circuitRestored | Circuit temporarily restored, a tentative to the data-source may be sent.
+circuitRecovered | The tentative request was successful and the circuit it's assumed that the data-source has recovered.
 
 
 ## Testing
@@ -94,20 +92,11 @@ clearCache | When an item in the microcache has reached it's ttl and is now bein
 `npm test`
 
 
-## Roadmap
-
-- Implement circuit-breaking
-- Release a redis adapter for the microcache
-- Link White Paper + graphs for improvements (avg latency, avg ext calls, avg cost savings)
-
-
 ## Contribute
 
 Please do! This is an open source project - if you see something that you want, [open an issue](https://github.com/fed135/ha-store/issues/new) or file a pull request.
 
-If you have a major change, it would be better to open an issue first so that we can talk about it. 
-
-I am always looking for more maintainers, as well. Get involved. 
+I am always looking for more maintainers, as well.
 
 
 ## License 

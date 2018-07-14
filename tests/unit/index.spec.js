@@ -41,9 +41,10 @@ describe('index', () => {
         });
         expect(test).to.contain.keys(['get', 'set', 'has', 'clear', 'config']);
         expect(test.config).to.deep.contain({
-            cache: { ttl: 30000, step: 1000 },
-            batch: { limit: 100, tick: 50 },
-            retry: { limit: 3, scale: 2.5, base: 5 },
+            cache: { limit: 30000, steps: 5, base: 1000 },
+            batch: { max: 100, tick: 50 },
+            retry: { limit: 5000, steps: 3, base: 5 },
+            breaker: { limit: 0xffffff, steps: 0xffff, base: 1000 },
         });
     });
 
@@ -51,15 +52,17 @@ describe('index', () => {
         const test = root({
             getter: { method: () => {} },
             uniqueOptions: ['a', 'b', 'c'],
-            cache: { ttl: 2 },
-            batch: { limit: 12 },
+            cache: { base: 2 },
+            batch: { max: 12 },
             retry: { limit: 35 },
+            breaker: { steps: 1 },
         });
         expect(test).to.contain.keys(['get', 'set', 'has', 'clear', 'config']);
         expect(test.config).to.deep.contain({
-            cache: { ttl: 2, step: 1000 },
-            batch: { limit: 12, tick: 50 },
-            retry: { limit: 35, scale: 2.5, base: 5 },
+            cache: { limit: 30000, steps: 5, base: 2 },
+            batch: { max: 12, tick: 50 },
+            retry: { limit: 35, steps: 3, base: 5 },
+            breaker: { limit: 0xffffff, steps: 1, base: 1000 },
         });
     });
 
@@ -73,7 +76,7 @@ describe('index', () => {
         const test = root({ getter: { method: () => {} } });
         const queueMock = sinon.mock(test._queue);
         test.get('123abc');
-        queueMock.expects('add').once().withArgs('123abc');
+        queueMock.expects('batch').once().withArgs('123abc');
     });
 
     it('should handle single record queries with params', () => {
@@ -81,14 +84,14 @@ describe('index', () => {
         const params = { foo: 'bar' };
         const queueMock = sinon.mock(test._queue);
         test.get('123abc', params);
-        queueMock.expects('add').once().withArgs('123abc', params);
+        queueMock.expects('batch').once().withArgs('123abc', params);
     });
 
     it('should skip batching if batch config is false', () => {
         const test = root({ getter: { method: () => {} }, batch: false });
         const queueMock = sinon.mock(test._queue);
         test.get('123abc');
-        queueMock.expects('skip').once().withArgs('123abc');
+        queueMock.expects('direct').once().withArgs('123abc');
     });
 
     it('should skip batching if batch config is false with params', () => {
@@ -96,14 +99,14 @@ describe('index', () => {
         const params = { foo: 'bar' };
         const queueMock = sinon.mock(test._queue);
         test.get('123abc', params);
-        queueMock.expects('skip').once().withArgs('123abc', params);
+        queueMock.expects('direct').once().withArgs('123abc', params);
     });
 
     it('should handle multi record queries', () => {
         const test = root({ getter: { method: () => {} } });
         const queueMock = sinon.mock(test._queue);
         test.get(['123abc', '456def', '789ghi']);
-        queueMock.expects('add')
+        queueMock.expects('batch')
             .once().withArgs('123abc')
             .once().withArgs('456def')
             .once().withArgs('789ghi');
@@ -114,7 +117,7 @@ describe('index', () => {
         const params = { foo: 'bar' };
         const queueMock = sinon.mock(test._queue);
         test.get(['123abc', '456def', '789ghi'], params);
-        queueMock.expects('skip')
+        queueMock.expects('direct')
             .once().withArgs('123abc', params)
             .once().withArgs('456def', params)
             .once().withArgs('789ghi', params);
@@ -218,12 +221,15 @@ describe('index', () => {
   });
 
   describe('#size', () => {
-    it('should return size value', () => {
+    it('should return size value', (done) => {
         const test = root({ getter: { method: () => {} } });
         const queueMock = sinon.mock(test._queue);
         test.get('123abc');
-        expect(test.size()).to.deep.equal({ contexts: 1, records: 0 });
-        queueMock.expects('size').once();
+        setTimeout(() => {
+            expect(test.size()).to.deep.equal({ contexts: 1, records: 0 });
+            queueMock.expects('size').once();
+            done();
+        }, 1);
     });
   });
 });

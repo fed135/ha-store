@@ -1,9 +1,10 @@
 /**
- * A-Store
- * 
- * TODO: Decouple record data with entity data in order to save the latter in
- *       a seperate datastore, if the user wants
+ * Record Store
  */
+
+/* Requires ------------------------------------------------------------------*/
+
+const { tween } = require('./utils.js');
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -15,6 +16,7 @@
  */
 function localStore(config, emitter, store) {
   store = store || new Map();
+  const curve = tween(config.cache);
   
   /**
    * Performs a query that returns a single entities to be cached
@@ -29,7 +31,7 @@ function localStore(config, emitter, store) {
         record.bump = true;
       }
     }
-    return record;
+    return Promise.resolve(record);
   }
 
   /**
@@ -38,13 +40,17 @@ function localStore(config, emitter, store) {
    * @param {string} method The dao method to call
    * @returns {Promise}
    */
-  function set(key, value, opts) {
-    if (opts && opts.ttl) {
-      value.timestamp = Date.now();
-      value.timer = setTimeout(() => lru(key), config.cache.step);
-    }
-    store.set(key, value);
-    return value;
+  function set(recordKey, keys, values, opts) {
+    const now = Date.now();
+    return keys.map((id) => {
+      let value = { value: values[id] };
+      if (opts && opts.step !== undefined) {
+        value.timestamp = now;
+        value.step = opts.step;
+        value.timer = setTimeout(lru.bind(null, recordKey(id)), curve(opts.step));
+      }
+      return store.set(recordKey(id), value);
+    });
   }
 
   /**
@@ -74,15 +80,17 @@ function localStore(config, emitter, store) {
     if (record) {
       if (record.value && record.timer) {
         const now = Date.now();
-        if (now + config.cache.step <= record.timestamp + config.cache.ttl && record.bump === true) {
-          emitter.emit('cacheBump', { key, timestamp: record.timestamp, expires: now + config.cache.step });
+        if (record.step < config.cache.steps && record.bump === true) {
+          record.step = record.step + 1;
+          const ext = curve(record.step);
+          emitter.emit('cacheBump', { key, timestamp: record.timestamp, step: record.step, expires: now + ext });
           clearTimeout(record.timer);
-          record.timer = setTimeout(() => clear(key), config.cache.step);
+          record.timer = setTimeout(clear.bind(null, key), ext);
           record.bump = false;
         }
         else {
-          emitter.emit('cacheClear', { key, timestamp: record.timestamp, expires: now });
-          process.nextTick(() => clear(key));
+          emitter.emit('cacheClear', { key, timestamp: record.timestamp, step: record.step, expires: now });
+          process.nextTick(clear.bind(null, key));
         }
       }
     }

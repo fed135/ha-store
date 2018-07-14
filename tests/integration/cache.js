@@ -44,7 +44,7 @@ describe('Caching', () => {
         });
 
         it('should cache single values without batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             testStore.get('foo');
             return testStore.get('foo')
                 .then((result) => {
@@ -56,7 +56,7 @@ describe('Caching', () => {
         });
 
         it('should cache multi values without batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             testStore.get(['abc', 'foo'])
             return testStore.get(['abc', 'foo'])
                 .then((result) => {
@@ -90,7 +90,7 @@ describe('Caching', () => {
         });
 
         it('should support disabled caching', () => {
-            testStore.config.cache = false;
+            testStore.config.cache = null;
             testStore.get('foo');
             return testStore.get('foo')
                 .then((result) => {
@@ -102,8 +102,8 @@ describe('Caching', () => {
         });
 
         it('should support disabled caching and batching', () => {
-            testStore.config.cache = false;
-            testStore.config.batch = false;
+            testStore.config.cache = null;
+            testStore.config.batch = null;
             testStore.get('foo');
             return testStore.get('foo')
                 .then((result) => {
@@ -154,7 +154,7 @@ describe('Caching', () => {
         });
 
         it('should support disabled caching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             testStore.get('foo');
             return testStore.get('abc')
                 .then((result) => {
@@ -194,7 +194,7 @@ describe('Caching', () => {
         });
 
         it('should support disabled caching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             testStore.get('foo');
             return testStore.get('abc')
                 .then((result) => {
@@ -242,7 +242,7 @@ describe('Caching', () => {
         });
 
         it('should properly reject with disabled batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             return testStore.get('abc')
                 .then(null, (error) => {
                     expect(error).to.deep.equal({ error: 'Something went wrong' });
@@ -280,7 +280,7 @@ describe('Caching', () => {
         });
 
         it('should properly reject with disabled batching', () => {
-            testStore.config.batch = false;
+            testStore.config.batch = null;
             return testStore.get('abc')
                 .then(null, (error) => {
                     expect(error).to.deep.equal({ error: 'Something went wrong' });
