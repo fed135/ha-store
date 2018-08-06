@@ -1,7 +1,15 @@
+/**
+ * Caching feature integration tests
+ */
+
+/* Requires ------------------------------------------------------------------*/
+
 const expect = require('chai').expect;
 const sinon = require('sinon');
 const dao = require('./utils/dao');
 const store = require('../../src');
+
+/* Tests ---------------------------------------------------------------------*/
 
 describe('Caching', () => {
     describe('Happy responses', () => {
@@ -14,10 +22,8 @@ describe('Caching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getAssets
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getAssets
             });
         });
 
@@ -125,10 +131,8 @@ describe('Caching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getEmptyGroup
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getEmptyGroup
             });
         });
 
@@ -176,10 +180,8 @@ describe('Caching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getPartialGroup
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getPartialGroup
             });
         });
 
@@ -198,7 +200,7 @@ describe('Caching', () => {
             testStore.get('foo');
             return testStore.get('abc')
                 .then((result) => {
-                    expect(result).to.deep.equal({ id: 'abc', language: undefined });
+                    expect(result).to.be.undefined;
                     mockSource.expects('getPartialGroup')
                         .once()
                         .withArgs(['abc']);
@@ -216,10 +218,8 @@ describe('Caching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getFailedRequest
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getFailedRequest
             });
         });
 
@@ -263,10 +263,8 @@ describe('Caching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getErroredRequest
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getErroredRequest
             });
         });
 

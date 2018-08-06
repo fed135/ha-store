@@ -1,7 +1,15 @@
+/**
+ * Batching feature integration tests
+ */
+
+/* Requires ------------------------------------------------------------------*/
+
 const expect = require('chai').expect;
 const sinon = require('sinon');
 const dao = require('./utils/dao');
 const store = require('../../src');
+
+/* Tests ---------------------------------------------------------------------*/
 
 describe('Batching', () => {
     describe('Happy responses', () => {
@@ -14,10 +22,8 @@ describe('Batching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getAssets
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getAssets
             });
         });
 
@@ -74,6 +80,16 @@ describe('Batching', () => {
                 });
         });
 
+        it('should coalesce duplicate entries', () => {
+            testStore.get('foo', { language: 'fr' });
+            return testStore.get('foo', { language: 'fr' })
+                .then((result) => {
+                    expect(result).to.deep.equal({ id: 'foo', language: 'fr' });
+                    mockSource.expects('getAssets')
+                        .once().withArgs(['foo'], { language: 'fr' });
+                });
+        });
+
         it('should properly bucket large requests', () => {
             testStore.config.batch = { max: 2, tick: 1 };
             return testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
@@ -115,10 +131,8 @@ describe('Batching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getEmptyGroup
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getEmptyGroup
             });
         });
 
@@ -198,10 +212,8 @@ describe('Batching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getPartialGroup
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getPartialGroup
             });
         });
 
@@ -226,10 +238,8 @@ describe('Batching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getFailedRequest
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getFailedRequest
             });
         });
 
@@ -273,10 +283,8 @@ describe('Batching', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getErroredRequest
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getErroredRequest
             });
         });
 

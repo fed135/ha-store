@@ -5,7 +5,9 @@
 /* Requires ------------------------------------------------------------------*/
 
 const q = require('./queue.js');
-const { requiredParam } = require('./utils.js');
+const l = require('./store.js');
+const b = require('./breaker.js');
+const { exp, contextKey, recordKey } = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 
 /* Local variable ------------------------------------------------------------*/
@@ -19,16 +21,19 @@ const baseConfig = {
         base: 5,
         steps: 3,
         limit: 5000,
+        curve: exp,
     },
     cache: {
         base: 1000,
         steps: 5,
         limit: 30000,
+        curve: exp,
     },
     breaker: {
         base: 1000,
         steps: 0xffff,
         limit: 0xffffff,
+        curve: exp,
     }
 }
 
@@ -38,27 +43,26 @@ const baseConfig = {
  * Batcher constructor 
  * @class batcher
  */
-function batcher(config = {
-    getter: requiredParam('getter', '<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)> }'),
-    uniqueOptions: [],
-    cache: baseConfig.cache,
-    batch: baseConfig.batch,
-    retry: baseConfig.retry,
-    breaker: baseConfig.breaker,
-}, emitter) {
+function batcher(config = {}, emitter) {
     // Parameter validation
+    if (typeof config.resolver !== 'function') {
+        throw new Error(`config.resolver [${config.resolver}] is not a function`);
+    }
+
     if (config.batch !== null) config.batch = { ...baseConfig.batch, ...config.batch };
     if (config.retry !== null) config.retry = { ...baseConfig.retry, ...config.retry };
     if (config.cache !== null) config.cache = { ...baseConfig.cache, ...config.cache };
     if (config.breaker !== null) config.breaker = { ...baseConfig.breaker, ...config.breaker };
 
     if (emitter && !emitter.emit) {
-        throw new Error(`${emitter} is not an Event Emitter`);
+        throw new Error(`${emitter} is not an EventEmitter`);
     }
 
     // Local variables
     const _emitter = emitter || new EventEmitter();
-    const _queue = q(config, _emitter, config.store);
+    const _store = (config.store || l)(config, _emitter);
+    const _breaker = b(config, emitter);
+    const _queue = q(config, _emitter, _store, _breaker);
 
     /**
      * Gets a list of records from source
@@ -67,18 +71,13 @@ function batcher(config = {
      * @returns {Promise} The eventual single record
      */
     function get(ids, params = {}) {
-        if (config.batch === null) {
-            return _queue.direct(ids, params)
-                .then((results) => {
-                    if (!Array.isArray(ids) && Array.isArray(results)) return results[0];
-                    return results;
-                });
-        }
-        if (Array.isArray(ids)) return Promise.all(ids.map(id => get(id, params)));
-        return Promise.resolve()
-            .then(() => {
-                return _queue.batch(ids, params);
-            });
+        const requestIds = (Array.isArray(ids)) ? ids : [ids];
+        const promises = requestIds.map((id, i) => {
+            return _queue.push(id, params, (config.batch === null && i === requestIds.length -1));
+        });
+        return Promise.all(promises)
+            .then(response => (!Array.isArray(ids)) ? response[0] : response)
+            .catch(err => console.log); // TODO remove
     }
 
     /**
@@ -89,19 +88,9 @@ function batcher(config = {
      * @returns {Promise} The eventual single record
      */
     function set(items, ids, params = {}) {
-        if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ')
-        return _queue.complete(_queue.contextKey(params), ids, params, items);
-    }
-
-    /**
-     * Checks if one or more recors are present in temp store 
-     * @param {string|number|array<string|number>} ids The id(s) to lookup
-     * @param {object} params (Optional) The Request parameters
-     * @returns {boolean} If all records requested are in temp store
-     */
-    function has(ids, params) {
-        if (Array.isArray(ids)) return ids.every(id => has(id, params));
-        return _queue.has(ids, params);
+        if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
+        const key = contextKey(config.uniqueParams, params);
+        return _queue.complete(key, ids, _queue.resolveContext(key, params), items);
     }
 
     /**
@@ -112,18 +101,21 @@ function batcher(config = {
      */
     function clear(ids, params) {
         if (Array.isArray(ids)) return ids.map(id => clear(id, params));
-        return _queue.clear(ids, params);
+        return _store.clear(recordKey(contextKey(config.uniqueParams, params), ids));
     }
 
     /**
      * Returns the amount of records and contexts in memory
      * @returns {object}
      */
-    function size() {
-        return _queue.size();
+    async function size() {
+        return await {
+            contexts: _queue.size(),
+            records: await _store.size(),
+        }; 
     }
 
-    return Object.assign(_emitter, { get, set, has, clear, size, config, _queue });
+    return Object.assign(_emitter, { get, set, clear, size, config, _queue, _store });
 }
 
 /* Exports -------------------------------------------------------------------*/

@@ -1,7 +1,7 @@
 {
   "name": "ha-store",
-  "version": "1.0.0-alpha4",
-  "description": "A better solution for entity management",
+  "version": "1.0.0",
+  "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
     "test": "npm run test:unit && npm run test:integration",

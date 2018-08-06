@@ -1,5 +1,5 @@
 /**
- * Utils unit tests
+ * Breaker component unit tests
  */
 
 /* Requires ------------------------------------------------------------------*/

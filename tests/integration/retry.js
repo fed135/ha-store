@@ -1,7 +1,16 @@
+/**
+ * Retrying feature integration tests
+ */
+
+/* Requires ------------------------------------------------------------------*/
+
 const expect = require('chai').expect;
 const sinon = require('sinon');
 const dao = require('./utils/dao');
 const store = require('../../src');
+
+/* Tests ---------------------------------------------------------------------*/
+
 
 describe('Retrying', () => {
 
@@ -15,10 +24,8 @@ describe('Retrying', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getEmptyGroup
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getEmptyGroup
             });
         });
 
@@ -43,10 +50,8 @@ describe('Retrying', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getFailedRequest
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getFailedRequest
             });
         });
 
@@ -100,10 +105,8 @@ describe('Retrying', () => {
         beforeEach(() => {
             mockSource = sinon.mock(dao);
             testStore = store({
-                uniqueOptions: ['language'],
-                getter: {
-                    method: dao.getErroredRequest
-                }
+                uniqueParams: ['language'],
+                resolver: dao.getErroredRequest
             });
         });
 
