@@ -6,12 +6,12 @@
 /* Init ----------------------------------------------------------------------*/
 
 const crypto = require('crypto');
-const store = require('../../src')({
-    resolver: require('../integration/utils/dao').getAssets,
-    uniqueParams: ['language'],
-    cache: { limit: 60000, steps: 5, base: 5000 },
-    batch: { tick: 10, limit: 10 },
-    retry: { base: 5 },
+const store = require('../../src/index.js')({
+  resolver: require('../integration/utils/dao.js').getAssets,
+  uniqueParams: ['language'],
+  cache: { limit: 60000, steps: 5, base: 5000 },
+  batch: { tick: 10, limit: 10 },
+  retry: { base: 5 },
 });
 const testDuration = 60000;
 const requestDelay = 2;
@@ -26,14 +26,8 @@ const startHeap = process.memoryUsage().heapUsed;
 const languages = ['fr', 'en', 'pr', 'it', 'ge'];
 const now = Date.now();
 
-// store.on('cacheBump', console.log.bind(console, 'cacheBump'));
-// store.on('cacheClear', console.log.bind(console, 'cacheClear'));
-// store.on('retryCancelled', console.log.bind(console, 'retryCancelled'));
-store.on('batch', () => { batches++; });
-// store.on('batchSuccess', console.log.bind(console, 'batchSuccess'));
-// store.on('batchFailed', console.log.bind(console, 'batchFailed'));
+store.on('query', () => { batches++; });
 store.on('cacheHit', () => { cacheHits++; });
-// store.on('cacheMiss', console.log.bind(console, 'cacheMiss'));
 
 async function hitStore() {
   if (Date.now() - now < testDuration) {
@@ -58,7 +52,7 @@ async function hitStore() {
       .catch((err) => process.exit(1));
   }
   else {
-    console.log(`${completed} completed requests\n${cacheHits} cache hits\n${JSON.stringify(await store.size())}\n${timeouts} timed out\navg response time ${(sum / completed).toFixed(3)}\n${batches} batches sent\n${((process.memoryUsage().heapUsed - startHeap) / 1024).toFixed(2)} Kbytes allocated`)
+    console.log(`${completed} completed requests\n${cacheHits} cache hits\n${JSON.stringify(await store.size())}\n${timeouts} timed out\navg response time ${(sum / completed).toFixed(3)}\n${batches} queries sent\n${((process.memoryUsage().heapUsed - startHeap) / 1024).toFixed(2)} Kbytes allocated`)
     process.exit(0);
   }
 }

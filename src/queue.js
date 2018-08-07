@@ -100,7 +100,7 @@ function queue(config, emitter, store, breaker) {
     const key = contextKey(config.uniqueParams, params);
     const context = resolveContext(key, params);
     let entity = await lookupCache(key, id, context);
-    if (entity === null) entity = context.promises.get(id);
+    if (entity === null) entity = context.promises.get(id).promise;
 
     if (config.batch) {
       if (context.timer === null) {
@@ -125,7 +125,7 @@ function queue(config, emitter, store, breaker) {
     // Force-bucket
     let targetIds = ids.splice(0, config.batch ? config.batch.max: ids.length);
     if (ids.length > 0) {
-      query(type, key, ids);
+      query(type, key, ids, context);
     }
     if (targetIds.length > 0) {
       emitter.emit('query', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined });

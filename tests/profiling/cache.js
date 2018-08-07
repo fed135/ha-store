@@ -6,12 +6,12 @@
 /* Init ----------------------------------------------------------------------*/
 
 const crypto = require('crypto');
-const store = require('../../src')({
-    resolver: require('../integration/utils/dao').getAssets,
-    uniqueParams: ['language'],
-    cache: { limit: 60000, steps: 5, base: 5000 },
-    batch: null,
-    retry: { base: 5 },
+const store = require('../../src/index.js')({
+  resolver: require('../integration/utils/dao.js').getAssets,
+  uniqueParams: ['language'],
+  cache: { limit: 60000, steps: 5, base: 5000 },
+  batch: null,
+  retry: { base: 5 },
 });
 const testDuration = 60000;
 const requestDelay = 2;
@@ -20,20 +20,12 @@ let completed = 0;
 let cacheHits = 0;
 let sum = 0;
 let timeouts = 0;
-let batches = 0;
 const startHeap = process.memoryUsage().heapUsed;
 
 const languages = ['fr', 'en', 'pr', 'it', 'ge'];
 const now = Date.now();
 
-// store.on('cacheBump', console.log.bind(console, 'cacheBump'));
-// store.on('cacheClear', console.log.bind(console, 'cacheClear'));
-// store.on('retryCancelled', console.log.bind(console, 'retryCancelled'));
-store.on('batch', () => { batches++; });
-// store.on('batchSuccess', console.log.bind(console, 'batchSuccess'));
-// store.on('batchFailed', console.log.bind(console, 'batchFailed'));
 store.on('cacheHit', () => { cacheHits++; });
-// store.on('cacheMiss', console.log.bind(console, 'cacheMiss'));
 
 async function hitStore() {
   if (Date.now() - now < testDuration) {

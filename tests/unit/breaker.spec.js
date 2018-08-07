@@ -4,24 +4,64 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const utils = require('../../src/utils');
+const breaker = require('../../src/breaker.js');
+const { exp } = require('../../src/utils.js');
+const EventEmitter = require('events').EventEmitter;
 const expect = require('chai').expect;
+const sinon = require('sinon');
+
+/* Local variables -----------------------------------------------------------*/
+
+const config = {
+  breaker: {
+    base: 1,
+    steps: 10,
+    limit: 100,
+    curve: exp,
+  },
+};
 
 /* Tests ---------------------------------------------------------------------*/
 
-describe('utils', () => {
-
-  describe('#basicParser', () => {
-    it('should return properly formatted results', () => {
-      expect(utils.basicParser({ '123': { id: 123 } }, ['123'])).to.deep.equal({ '123': { id: 123 }});
-      expect(utils.basicParser({ '123': { id: 123 } }, [123])).to.deep.equal({ '123': { id: 123 }}); 
-      expect(utils.basicParser([{ id: 123 }], [123])).to.deep.equal({ '123': { id: 123 }});
-      expect(utils.basicParser([{ id: '123' }], [123])).to.deep.equal({ '123': { id: '123' }});
+describe('breaker', () => {
+  let testCircuit;
+  let testEmitter;
+  
+  describe('#closeCircuit', () => {
+    beforeEach(() => {
+      testEmitter = new EventEmitter();
+      testCircuit = breaker(config, testEmitter);
     });
+      
+    it('should close an opened circuit', (done) => {
+      testCircuit.openCircuit();
+      testEmitter.on('circuitRecovered', (status) => {
+        expect(testCircuit.status()).to.deep.equal(status);
+        expect(testCircuit.status()).to.deep.equal({ step: 0, active: false, ttl: undefined });
+        done();
+      });
+      testCircuit.closeCircuit();
+    });
+  });
 
-    it('should trim out unwanted results', () => {
-      expect(utils.basicParser({ '123': { id: 123 }, '456': { id: 456 } }, [123])).to.deep.equal({ '123': { id: 123 }});
-      expect(utils.basicParser([{ id: '123' }, { id: '456'}], [123])).to.deep.equal({ '123': { id: '123' }});
-    })
+  describe('#openCircuit', () => {
+    beforeEach(() => {
+      testEmitter = new EventEmitter();
+      testCircuit = breaker(config, testEmitter);
+    });
+          
+    it('should open a circuit', (done) => {
+      testEmitter.on('circuitBroken', (status) => {
+        expect(status.step).to.equal(1);
+        expect(status.active).to.be.true;
+        expect(status.ttl).to.be.at.least(1);
+        testEmitter.on('circuitRestored', (savedStatus) => {
+          expect(testCircuit.status()).to.deep.equal(savedStatus);
+          expect(testCircuit.status()).to.deep.equal({ step: 1, active: false, ttl: undefined });
+          done();
+        });
+      });
+      testCircuit.openCircuit();
+    });
   });
 });

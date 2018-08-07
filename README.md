@@ -21,9 +21,9 @@ Want to make your app faster and don't want to spend on extra infrastructure ?
 **HA-store** is: 
 
 - Smart micro-caching for 'hot' information (in-memory or using [redis-adapter](https://github.com/fed135/ha-redis-adapter))
-- Loads of features (request dedupping, batching, retrying and circuit-breaking)
+- Loads of features (request coalescing, batching, retrying and circuit-breaking)
 - Insightful stats and [events](#Monitoring-and-events)
-- Lightweight and has **zero dependencies**
+- Lightweight, low resource and has **zero dependencies**
 
 ## Installing
 
@@ -72,10 +72,11 @@ Event | Description
 --- | ---
 cacheHit | When the requested item is present in the microcache, or is already being fetched. Prevents another request from being created.
 cacheMiss | When the requested item is not present in the microcache and is not currently being fetched. A new request will be made.
-batch | When a batch of requests is about to be sent.
-batchFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.
-batchCancelled | Indicates that the batch has reached the allowed number of retries and is now abandonning.
-batchSuccess | Indicates that the batch request was successful.
+coalescedHit | When a record query successfully hooks to the promise of the same record in transit.
+query | When a batch of requests is about to be sent.
+queryFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.
+retryCancelled | Indicates that the batch has reached the allowed number of retries and is now abandonning.
+querySuccess | Indicates that the batch request was successful.
 bumpCache | When a call for an item fully loaded in the microcache succeeds, it's ttl gets extended.
 clearCache | When an item in the microcache has reached it's ttl and is now being evicted.
 circuitBroken | When a batch call fails after the limit amount of retries, the circuit gets broken - all calls in the next ttl will automatically fail. It is assumed that there is a problem with the data-source.

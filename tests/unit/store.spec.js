@@ -4,7 +4,8 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const store = require('../../src/store');
+const store = require('../../src/store.js');
+const { exp } = require('../../src/utils.js')
 const EventEmitter = require('events').EventEmitter;
 const expect = require('chai').expect;
 const sinon = require('sinon');
@@ -14,8 +15,10 @@ const sinon = require('sinon');
 const testDuration = 100;
 const config = {
   cache: {
-    step: 10,
-    ttl: 100,
+    base: 1,
+    steps: 10,
+    limit: 100,
+    curve: exp,
   },
 };
 const recordKey = (id) => `${id}`;

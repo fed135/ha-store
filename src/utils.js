@@ -12,7 +12,7 @@
  * @returns {number} The exponential value
  */
 function exp(progress, start, end) {
-    return start + (end - start) * (progress * progress);
+  return start + (end - start) * (progress * progress);
 }
 
 /**
@@ -21,12 +21,12 @@ function exp(progress, start, end) {
  * @returns {object} The curve object
  */
 function tween(opts) {
-    let step = 0;
+  let step = 0;
 
-    return function step(progress) {
-        if (progress === undefined) step++;
-        return (opts.curve || exp)(Math.min(1, ((progress === undefined) ? step : progress / opts.steps)), opts.base, opts.limit);
-    };
+  return function _tweenStep(progress) {
+    if (progress === undefined) step++;
+    return (opts.curve || exp)(Math.min(1, ((progress === undefined) ? step : progress / opts.steps)), opts.base, opts.limit);
+  };
 }
 
 /**
@@ -37,23 +37,23 @@ function tween(opts) {
  * @returns {object} The indexed result set found
  */
 function basicParser(results, ids, params = {}) {
-    if (results === null || results === undefined) return {};
-    ids = ids.map(id => `${id}`);
-    if (Array.isArray(results)) {
-      return results.reduce((acc, curr) => {
-        if (ids.includes(`${curr.id}`)) {
-          acc[curr.id] = curr;
-        }
-        return acc;
-      }, {});
-    }
-    const keys = Object.keys(results).map(id => `${id}`);
-    return keys.reduce((acc, curr) => {
-      if (ids.includes(curr)) {
-        acc[curr] = results[curr];
+  if (results === null || results === undefined) return {};
+  ids = ids.map(id => `${id}`);
+  if (Array.isArray(results)) {
+    return results.reduce((acc, curr) => {
+      if (ids.includes(`${curr.id}`)) {
+        acc[curr.id] = curr;
       }
       return acc;
     }, {});
+  }
+  const keys = Object.keys(results).map(id => `${id}`);
+  return keys.reduce((acc, curr) => {
+    if (ids.includes(curr)) {
+      acc[curr] = results[curr];
+    }
+    return acc;
+  }, {});
 }
 
 /**
@@ -61,10 +61,10 @@ function basicParser(results, ids, params = {}) {
  * @returns {object} A deferred promise handler 
  */
 function deferred() {
-    let resolve;
-    let reject;
-    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
-    return { promise, resolve, reject };
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
 }
 
 /**
@@ -74,7 +74,7 @@ function deferred() {
  * @returns {string} The context key
  */
 function contextKey(u, params) {
-    return Array.from(u || []).map(opt => `${opt}=${JSON.stringify(params[opt])}`).join(';');
+  return Array.from(u || []).map(opt => `${opt}=${JSON.stringify(params[opt])}`).join(';');
 }
 
 /**
@@ -83,9 +83,9 @@ function contextKey(u, params) {
  * @param {*} id The id
  * @returns {string} The record key
  */
-  function recordKey(context, id) {
-    return `${context}::${id}`;
-  }
+function recordKey(context, id) {
+  return `${context}::${id}`;
+}
 
 /* Exports -------------------------------------------------------------------*/
 
