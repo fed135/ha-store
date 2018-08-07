@@ -4,190 +4,198 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const localStore = require('./store.js');
-const circuitBreaker = require('./breaker.js');
-const { tween, basicParser } = require('./utils.js');
+const { tween, basicParser, deferred, contextKey, recordKey } = require('./utils.js');
 
 /* Methods -------------------------------------------------------------------*/
 
-function queue(config, emitter, userStore) {
+function queue(config, emitter, store, breaker) {
 
   // Local variables
-  const store = (userStore || localStore)(config, emitter);
-  const breaker = circuitBreaker(config, emitter);
   const contexts = new Map();
 
-  async function lookupCache(key, id, params) {
+  /**
+   * Attempts to read a query item from cache
+   * If no records are found, a deferred handle is created
+   * @param {string} key The context key
+   * @param {string} id The record id
+   * @param {object} context The context object
+   * @returns {*|null} The cache result
+   */
+  async function lookupCache(key, id, context) {
     if (config.cache !== null) {
       const record = await store.get(recordKey(key, id));
       
       if (record !== undefined && record !== null) {
-        emitter.emit('cacheHit', { key, id, params, deferred: !!(record.value) });
-        return record.value || record.promise;
+        emitter.emit('cacheHit', { key, id, params: context.params });
+        return record.value;
       }
-      emitter.emit('cacheMiss', { key, id, params });
+
+      emitter.emit('cacheMiss', { key, id, params: context.params });
     }
+
+    const expectation = context.promises.get(id);
+    if (expectation !== undefined) {
+      emitter.emit('coalescedHit', { key, id, params: context.params });
+      return expectation.promise;
+    }
+    else {
+      context.promises.set(id, deferred());
+      context.ids.push(id);
+    }
+    
     return null;
   }
 
-  async function addToQueue(key, id, params) {
-    let resolve;
-    let reject;
-    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
-
+  /**
+   * Creates or returns a context object
+   * @param {string} key The context key
+   * @param {*} params The parameters for the context
+   * @returns {object} The context object
+   */
+  function resolveContext(key, params) {
     let context = contexts.get(key);
     if (context === undefined) {
-      const expectations = new Map();
-      expectations.set(id, [{ resolve, reject }]);
-      contexts.set(key, {
-        ids: [id],
-        promises: expectations,
+      context = {
+        ids: [],
+        promises: new Map(),
         params,
         retry: {
           step: 0,
           curve: tween(config.retry),
         },
-        timer: setTimeout(query.bind(null, key), config.batch.tick),
-      });
+        timer: null,
+      };
+      contexts.set(key, context);
     }
-    else {
-      const expectations = context.promises.get(id);
-      if (expectations === undefined) context.promises.set(id, [{ resolve, reject }]);
-      else expectations.push({ resolve, reject });
-      context.ids.push(id);
-      if (context.timer === null) {
-        context.timer = setTimeout(query.bind(null, key), config.batch.tick);
-      }
-    }
-    
-    return promise;
-  }
-
-  async function batch(id, params) {
-    if (breaker.status().active === true) return Promise.reject(breaker.error);
-    const key = contextKey(params);
-    const cached = await lookupCache(key, id, params);
-    if (cached !== null) return cached;
-    return addToQueue(key, id, params);
-  }
-
-  async function direct(ids, params) {
-    if (breaker.status().active === true) return Promise.reject(breaker.error);
-    if (!Array.isArray(ids)) ids = [ids];
-    const key = contextKey(params);
-    const cachedResults = [];
-
-    return Promise.resolve(ids.reduce(async (acc, id) => {
-      const cached = await lookupCache(key, id, params);
-      if (cached !== null) {
-        cachedResults.push(cached);
-        return acc;
-      }
-      return Promise.resolve(acc)
-        .then((res) => {
-          res.push(id);
-          return res;
-        });
-    }, []))
-      .then((notFound) => {
-        if (notFound.length === 0) return Promise.resolve(cachedResults);
-
-        return Promise.resolve(config.getter.method(notFound, params))
-          .catch(err => retry(key, notFound, params, err))
-          .then(
-            function handleSuccess(results) {
-              complete(key, notFound, params, results);
-              return [...results || [], ...cachedResults];
-            },
-            function handleError(err) {
-              return retry(key, notFound, params, err);
-            }
-          );
-      });
+    return context;
   }
 
   /**
-   * Runs the getter function
+   * Gathers the ids in preparation for a data-source query
+   * @param {string} type The type of query (direct, batch or retry)
+   * @param {string} key The context key
+   * @param {object} context The context object
    */
-  function query(key, ids) {
-    const context = contexts.get(key);
-    if (context !== undefined) {
-      let targetIds = [];
-      // Force-bucket
-      if (ids) {
-        targetIds = ids.splice(0, config.batch.max);
-        if (ids.length > 0) {
-          query(key, ids);
-        }
-      }
-      else {
-        clearTimeout(context.timer);
-        context.timer = null;
-        targetIds = context.ids.splice(0, config.batch.max);
-        if (context.ids.length > 0) {
-          query(key);
-        }
-      }
-      // Check if batch size > 0
-      if (targetIds.length > 0) {
-        emitter.emit('batch', { key, ids: targetIds, params: context.params });
-        Promise.resolve(config.getter.method(targetIds, context.params))
-          .catch(err => retry(key, targetIds, context.params, err))
-          .then(
-            function handleBatchSuccess(results) {
-              emitter.emit('batchSuccess', { key, ids: targetIds, params: context.params });
-              complete(key, targetIds, context.params, results);
-            },
-            function handleBatchError(err) {
-              emitter.emit('batchFailed', { key, ids: targetIds, params: context.params, error: err });
-              retry(key, targetIds, context.params, err);
-            }
-          );
-      }
+  function batch(type, key, context) {
+    clearTimeout(context.timer);
+    context.timer = null;
+    const targetIds = context.ids.splice(0, context.ids.length);
+    if (targetIds.length > 0) {
+      query(type, key, targetIds, context);
     }
   }
 
-  function retry(key, ids, params, err) {
-    const context = contexts.get(key);
-    if (context !== undefined) {
-      context.retry.step = context.retry.step + 1;
-      if (config.retry && config.retry.limit >= context.retry.step) {
-        setTimeout(query.bind(null, key, ids), context.retry.curve(context.retry.step));
+  /**
+   * Main queue function
+   * - Checks circuit-breaker status
+   * - Resolves context object and deferred handlers
+   * - Looks-up cache
+   * - Prepares data-source query timer/invocation
+   * @param {string} id The id of the record to query
+   * @param {*} params The parameters for the query
+   * @param {boolean} startQueue Wether to start the queue immediately or not
+   */
+  async function push(id, params, startQueue) {
+    if (breaker.status().active === true) return Promise.reject(breaker.error);
+    const key = contextKey(config.uniqueParams, params);
+    const context = resolveContext(key, params);
+    let entity = await lookupCache(key, id, context);
+    if (entity === null) entity = context.promises.get(id).promise;
+
+    if (config.batch) {
+      if (context.timer === null) {
+        context.timer = setTimeout(batch.bind(null, 'batch', key, context), config.batch.tick);
       }
-      else {
-        emitter.emit('retryCancelled', { key, ids, params, error: err });
-        ids.forEach((id) => {
-          const expectations = context.promises.get(id);
-          if (expectations !== undefined) {
-            expectations.forEach(rec => rec.reject(err));
-            context.promises.delete(id);
+    }
+    else {
+      if (startQueue === true) batch('direct', key, context);
+    }
+    
+    return entity;
+  }
+
+  /**
+   * Performs the query to the data-source
+   * @param {string} type The type of query (direct, batch or retry)
+   * @param {string} key The context key
+   * @param {array} ids The ids to query
+   * @param {object} context The context object
+   */
+  function query(type, key, ids, context) {
+    // Force-bucket
+    let targetIds = ids.splice(0, config.batch ? config.batch.max: ids.length);
+    if (ids.length > 0) {
+      query(type, key, ids, context);
+    }
+    if (targetIds.length > 0) {
+      emitter.emit('query', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined });
+      Promise.resolve(config.resolver(targetIds, context.params))
+        .catch(err => retry(key, targetIds, context, err))
+        .then(
+          function handleQuerySuccess(results) {
+            emitter.emit('querySuccess', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined });
+            complete(key, targetIds, context, results);
+          },
+          function handleQueryError(err) {
+            emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retry.step : undefined });
+            retry(key, targetIds, context, err);
           }
-        });
-        breaker.openCircuit();
-      }
+        );
     }
   }
 
-  function complete(key, ids, params, results) {
-    const parser = config.getter.responseParser || basicParser;
-    const records = parser(results, ids, params);
-    const context = contexts.get(key);
-    if (context !== undefined) {
+  /**
+   * Query failure handler
+   * Assures the queries are properly retried after the configured amount of time
+   * @param {string} key The context key
+   * @param {array} ids The list of ids to query
+   * @param {object} context The context object
+   * @param {Error} err The error that caused the failure
+   */
+  function retry(key, ids, context, err) {
+    context.retry.step = context.retry.step + 1;
+    if (config.retry && config.retry.limit >= context.retry.step) {
+      setTimeout(query.bind(null, 'retry', key, ids, context), context.retry.curve(context.retry.step));
+    }
+    else {
+      emitter.emit('retryCancelled', { key, ids, params: context.params, error: err });
       ids.forEach((id) => {
-        const expectations = context.promises.get(id);
-        if (expectations !== undefined) {
-          expectations.forEach(rec => rec.resolve(records[id]));
+        const expectation = context.promises.get(id);
+        if (expectation !== undefined) {
+          expectation.reject(err);
           context.promises.delete(id);
         }
       });
-
-      if (context.ids.length > 0) {
-        context.retry.step = 0;
-      }
-      else {
-        if (context.promises.size === 0) contexts.delete(key);
-      }
+      breaker.openCircuit();
     }
+  }
+
+  /**
+   * Query success handler
+   * Assures the results are properly parsed, promises resolved and contexts cleaned up
+   * @param {string} key The context key
+   * @param {array} ids The list of ids to query
+   * @param {object} context The context object
+   * @param {*} results The query results
+   */
+  function complete(key, ids, context, results) {
+    const parser = config.responseParser || basicParser;
+    const records = parser(results, ids, context.params);
+    ids.forEach((id) => {
+      const expectation = context.promises.get(id);
+      if (expectation !== undefined) {
+        expectation.resolve(records[id]);
+        context.promises.delete(id);
+      }
+    });
+
+    if (context.ids.length > 0) {
+      context.retry.step = 0;
+    }
+    else {
+      if (context.promises.size === 0) contexts.delete(key);
+    }
+
     if (config.cache) {
       store.set(recordKey.bind(null, key), ids, records, { step: 0 });
     }
@@ -196,30 +204,15 @@ function queue(config, emitter, userStore) {
     }
   }
 
-  function contextKey(params) {
-    return (config.uniqueOptions || []).map(opt => `${opt}=${params[opt]}`).join(';');
-  }
-
-  function recordKey(context, id) {
-    return `${context}::${id}`;
-  }
-
-  function has(id, params) {
-    return store.has(recordKey(contextKey(params), id));
-  }
-
-  function clear(id, params) {
-    return store.clear(recordKey(contextKey(params), id));
-  }
-
+  /**
+   * The number of active contexts
+   * @returns {number} The number of active contexts
+   */
   function size() {
-    return {
-      contexts: contexts.size,
-      records: store.size(),
-    };
+    return contexts.size;
   }
 
-  return { batch, direct, has, clear, store, complete, contextKey, retry, query, size };
+  return { batch, push, size, retry, query, resolveContext, complete };
 }
 
 /* Exports -------------------------------------------------------------------*/

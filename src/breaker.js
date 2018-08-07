@@ -13,7 +13,7 @@ function breaker(config, emitter) {
   const circuitError = new Error('Service unavailable (circuit-breaker)');
   let timer = null;
   let step = 0;
-  let curve = tween(config.circuitBreaker);
+  let curve = tween(config.breaker);
 
   function closeCircuit() {
     active = false;
@@ -31,7 +31,7 @@ function breaker(config, emitter) {
   }
 
   function openCircuit() {
-    if (config.circuitBreaker) {
+    if (config.breaker) {
       const ttl = curve(++step);
       active = true;
       emitter.emit('circuitBroken', status(ttl));

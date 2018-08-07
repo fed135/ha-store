@@ -20,8 +20,7 @@ function localStore(config, emitter, store) {
   
   /**
    * Performs a query that returns a single entities to be cached
-   * @param {object} opts The options for the dao
-   * @param {string} method The dao method to call
+   * @param {string} key the key of the record to get from store
    * @returns {Promise}
    */
   function get(key) {
@@ -40,26 +39,18 @@ function localStore(config, emitter, store) {
    * @param {string} method The dao method to call
    * @returns {Promise}
    */
-  function set(recordKey, keys, values, opts) {
+  function set(recordKey, keys, values, opts={}) {
     const now = Date.now();
+    const stepSize = curve(opts.step || 0);
     return keys.map((id) => {
       let value = { value: values[id] };
       if (opts && opts.step !== undefined) {
         value.timestamp = now;
         value.step = opts.step;
-        value.timer = setTimeout(lru.bind(null, recordKey(id)), curve(opts.step));
+        value.timer = setTimeout(lru.bind(null, recordKey(id)), stepSize);
       }
       return store.set(recordKey(id), value);
     });
-  }
-
-  /**
-   * Checks if a computed key is present in the store
-   * @param {string} key The key to search for
-   * @returns {boolean} Wether the key is in the store or not 
-   */
-  function has(key) {
-    return !!store.has(key);
   }
 
   /**
@@ -96,11 +87,15 @@ function localStore(config, emitter, store) {
     }
   }
 
-  function size() {
+  /**
+   * The number of active records
+   * @returns {number} The number of active records
+   */
+  async function size() {
     return store.size;
   }
 
-  return { get, set, has, clear, lru, size };
+  return { get, set, clear, lru, size };
 }
 
 /* Exports -------------------------------------------------------------------*/
