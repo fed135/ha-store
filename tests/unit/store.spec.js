@@ -4,7 +4,8 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const store = require('../../src/store');
+const store = require('../../src/store.js');
+const { exp } = require('../../src/utils.js')
 const EventEmitter = require('events').EventEmitter;
 const expect = require('chai').expect;
 const sinon = require('sinon');
@@ -14,8 +15,10 @@ const sinon = require('sinon');
 const testDuration = 100;
 const config = {
   cache: {
-    step: 10,
-    ttl: 100,
+    base: 1,
+    steps: 10,
+    limit: 100,
+    curve: exp,
   },
 };
 const recordKey = (id) => `${id}`;
@@ -93,29 +96,6 @@ describe('store', () => {
     });
   });
 
-  describe('#has', () => {
-    beforeEach(() => {
-      testMap = new Map();
-      testEmitter = new EventEmitter();
-      mapMock = sinon.mock(testMap);
-      emitterMock = sinon.mock(testEmitter);
-      testStore = store(config, testEmitter, testMap);
-
-      valueRecord = { value: 'foo' };
-    });
-
-    it('should return true if there\'s a value saved', () => {
-      testStore.set(recordKey, ['testValue'], { testValue: 'foo' });
-      expect(testStore.has('testValue')).to.be.true;
-      mapMock.expects('has').once().withArgs('testValue');
-    });
-
-    it('should return false if the key is missing', () => {
-      expect(testStore.has('test')).to.be.false;
-      mapMock.expects('has').once().withArgs('test');
-    });
-  });
-
   describe('#clear', () => {
     beforeEach(() => {
       testMap = new Map();
@@ -169,10 +149,11 @@ describe('store', () => {
       testStore = store(config, testEmitter, testMap);
     });
 
-    it('should return the amount of records in the store', () => {
+    it('should return the amount of records in the store', async () => {
       testStore.set(recordKey, ['testLRUValue'], { testLRUValue: 'foo' }, { step: 0 });
       testStore.get('testLRUValue');
-      expect(testStore.size()).to.equal(1);
+      const sizeValue = await testStore.size()
+      expect(sizeValue).to.equal(1);
     });
   });
 });

@@ -2,7 +2,7 @@
   High-Availability store
 </h1>
 <h3 align="center">
-  A better solution for entity management
+  Efficient data fetching
   <br/><br/><br/>
 </h3>
 <br/>
@@ -20,10 +20,10 @@ Want to make your app faster and don't want to spend on extra infrastructure ?
 
 **HA-store** is: 
 
-- Smart caching for 'hot' information (in-memory or using [redis-adapter](https://github.com/fed135/ha-redis-adapter))
-- Loads of features (request dedupping, batching, retrying and circuit-breaking)
+- Smart micro-caching for 'hot' information (in-memory or using [redis-adapter](https://github.com/fed135/ha-redis-adapter))
+- Loads of features (request coalescing, batching, retrying and circuit-breaking)
 - Insightful stats and [events](#Monitoring-and-events)
-- Lightweight and has **zero dependencies**
+- Lightweight, low resource and has **zero dependencies**
 
 ## Installing
 
@@ -32,34 +32,30 @@ Want to make your app faster and don't want to spend on extra infrastructure ?
 
 ## Usage
 
-**Data-Access layer**
-
-```node
-function getItems(ids, params) {
-    // Some compute-heavy async function or external request to a DB / service
-}
-```
-
 **Store**
 ```node
 const store = require('ha-store');
-const itemStore = store({ getter: { method: getItems }});
-```
+const itemStore = store({
+  source: { 
+    resolver: getItems 
+  }
+});
 
-**Model**
-```node
-function getItemById(id, params) {
-    itemStore.one(id, params)
-        .then(item => /* The item you requested */);
-}
+// Anywhere in your application
+
+itemStore.get(id, params)
+  .then(item => /* The item you requested */);
+
+itemStore.get(ids, params)
+  .then(items => /* All the items you requested */);
 ```
 
 ## Options
 
 Name | Required | Default | Description
 --- | --- | --- | ---
-getter | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)>`
-uniqueOptions | false | `[]` | The list of parameters that, when passed, alter the results of the items requested. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
+resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)>`
+uniqueParams | false | `[]` | The list of parameters that, when passed, alter the results of the items requested. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
 cache | false | ```{ base: 1000, step: 5, limit: 30000 }``` | Caching options for the data
 batch | false | ```{ tick: 50, max: 100 }``` | Batching options for the requests
 retry | false | ```{ base: 5, step: 3, limit: 5000 }``` | Retry options for the requests
@@ -76,10 +72,11 @@ Event | Description
 --- | ---
 cacheHit | When the requested item is present in the microcache, or is already being fetched. Prevents another request from being created.
 cacheMiss | When the requested item is not present in the microcache and is not currently being fetched. A new request will be made.
-batch | When a batch of requests is about to be sent.
-batchFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.
-batchCancelled | Indicates that the batch has reached the allowed number of retries and is now abandonning.
-batchSuccess | Indicates that the batch request was successful.
+coalescedHit | When a record query successfully hooks to the promise of the same record in transit.
+query | When a batch of requests is about to be sent.
+queryFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.
+retryCancelled | Indicates that the batch has reached the allowed number of retries and is now abandonning.
+querySuccess | Indicates that the batch request was successful.
 bumpCache | When a call for an item fully loaded in the microcache succeeds, it's ttl gets extended.
 clearCache | When an item in the microcache has reached it's ttl and is now being evicted.
 circuitBroken | When a batch call fails after the limit amount of retries, the circuit gets broken - all calls in the next ttl will automatically fail. It is assumed that there is a problem with the data-source.
