@@ -32,21 +32,19 @@ Want to make your app faster and don't want to spend on extra infrastructure ?
 
 ## Usage
 
-**Store**
 ```node
 const store = require('ha-store');
 const itemStore = store({
-  source: { 
-    resolver: getItems 
-  }
+  resolver: getItems,
+  uniqueParams: ['language']
 });
 
 // Anywhere in your application
 
-itemStore.get(id, params)
+itemStore.get('123', { language: 'fr' })
   .then(item => /* The item you requested */);
 
-itemStore.get(ids, params)
+itemStore.get(['123', '456'], { language: 'en' })
   .then(items => /* All the items you requested */);
 ```
 
@@ -54,12 +52,13 @@ itemStore.get(ids, params)
 
 Name | Required | Default | Description
 --- | --- | --- | ---
-resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<object>{ method: <function(ids, params)>, responseParser: <function(response, requestedIds)>`
-uniqueParams | false | `[]` | The list of parameters that, when passed, alter the results of the items requested. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
-cache | false | ```{ base: 1000, step: 5, limit: 30000 }``` | Caching options for the data
+resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<function(ids, params)>`
+responseParser | false | (system) | The method that format the results from the resolver into an indexed collection. Accepts indexed collections or arrays of objects with an `id` property. Uses the format `<function(response, requestedIds, params)>`
+uniqueParams | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
+cache | false | ```{ base: 1000, step: 5, limit: 30000, curve: <function(progress, start, end)> }``` | Caching options for the data
 batch | false | ```{ tick: 50, max: 100 }``` | Batching options for the requests
-retry | false | ```{ base: 5, step: 3, limit: 5000 }``` | Retry options for the requests
-circuitBreaker | false | ```{ base: 1000, steps: 0xffff, limit: 0xffffff }``` | Circuit-breaker options, enabled by default and triggers after the retry limit
+retry | false | ```{ base: 5, step: 3, limit: 5000, curve: <function(progress, start, end)> }``` | Retry options for the requests
+breaker | false | ```{ base: 1000, steps: 0xffff, limit: 0xffffff, curve: <function(progress, start, end)> }``` | Circuit-breaker options, enabled by default and triggers after the retry limit
 
 *All options are in (ms)
 *Scaling options are represented via and exponential curve with base and limit being the 2 edge values while steps is the number of events over that curve.
