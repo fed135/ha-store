@@ -20,8 +20,7 @@ function localStore(config, emitter, store) {
   
   /**
    * Performs a query that returns a single entities to be cached
-   * @param {object} opts The options for the dao
-   * @param {string} method The dao method to call
+   * @param {string} key the key of the record to get from store
    * @returns {Promise}
    */
   function get(key) {

@@ -52,5 +52,6 @@
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>"
-  ]
+  ],
+  "typings": "./src/index.d.ts"
 }
