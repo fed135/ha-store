@@ -8,10 +8,20 @@ const { tween, basicParser, deferred, contextKey, recordKey } = require('./utils
 
 /* Methods -------------------------------------------------------------------*/
 
-function queue(config, emitter, store, breaker) {
+function queue(config, emitter, store, storePlugin, breaker) {
 
   // Local variables
   const contexts = new Map();
+  let targetStore = storePlugin && storePlugin(config, emitter) || store;
+  emitter.on('storePluginErrored', () => {
+    if (config.storePluginFallback === true) {
+      targetStore = store;
+      setTimeout(() => {
+        emitter.emit('storePluginRestored'), 
+        targetStore = storePlugin && storePlugin(config, emitter) || store;
+      }, config.storePluginRecoveryDelay);
+    }
+  });
 
   /**
    * Attempts to read a query item from cache
@@ -212,7 +222,7 @@ function queue(config, emitter, store, breaker) {
     return contexts.size;
   }
 
-  return { batch, push, size, retry, query, resolveContext, complete };
+  return { batch, push, size, retry, query, resolveContext, complete, store: targetStore };
 }
 
 /* Exports -------------------------------------------------------------------*/

@@ -147,7 +147,7 @@ describe('index', () => {
   describe('#clear', () => {
     it('should return clear value', () => {
       const test = root({ resolver: () => {} });
-      const storeMock = sinon.mock(test._store);
+      const storeMock = sinon.mock(test._queue.store);
       test.clear('123abc');
       storeMock.expects('clear').once().withArgs('123abc');
     });
@@ -155,14 +155,14 @@ describe('index', () => {
     it('should return clear value with params', () => {
       const test = root({ resolver: () => {}, uniqueParams: ['foo'] });
       const params = { foo: 'bar' };
-      const storeMock = sinon.mock(test._store);
+      const storeMock = sinon.mock(test._queue.store);
       test.clear('123abc', params);
       storeMock.expects('clear').once().withArgs('foo=bar::123abc');
     });
 
     it('should handle multi record clear queries', () => {
       const test = root({ resolver: () => {} });
-      const storeMock = sinon.mock(test._store);
+      const storeMock = sinon.mock(test._queue.store);
       test.clear(['123abc', '456def', '789ghi']);
       storeMock.expects('clear')
         .once().withArgs('123abc')
@@ -173,7 +173,7 @@ describe('index', () => {
     it('should handle multi record clear queries with params', () => {
       const test = root({ resolver: () => {}, uniqueParams: ['foo'] });
       const params = { foo: 'bar' };
-      const storeMock = sinon.mock(test._store);
+      const storeMock = sinon.mock(test._queue.store);
       test.clear(['123abc', '456def', '789ghi'], params);
       storeMock.expects('clear')
         .once().withArgs('foo=bar::123abc')
@@ -186,7 +186,7 @@ describe('index', () => {
     it('should return size value', async () => {
       const test = root({ resolver: () => {} });
       const queueMock = sinon.mock(test._queue);
-      const storeMock = sinon.mock(test._store);
+      const storeMock = sinon.mock(test._queue.store);
       test.get('123abc');
       const sizeValue = await test.size();
       expect(sizeValue).to.deep.equal({ contexts: 1, records: 0 });
