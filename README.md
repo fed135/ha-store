@@ -18,12 +18,13 @@
 
 Want to make your app faster and don't want to spend on extra infrastructure ? 
 
-**HA-store** is: 
+**HA-store** is a generic wrapper for your data queries, it features: 
 
 - Smart micro-caching for 'hot' information (in-memory or using [redis-adapter](https://github.com/fed135/ha-redis-adapter))
 - Loads of features (request coalescing, batching, retrying and circuit-breaking)
 - Insightful stats and [events](#Monitoring-and-events)
 - Lightweight, low resource and has **zero dependencies**
+
 
 ## Installing
 
@@ -55,10 +56,12 @@ Name | Required | Default | Description
 resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<function(ids, params)>`
 responseParser | false | (system) | The method that format the results from the resolver into an indexed collection. Accepts indexed collections or arrays of objects with an `id` property. Uses the format `<function(response, requestedIds, params)>`
 uniqueParams | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinaisons of cache keys.
-cache | false | ```{ base: 1000, step: 5, limit: 30000, curve: <function(progress, start, end)> }``` | Caching options for the data
-batch | false | ```{ tick: 50, max: 100 }``` | Batching options for the requests
-retry | false | ```{ base: 5, step: 3, limit: 5000, curve: <function(progress, start, end)> }``` | Retry options for the requests
-breaker | false | ```{ base: 1000, steps: 0xffff, limit: 0xffffff, curve: <function(progress, start, end)> }``` | Circuit-breaker options, enabled by default and triggers after the retry limit
+cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;step: 5,&#13;&#10;&nbsp;&nbsp;limit: 30000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Caching options for the data
+batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;tick: 50,&#13;&#10;&nbsp;&nbsp;max: 100&#13;&#10;}</pre> | Batching options for the requests
+retry | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 5,&#13;&#10;&nbsp;&nbsp;step: 3,&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Retry options for the requests
+breaker | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;step: 65535,&#13;&#10;&nbsp;&nbsp;limit: 16777215,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Circuit-breaker options, enabled by default and triggers after the retry limit
+storePluginFallback | false | `true` | If a custom store plugin errors, fallback to the default in-memory store
+storePluginRecoveryDelay | false | 10000 | If a custom store plugin errors and `storePluginFallback` is `true`, ha-store will attempt to recover the store every `storePluginRecoveryDelay`
 
 *All options are in (ms)
 *Scaling options are represented via and exponential curve with base and limit being the 2 edge values while steps is the number of events over that curve.
@@ -81,11 +84,17 @@ clearCache | When an item in the microcache has reached it's ttl and is now bein
 circuitBroken | When a batch call fails after the limit amount of retries, the circuit gets broken - all calls in the next ttl will automatically fail. It is assumed that there is a problem with the data-source.
 circuitRestored | Circuit temporarily restored, a tentative to the data-source may be sent.
 circuitRecovered | The tentative request was successful and the circuit it's assumed that the data-source has recovered.
+storePluginErrored | The custom store has encountered an error
+storePluginRestored | The custom store has been re-instantiated
+
+You may also want to track the amount of `contexts` and `records` stored via the `size` method.
 
 
 ## Testing
 
 `npm test`
+
+`npm run bench`
 
 
 ## Contribute
