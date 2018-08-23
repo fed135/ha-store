@@ -49,6 +49,9 @@ function batcher(config = {}, emitter) {
     throw new Error(`config.resolver [${config.resolver}] is not a function`);
   }
 
+  config.storePluginRecoveryDelay = Number(config.storePluginRecoveryDelay) || 10000;
+  config.storePluginFallback = (config.storePluginFallback === undefined) ? true : config.storePluginFallback;
+
   if (config.batch !== null) config.batch = { ...baseConfig.batch, ...config.batch };
   if (config.retry !== null) config.retry = { ...baseConfig.retry, ...config.retry };
   if (config.cache !== null) config.cache = { ...baseConfig.cache, ...config.cache };
@@ -60,9 +63,10 @@ function batcher(config = {}, emitter) {
 
   // Local variables
   const _emitter = emitter || new EventEmitter();
-  const _store = (config.store || l)(config, _emitter);
+  _emitter.setMaxListeners && _emitter.setMaxListeners(Infinity);
   const _breaker = b(config, _emitter);
-  const _queue = q(config, _emitter, _store, _breaker);
+
+  const _queue = q(config, _emitter, l(config, _emitter), config.store, _breaker);
 
   /**
      * Gets a list of records from source
@@ -101,7 +105,7 @@ function batcher(config = {}, emitter) {
      */
   function clear(ids, params) {
     if (Array.isArray(ids)) return ids.map(id => clear(id, params));
-    return _store.clear(recordKey(contextKey(config.uniqueParams, params), ids));
+    return _queue.store.clear(recordKey(contextKey(config.uniqueParams, params), ids));
   }
 
   /**
@@ -111,11 +115,11 @@ function batcher(config = {}, emitter) {
   async function size() {
     return await {
       contexts: _queue.size(),
-      records: await _store.size(),
+      records: await _queue.store.size(),
     }; 
   }
 
-  return Object.assign(_emitter, { get, set, clear, size, config, _queue, _store });
+  return Object.assign(_emitter, { get, set, clear, size, config, _queue });
 }
 
 /* Exports -------------------------------------------------------------------*/
