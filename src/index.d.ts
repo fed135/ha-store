@@ -1,15 +1,5 @@
 import { EventEmitter } from "events";
 
-declare type Config = {
-  batch: {
-    tick: number,
-    max: number,
-  },
-  retry: GenericCurveConfig,
-  cache: GenericCurveConfig,
-  breaker: GenericCurveConfig,
-}
-
 type GenericCurveConfig = {
   base: number,
   steps: number,
@@ -24,17 +14,20 @@ type Params = {
 type RequestIds = string | number | string[] | number[];
 
 declare interface BatcherConfig {
-  resolver(ids: RequestIds, params?: Params): Promise<T>,
+  resolver(ids: RequestIds, params?: Params, batchData?: any): Promise<any>,
   uniqueOptions?: string[],
   responseParser?(
     response: any, 
     requestedIds: string[] | number[], 
     params?: Params
   ): any
-  cache?: Config.cache,
-  batch?: Config.batch,
-  retry?: Config.retry,
-  breaker?: BreakerConfig,
+  cache?: GenericCurveConfig,
+  batch?: {
+    tick: number,
+    max: number,
+  },
+  retry?: GenericCurveConfig,
+  breaker?: GenericCurveConfig,
   store?: any,
   storePluginFallback?: boolean,
   storePluginRecoveryDelay?: number
@@ -42,21 +35,11 @@ declare interface BatcherConfig {
 
 declare function batcher(BatcherConfig, emitter: EventEmitter): {
 
-  get(ids: string | number, params?: Params): Promise;
+  get(ids: string | number, params?: Params): Promise<any>;
 
-  set(items: any, ids: string[] | number[], params?: Params): Promise;
-
-  has(ids: RequestIds, params?: Params): Boolean;
+  set(items: any, ids: string[] | number[], params?: Params): Promise<any>;
 
   clear(ids: RequestIds, params?: Params): void;
 
   size(): Object;
 };
-
-
-/**
- * Utilities
- */
-declare function exp(progress: number, start: number, end: number): number;
-declare function tween(opts: GenericCurveConfig): (progress: number) => void;
-declare function basicParser(results: any[], ids: RequestIds, params: Params): Object;

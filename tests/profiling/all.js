@@ -39,7 +39,7 @@ async function hitStore() {
     const id = crypto.randomBytes(sampleRange).toString('hex');
     const language = languages[Math.floor(Math.random()*languages.length)];
     const before = Date.now();
-    store.get(id, { language })
+    store.get(id, { language }, crypto.randomBytes(8).toString('hex'))
       .then((result) => {
         if (!result || result.id !== id || result.language !== language) {
           console.log(result, id, language);

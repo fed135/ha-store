@@ -74,10 +74,11 @@ function batcher(config = {}, emitter) {
      * @param {object} params (Optional)The Request parameters
      * @returns {Promise} The eventual single record
      */
-  function get(ids, params = {}) {
+  function get(ids, params = {}, agg = null) {
+    if (params === null) params = {};
     const requestIds = (Array.isArray(ids)) ? ids : [ids];
     const promises = requestIds.map((id, i) => {
-      return _queue.push(id, params, (config.batch === null && i === requestIds.length -1));
+      return _queue.push(id, params, agg, (config.batch === null && i === requestIds.length -1));
     });
     return Promise.all(promises)
       .then(response => (!Array.isArray(ids)) ? response[0] : response)

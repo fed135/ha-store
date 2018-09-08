@@ -16,11 +16,12 @@
 
 ## How it works
 
-Want to make your app faster and don't want to spend on extra infrastructure ? 
+Want to make your app faster and don't want to spend on extra infrastructure ?
+Using [Zeta distributions](https://github.com/fed135/ha-store/wiki) or the out-of-the-box config, you can do both with HA-store!
 
 **HA-store** is a generic wrapper for your data queries, it features: 
 
-- Smart micro-caching for 'hot' information (in-memory or using [redis-adapter](https://github.com/fed135/ha-redis-adapter))
+- Smart micro-caching for 'hot' information (in-memory or using the [redis-adapter](https://github.com/fed135/ha-redis-adapter))
 - Loads of features (request coalescing, batching, retrying and circuit-breaking)
 - Insightful stats and [events](#Monitoring-and-events)
 - Lightweight, low resource and has **zero dependencies**

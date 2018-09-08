@@ -108,6 +108,29 @@ describe('Batching', () => {
         });
     });
 
+    it('should accumulate batch data', () => {
+      testStore.get('foo', null, '1234567890');
+      return testStore.get('foo', null, '2345678901')
+        .then((result) => {
+          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          mockSource.expects('getAssets')
+            .once()
+            .withArgs(['abc'], null, { 'foo': ['1234567890', '2345678901'] });
+        });
+    });
+
+    it('should accumulate batch data, when batching is disabled', () => {
+      testStore.config.batch = null;
+      testStore.get('foo');
+      return testStore.get('abc', null, '1234567890')
+        .then((result) => {
+          expect(result).to.deep.equal({ id: 'abc', language: undefined });
+          mockSource.expects('getAssets')
+            .once()
+            .withArgs(['abc'], null, { 'abc': ['1234567890'] });
+        });
+    });
+
     it('should support disabled batching', () => {
       testStore.config.batch = null;
       testStore.get('foo');
