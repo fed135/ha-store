@@ -81,8 +81,7 @@ function batcher(config = {}, emitter) {
       return _queue.push(id, params, agg, (config.batch === null && i === requestIds.length -1));
     });
     return Promise.all(promises)
-      .then(response => (!Array.isArray(ids)) ? response[0] : response)
-      .catch(err => console.log); // TODO remove
+      .then(response => (!Array.isArray(ids)) ? response[0] : response);
   }
 
   /**
