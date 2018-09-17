@@ -69,6 +69,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
         ids: [],
         promises: new Map(),
         params,
+        batchData: {},
         retry: {
           step: 0,
           curve: tween(config.retry),
@@ -103,14 +104,23 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * - Prepares data-source query timer/invocation
    * @param {string} id The id of the record to query
    * @param {*} params The parameters for the query
+   * @param {*} agg A value to add to the list of the context's persisted batch state
    * @param {boolean} startQueue Wether to start the queue immediately or not
    */
-  async function push(id, params, startQueue) {
+  async function push(id, params, agg, startQueue) {
     if (breaker.status().active === true) return Promise.reject(breaker.error);
     const key = contextKey(config.uniqueParams, params);
     const context = resolveContext(key, params);
     let entity = await lookupCache(key, id, context);
-    if (entity === null) entity = context.promises.get(id).promise;
+    if (agg !== null) {
+      if (!(id in context.batchData)) context.batchData[id] = [];
+      context.batchData[id].push(agg);
+    }
+    if (entity !== null) {
+      if (!config.batch && startQueue === true) batch('direct', key, context);
+      return entity;
+    }
+    entity = context.promises.get(id).promise;
 
     if (config.batch) {
       if (context.timer === null) {
@@ -137,17 +147,31 @@ function queue(config, emitter, store, storePlugin, breaker) {
     if (ids.length > 0) {
       query(type, key, ids, context);
     }
+
+    const bd = targetIds.reduce((acc, id) => {
+      if (id in context.batchData) {
+        if ([Number, String, Boolean].includes(context.batchData[id].constructor)) {
+          acc[id] = context.batchData[id]
+        }
+        else {
+          acc[id] = JSON.parse(JSON.stringify(context.batchData[id]));
+        }
+        delete context.batchData[id];
+      }
+      return acc;
+    }, {});
+
     if (targetIds.length > 0) {
-      emitter.emit('query', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined });
-      Promise.resolve(config.resolver(targetIds, context.params))
+      emitter.emit('query', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined, batchData: context.batchData });
+      Promise.resolve(config.resolver(targetIds, context.params, context.batchData))
         .catch(err => retry(key, targetIds, context, err))
         .then(
           function handleQuerySuccess(results) {
-            emitter.emit('querySuccess', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined });
+            emitter.emit('querySuccess', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined, batchData: context.batchData });
             complete(key, targetIds, context, results);
           },
           function handleQueryError(err) {
-            emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retry.step : undefined });
+            emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retry.step : undefined, batchData: context.batchData });
             retry(key, targetIds, context, err);
           }
         );
@@ -168,7 +192,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       setTimeout(query.bind(null, 'retry', key, ids, context), context.retry.curve(context.retry.step));
     }
     else {
-      emitter.emit('retryCancelled', { key, ids, params: context.params, error: err });
+      emitter.emit('retryCancelled', { key, ids, params: context.params, error: err, batchData: context.batchData });
       ids.forEach((id) => {
         const expectation = context.promises.get(id);
         if (expectation !== undefined) {

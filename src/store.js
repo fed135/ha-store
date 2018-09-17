@@ -70,13 +70,13 @@ function localStore(config, emitter, store) {
     const record = store.get(key);
     if (record) {
       if (record.value && record.timer) {
-        const now = Date.now();
+        const now = record.timestamp + curve(record.step);
         if (record.step < config.cache.steps && record.bump === true) {
           record.step = record.step + 1;
           const ext = curve(record.step);
-          emitter.emit('cacheBump', { key, timestamp: record.timestamp, step: record.step, expires: now + ext });
+          emitter.emit('cacheBump', { key, timestamp: record.timestamp, step: record.step, expires: record.timestamp + ext });
           clearTimeout(record.timer);
-          record.timer = setTimeout(clear.bind(null, key), ext);
+          record.timer = setTimeout(clear.bind(null, key), record.timestamp + ext - now);
           record.bump = false;
         }
         else {
