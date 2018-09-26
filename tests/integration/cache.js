@@ -200,7 +200,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('abc')
         .then((result) => {
-          expect(result).to.be.undefined;
+          expect(result).to.deep.equal({ id: 'abc', language: undefined });
           mockSource.expects('getPartialGroup')
             .once()
             .withArgs(['abc']);
