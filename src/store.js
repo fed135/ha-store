@@ -5,8 +5,19 @@
 /* Requires ------------------------------------------------------------------*/
 
 const { tween } = require('./utils.js');
+const v8 = require('v8');
+
+/* Local variables -----------------------------------------------------------*/
+
+const memoryLimit = v8.getHeapStatistics().total_available_size;
+let currentMemory = 0;
 
 /* Methods -------------------------------------------------------------------*/
+
+function checkMemory() {
+  setTimeout(checkMemory, 1000);
+  currentMemory = process.memoryUsage().rss;
+}
 
 /**
  * Store constructor
@@ -40,9 +51,18 @@ function localStore(config, emitter, store) {
    * @returns {Promise}
    */
   function set(recordKey, keys, values, opts={}) {
+    if (currentMemory / memoryLimit > config.storeOptions.memoryLimit) {
+      emitter.emit('cacheFull', { reason: 'Out of memory', current: currentMemory, limit: memoryLimit * config.storeOptions.memoryLimit });
+      return [];
+    }
     const now = Date.now();
     const stepSize = curve(opts.step || 0);
-    return keys.map((id) => {
+    const storeSize = size();
+    return keys.map((id, i) => {
+      if (storeSize + i + 1 > config.storeOptions.recordLimit) {
+        emitter.emit('cacheFull', { reason: 'Too many records', current: config.storeOptions.recordLimit, limit: config.storeOptions.recordLimit });
+        return;
+      }
       let value = { value: values[id] };
       if (opts && opts.step !== undefined) {
         value.timestamp = now;
@@ -59,6 +79,7 @@ function localStore(config, emitter, store) {
    * @returns {boolean} Wether the key was removed or not 
    */
   function clear(key) {
+    if (key === '*') return !!store.clear();
     return !!store.delete(key);
   }
 
@@ -97,6 +118,8 @@ function localStore(config, emitter, store) {
 
   return { get, set, clear, lru, size };
 }
+
+checkMemory();
 
 /* Exports -------------------------------------------------------------------*/
 

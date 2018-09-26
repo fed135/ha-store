@@ -49,8 +49,11 @@ function batcher(config = {}, emitter) {
     throw new Error(`config.resolver [${config.resolver}] is not a function`);
   }
 
-  config.storePluginRecoveryDelay = Number(config.storePluginRecoveryDelay) || 10000;
-  config.storePluginFallback = (config.storePluginFallback === undefined) ? true : config.storePluginFallback;
+  config.storeOptions = config.storeOptions || {};
+  config.storeOptions.pluginRecoveryDelay = Number(config.storeOptions.pluginRecoveryDelay) || 10000;
+  config.storeOptions.pluginFallback = (config.storeOptions.pluginFallback === undefined) ? true : config.storeOptions.pluginFallback;
+  config.storeOptions.memoryLimit = Math.max(0, Math.min(1, Number(config.storeOptions.memoryLimit) || 0.9));
+  config.storeOptions.recordLimit = Number(config.storeOptions.recordLimit) || Infinity;
 
   if (config.batch !== null) config.batch = { ...baseConfig.batch, ...config.batch };
   if (config.retry !== null) config.retry = { ...baseConfig.retry, ...config.retry };

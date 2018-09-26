@@ -20,6 +20,10 @@ const config = {
     limit: 100,
     curve: exp,
   },
+  storeOptions: {
+    memoryLimit: 0.9,
+    recordLimit: Infinity,
+  },
 };
 const recordKey = (id) => `${id}`;
 
@@ -154,6 +158,53 @@ describe('store', () => {
       testStore.get('testLRUValue');
       const sizeValue = await testStore.size()
       expect(sizeValue).to.equal(1);
+    });
+  });
+
+  describe('#store limitations', () => {
+    beforeEach(() => {
+      testMap = new Map();
+      testEmitter = new EventEmitter();
+      mapMock = sinon.mock(testMap);
+      emitterMock = sinon.mock(testEmitter);
+    });
+
+    it('should not save if process memory has reached the limit', (done) => {
+      testStore = store({
+        cache: {
+          base: 1,
+          steps: 10,
+          limit: 100,
+          curve: exp,
+        },
+        storeOptions: { memoryLimit: 0, recordLimit: Infinity },
+      }, testEmitter, testMap);
+      const lruMock = sinon.mock(testStore);
+      testStore.set(recordKey, ['testLRUValue'], { testLRUValue: { value: 'foo' } }, { step: 0 });
+      setTimeout(() => {
+        lruMock.expects('lru').never();
+        emitterMock.expects('emit').once().withArgs('cacheFull');
+        done();
+      }, 11);
+    });
+
+    it('should not save if record count has reached the limit', (done) => {
+      testStore = store({
+        cache: {
+          base: 1,
+          steps: 10,
+          limit: 100,
+          curve: exp,
+        },
+        storeOptions: { memoryLimit: 0.9, recordLimit: 1 },
+      }, testEmitter, testMap);
+      const lruMock = sinon.mock(testStore);
+      testStore.set(recordKey, ['testLRUValue', 'testLRUValue2'], { testLRUValue: { value: 'foo' }, testLRUValue2: { value: 'foo' } }, { step: 0 });
+      setTimeout(() => {
+        lruMock.expects('lru').once().withArgs('testLRUValue');
+        emitterMock.expects('emit').once().withArgs('cacheFull');
+        done();
+      }, 11);
     });
   });
 });
