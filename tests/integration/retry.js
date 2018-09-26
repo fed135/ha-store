@@ -133,7 +133,7 @@ describe('Retrying', () => {
       testStore.config.retry = { limit: 2 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.be.instanceof(Error);
           mockSource.expects('getErroredRequest')
             .exactly(2).withArgs(['abc'], { language: 'fr' });
         });

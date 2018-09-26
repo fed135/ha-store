@@ -25,7 +25,7 @@ function tween(opts) {
 
   return function _tweenStep(progress) {
     if (progress === undefined) step++;
-    return (opts.curve || exp)(Math.min(1, ((progress === undefined) ? step : progress / opts.steps)), opts.base, opts.limit);
+    return (opts.curve || exp)(Math.min(1, ((progress === undefined) ? step : progress / (opts.steps || 1))), opts.base, opts.limit);
   };
 }
 
