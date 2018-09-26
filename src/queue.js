@@ -188,7 +188,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
    */
   function retry(key, ids, context, err) {
     context.retry.step = context.retry.step + 1;
-    if (config.retry && config.retry.limit >= context.retry.step) {
+    if (config.retry && config.retry.steps >= context.retry.step) {
       setTimeout(query.bind(null, 'retry', key, ids, context), context.retry.curve(context.retry.step));
     }
     else {
