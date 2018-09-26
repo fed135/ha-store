@@ -61,8 +61,7 @@ cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;ste
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;tick: 50,&#13;&#10;&nbsp;&nbsp;max: 100&#13;&#10;}</pre> | Batching options for the requests
 retry | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 5,&#13;&#10;&nbsp;&nbsp;step: 3,&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Retry options for the requests
 breaker | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;step: 65535,&#13;&#10;&nbsp;&nbsp;limit: 16777215,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Circuit-breaker options, enabled by default and triggers after the retry limit
-storePluginFallback | false | `true` | If a custom store plugin errors, fallback to the default in-memory store
-storePluginRecoveryDelay | false | 10000 | If a custom store plugin errors and `storePluginFallback` is `true`, ha-store will attempt to recover the store every `storePluginRecoveryDelay`
+storeOptions | false | <pre>{&#13;&#10;&nbsp;&nbsp;pluginFallback: true,&#13;&#10;&nbsp;&nbsp;pluginRecoveryDelay: 10000,&#13;&#10;&nbsp;&nbsp;memoryLimit: 0.9,&#13;&#10;&nbsp;&nbsp;recordLimit: Infinity&#13;&#10;}</pre> | If the store plugin errors and `pluginFallback` is true, the Store instance will attempt to fallback to the default in-memory store. It will then attempt to recover the original store every `storePluginRecoveryDelay`. The memory limit tells the store to not record new entries once the process RSS memory reaches a certain percentage of the maximum memory alloted by V8.
 
 *All options are in (ms)
 *Scaling options are represented via and exponential curve with base and limit being the 2 edge values while steps is the number of events over that curve.
@@ -75,6 +74,7 @@ Event | Description
 --- | ---
 cacheHit | When the requested item is present in the microcache, or is already being fetched. Prevents another request from being created.
 cacheMiss | When the requested item is not present in the microcache and is not currently being fetched. A new request will be made.
+cacheFull | Whenever a store set is denied because process memory usage has reached it's acceptable limit or the number of maximum records was reached for that store.
 coalescedHit | When a record query successfully hooks to the promise of the same record in transit.
 query | When a batch of requests is about to be sent.
 queryFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.
