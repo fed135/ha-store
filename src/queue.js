@@ -60,9 +60,13 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * Creates or returns a context object
    * @param {string} key The context key
    * @param {*} params The parameters for the context
+   * @param {boolean} ephemeral If we should not store the request context (disabled batching)
    * @returns {object} The context object
    */
-  function resolveContext(key, params) {
+  function resolveContext(key, params, ephemeralKey) {
+    if (config.batch === null) {
+      key = ephemeralKey;
+    }
     let context = contexts.get(key);
     if (context === undefined) {
       context = {
@@ -105,12 +109,13 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {string} id The id of the record to query
    * @param {*} params The parameters for the query
    * @param {*} agg A value to add to the list of the context's persisted batch state
+   * @param {string} uid The request uuid, for multi-get disabled batches
    * @param {boolean} startQueue Wether to start the queue immediately or not
    */
-  async function push(id, params, agg, startQueue) {
+  async function push(id, params, agg, startQueue, uid) {
     if (breaker.status().active === true) return Promise.reject(breaker.error);
     const key = contextKey(config.uniqueParams, params);
-    const context = resolveContext(key, params);
+    const context = resolveContext(key, params, uid);
     let entity = await lookupCache(key, id, context);
     if (agg !== null) {
       if (!(id in context.batchData)) context.batchData[id] = [];

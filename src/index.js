@@ -8,6 +8,7 @@ const q = require('./queue.js');
 const l = require('./store.js');
 const b = require('./breaker.js');
 const { exp, contextKey, recordKey } = require('./utils.js');
+const { randomBytes } = require('crypto');
 const EventEmitter = require('events').EventEmitter;
 
 /* Local variable ------------------------------------------------------------*/
@@ -79,9 +80,10 @@ function batcher(config = {}, emitter) {
      */
   function get(ids, params = {}, agg = null) {
     if (params === null) params = {};
+    const uid = randomBytes(8).toString('hex');
     const requestIds = (Array.isArray(ids)) ? ids : [ids];
     const promises = requestIds.map((id, i) => {
-      return _queue.push(id, params, agg, (config.batch === null && i === requestIds.length -1));
+      return _queue.push(id, params, agg, (config.batch === null && i === requestIds.length -1), uid);
     });
     return Promise.all(promises)
       .then(response => (!Array.isArray(ids)) ? response[0] : response);
