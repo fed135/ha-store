@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
@@ -52,7 +52,9 @@
     "sinon": "^5.1.0"
   },
   "contributors": [
-    "frederic charette <fredericcharette@gmail.com>"
+    "frederic charette <fredericcharette@gmail.com>",
+    "tim mulqueen <tim.mulqueen@gmail.com>",
+    "damon perron-laurin <damonperronlaurin@gmail.com>"
   ],
   "typings": "./src/index.d.ts"
 }
