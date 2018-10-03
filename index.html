@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+	<title>HA-store - Efficient data fetching</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css" />
+	<style>
+		html,
+		body {
+			height: 100%;
+		}
+
+		body {
+			display: flex;
+			align-items: center;
+		}
+
+		a.github-link {
+			padding-left: 2.5rem;
+		}
+
+		a.github-link>.github-icon {
+			position: absolute;
+			left: 0.4em;
+			top: 0.65em;
+			width: 2em;
+		}
+
+		.noselect {
+			user-select: none;
+		}
+	</style>
+</head>
+
+<body class="mh2-m">
+	<main class="sans-serif w-100 mw6 center pv2-m">
+		<div class="tc bb bw1 b--light-gray">
+			<img src="/images/ha-store-logo.png" alt="ha-store logo" />
+			<h1 class="fw3 mt2 mb3">HA-store</h1>
+			<h2 class="fw3 mt0">Efficient data fetching</h2>
+			<div class="mt3 mb3">
+				<div class="bg-black-80 white w-100 pv3 br2">
+					<code class="ph2"><span class="noselect">$&nbsp;</span>npm install ha-store</code>
+				</div>
+			</div>
+		</div>
+		<p class="mb3 f5 lh-copy measure tl">
+			Want to make your app faster and don't want to spend on extra infrastructure ? With HA-store, you can do both !
+		</p>
+		<p class="mb3 f5 lh-copy measure tl">
+			HA-store is a generic wrapper for your data queries, it features:
+			<br/>
+			<ul>
+				<li>Smart micro-caching for 'hot' information (in-memory or using the redis-adapter)</li>
+				<li>Loads of features (request coalescing, batching, retrying and circuit-breaking)</li>
+				<li>Insightful stats and events</li>
+				<li>Lightweight, low resource and has <b>zero dependencies</b></li>
+			</ul>
+		</p>
+		<div class="tc">
+			<a class="f6 link dim br2 ba pr3 pv3 dib mid-gray relative github-link" href="https://github.com/fed135/ha-store.js">
+				<svg aria-labelledby="simpleicons-github-dark-icon" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="github-icon">
+					<title id="simpleicons-github-icon" lang="en">
+						GitHub Dark icon
+					</title>
+					<path fill="rgba(0,0,0,.8)" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+					/>
+				</svg>Github
+			</a>
+		</div>
+	</main>
+</body>
+
+</html>
