@@ -28,10 +28,17 @@ function getFailedRequest(ids, { language }) {
   });
 }
 
+function getSlowRequest(ids, { language }) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(ids.map(id => ({ id, language }))), 1000);
+  });
+}
+
 module.exports = {
   getAssets,
   getEmptyGroup,
   getPartialGroup,
   getErroredRequest,
   getFailedRequest,
+  getSlowRequest,
 };

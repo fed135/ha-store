@@ -51,6 +51,7 @@ function batcher(config = {}, emitter) {
   }
 
   config.storeOptions = config.storeOptions || {};
+  config.timeout = Number(config.timeout) || null; 
   config.storeOptions.pluginRecoveryDelay = Number(config.storeOptions.pluginRecoveryDelay) || 10000;
   config.storeOptions.pluginFallback = (config.storeOptions.pluginFallback === undefined) ? true : config.storeOptions.pluginFallback;
   config.storeOptions.memoryLimit = Math.max(0, Math.min(1, Number(config.storeOptions.memoryLimit) || 0.9));
@@ -124,7 +125,15 @@ function batcher(config = {}, emitter) {
     }; 
   }
 
-  return Object.assign(_emitter, { get, set, clear, size, config, _queue });
+  return Object.assign(_emitter, {
+    get,
+    set,
+    clear,
+    size,
+    config,
+    breaker: { open: _breaker.openCircuit, close: _breaker.restoreCircuit },
+    _queue
+  });
 }
 
 /* Exports -------------------------------------------------------------------*/

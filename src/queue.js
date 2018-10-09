@@ -12,6 +12,8 @@ function queue(config, emitter, store, storePlugin, breaker) {
 
   // Local variables
   const contexts = new Map();
+  const timeoutError = new Error('TIMEOUT')
+  const retryCurve = tween(config.retry);
   let targetStore = storePlugin && storePlugin(config, emitter) || store;
   emitter.on('storePluginErrored', () => {
     if (config.storeOptions.pluginFallback === true) {
@@ -70,14 +72,12 @@ function queue(config, emitter, store, storePlugin, breaker) {
     let context = contexts.get(key);
     if (context === undefined) {
       context = {
+        key,
         ids: [],
         promises: new Map(),
         params,
         batchData: {},
-        retry: {
-          step: 0,
-          curve: tween(config.retry),
-        },
+        retryStep: 0,
         timer: null,
       };
       contexts.set(key, context);
@@ -113,7 +113,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {boolean} startQueue Wether to start the queue immediately or not
    */
   async function push(id, params, agg, startQueue, uid) {
-    if (breaker.status().active === true) return Promise.reject(breaker.error);
+    if (breaker.status().active === true) return Promise.reject(breaker.circuitError);
     const key = contextKey(config.uniqueParams, params);
     const context = resolveContext(key, params, uid);
     let entity = await lookupCache(key, id, context);
@@ -149,6 +149,8 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function query(type, key, ids, context, bd) {
     // Force-bucket
     let targetIds = ids.splice(0, config.batch ? config.batch.max: ids.length);
+    let timer;
+    let is_cancelled;
     if (ids.length > 0) {
       query(type, key, ids, context);
     }
@@ -166,20 +168,45 @@ function queue(config, emitter, store, storePlugin, breaker) {
       return acc;
     }, {});
 
+    function handleQuerySuccess(results) {
+      if (is_cancelled === true) return;
+      clearTimeout(timer);
+      emitter.emit('querySuccess', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
+      complete(key, targetIds, context, results);
+    }
+
+    function handleQueryError(err) {
+      if (is_cancelled === true) return;
+      clearTimeout(timer);
+      targetIds.forEach((id) => {
+        const expectation = context.promises.get(id);
+        if (expectation !== undefined) {
+          expectation.reject(err);
+          context.promises.delete(id);
+        }
+      });
+      if (context.promises.size === 0) contexts.delete(context.key);
+    }
+
+    function handleQueryCriticalError(err, override) {
+      if (is_cancelled === true && override !== true) return;
+      clearTimeout(timer);
+      emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
+      retry(key, targetIds, context, err);
+    }
+
     if (targetIds.length > 0) {
-      emitter.emit('query', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined, batchData: bd });
-      Promise.resolve(config.resolver(targetIds, context.params, bd))
-        .catch(err => retry(key, targetIds, context, err))
-        .then(
-          function handleQuerySuccess(results) {
-            emitter.emit('querySuccess', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retry.step : undefined, batchData: bd });
-            complete(key, targetIds, context, results);
-          },
-          function handleQueryError(err) {
-            emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retry.step : undefined, batchData: bd });
-            retry(key, targetIds, context, err, bd);
-          }
-        );
+      emitter.emit('query', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
+      if (config.timeout) {
+        timer = setTimeout(() => {
+          is_cancelled = true;
+          handleQueryCriticalError(timeoutError, true);
+        }, config.timeout);
+      }
+      queryPromise = Promise.resolve()
+        .then(config.resolver.bind(null, targetIds, context.params, bd))
+        .then(handleQuerySuccess, handleQueryError)
+        .catch(handleQueryCriticalError);
     }
   }
 
@@ -192,9 +219,9 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {Error} err The error that caused the failure
    */
   function retry(key, ids, context, err, bd) {
-    context.retry.step = context.retry.step + 1;
-    if (config.retry && config.retry.steps >= context.retry.step) {
-      setTimeout(query.bind(null, 'retry', key, ids, context, bd), context.retry.curve(context.retry.step));
+    context.retryStep = context.retryStep + 1;
+    if (config.retry && config.retry.steps >= context.retryStep) {
+      setTimeout(query.bind(null, 'retry', key, ids, context, bd), retryCurve(context.retryStep));
     }
     else {
       emitter.emit('retryCancelled', { key, ids, params: context.params, error: err, batchData: context.batchData });
@@ -205,6 +232,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
           context.promises.delete(id);
         }
       });
+      if (context.promises.size === 0) contexts.delete(context.key);
       breaker.openCircuit();
     }
   }
@@ -229,17 +257,17 @@ function queue(config, emitter, store, storePlugin, breaker) {
     });
 
     if (context.ids.length > 0) {
-      context.retry.step = 0;
+      context.retryStep = 0;
     }
     else {
-      if (context.promises.size === 0) contexts.delete(key);
+      if (context.promises.size === 0) contexts.delete(context.key);
     }
 
     if (config.cache) {
       store.set(recordKey.bind(null, key), ids, records, { step: 0 });
     }
     if (breaker.status().step > 0) {
-      breaker.closeCircuit();
+      breaker.restoreCircuit();
     }
   }
 
