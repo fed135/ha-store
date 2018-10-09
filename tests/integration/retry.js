@@ -65,7 +65,7 @@ describe('Retrying', () => {
     });
 
     it('should retry the default amount of times before erroring for batches', () => {
-      testStore.get('foo', { language: 'fr' });
+      testStore.get('foo', { language: 'fr' }).catch(() => {});
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
           expect(error).to.deep.equal({ error: 'Something went wrong' });
@@ -113,17 +113,17 @@ describe('Retrying', () => {
     it('should retry the default amount of times before erroring', () => {
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .exactly(3).withArgs(['abc'], { language: 'fr' });
         });
     });
 
     it('should retry the default amount of times before erroring for batches', () => {
-      testStore.get('foo', { language: 'fr' });
+      testStore.get('foo', { language: 'fr' }).catch(() => {});
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .exactly(3).withArgs(['foo', 'abc'], { language: 'fr' });
         });
@@ -133,7 +133,7 @@ describe('Retrying', () => {
       testStore.config.retry = { limit: 2 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.be.instanceof(Error);
+          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .exactly(2).withArgs(['abc'], { language: 'fr' });
         });
@@ -143,7 +143,7 @@ describe('Retrying', () => {
       testStore.config.retry = false;
       return testStore.get('abc')
         .then(null, (error) => {
-          expect(error).to.be.instanceof(Error);
+          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .exactly(1).withArgs(['abc']);
         });

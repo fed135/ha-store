@@ -3,3 +3,4 @@ README.md
 .travis.yml
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
+.eslintrc

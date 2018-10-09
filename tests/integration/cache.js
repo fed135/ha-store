@@ -271,7 +271,7 @@ describe('Caching', () => {
     it('should not cache on rejected requests', () => {
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .once().withArgs(['abc'], { language: 'fr' });
         });
@@ -281,7 +281,7 @@ describe('Caching', () => {
       testStore.config.batch = null;
       return testStore.get('abc')
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .once()
             .withArgs(['abc']);
