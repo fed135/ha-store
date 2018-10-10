@@ -95,9 +95,10 @@ function localStore(config, emitter, store) {
         if (record.step < config.cache.steps && record.bump === true) {
           record.step = record.step + 1;
           const ext = curve(record.step);
-          emitter.emit('cacheBump', { key, timestamp: record.timestamp, step: record.step, expires: record.timestamp + ext });
+          const ttl = Math.min(record.timestamp + ext, record.timestamp + config.cache.ttl);
+          emitter.emit('cacheBump', { key, timestamp: record.timestamp, step: record.step, expires: ttl });
           clearTimeout(record.timer);
-          record.timer = setTimeout(clear.bind(null, key), record.timestamp + ext - now);
+          record.timer = setTimeout(clear.bind(null, key), ttl - now);
           record.bump = false;
         }
         else {
