@@ -16,15 +16,14 @@
 
 ## How it works
 
-Want to make your app faster and don't want to spend on extra infrastructure ?
-Using [Zeta distributions](https://github.com/fed135/ha-store/wiki) or the out-of-the-box config, you can do both with HA-store!
+Want to make your app faster and don't want to spend on extra infrastructure ? [Learn how](https://github.com/fed135/ha-store/wiki) you can do both with HA-store!
 
 **HA-store** is a generic wrapper for your data queries, it features: 
 
 - Smart micro-caching for 'hot' information (in-memory or using the [redis-adapter](https://github.com/fed135/ha-redis-adapter))
-- Loads of features (request coalescing, batching, retrying and circuit-breaking)
+- Request coalescing, batching, retrying and circuit-breaking
 - Insightful stats and [events](#Monitoring-and-events)
-- Lightweight, low resource and has **zero dependencies**
+- Lightweight, configurable and has **zero dependencies**
 
 
 ## Installing
@@ -37,7 +36,7 @@ Using [Zeta distributions](https://github.com/fed135/ha-store/wiki) or the out-o
 ```node
 const store = require('ha-store');
 const itemStore = store({
-  resolver: getItems,
+  resolver: getItems, // Your resolver can be an async function or should return a Promise
   uniqueParams: ['language']
 });
 
@@ -62,7 +61,7 @@ cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;ste
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;tick: 50,&#13;&#10;&nbsp;&nbsp;max: 100&#13;&#10;}</pre> | Batching options for the requests
 retry | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 5,&#13;&#10;&nbsp;&nbsp;step: 3,&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Retry options for the requests
 breaker | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;step: 65535,&#13;&#10;&nbsp;&nbsp;limit: 16777215,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Circuit-breaker options, enabled by default and triggers after the retry limit
-storeOptions | false | <pre>{&#13;&#10;&nbsp;&nbsp;pluginFallback: true,&#13;&#10;&nbsp;&nbsp;pluginRecoveryDelay: 10000,&#13;&#10;&nbsp;&nbsp;memoryLimit: 0.9,&#13;&#10;&nbsp;&nbsp;recordLimit: Infinity&#13;&#10;}</pre> | If the store plugin errors and `pluginFallback` is true, the Store instance will attempt to fallback to the default in-memory store. It will then attempt to recover the original store every `storePluginRecoveryDelay`. The memory limit tells the store to not record new entries once the process RSS memory reaches a certain percentage of the maximum memory alloted by V8.
+storeOptions | false | <pre>{&#13;&#10;&nbsp;&nbsp;pluginFallback: true,&#13;&#10;&nbsp;&nbsp;pluginRecoveryDelay: 10000,&#13;&#10;&nbsp;&nbsp;memoryLimit: 0.9,&#13;&#10;&nbsp;&nbsp;recordLimit: Infinity&#13;&#10;}</pre> | If the store plugin errors and `pluginFallback` is true, the Store instance will attempt to fallback to the default in-memory store. It will then attempt to recover the original store every `storePluginRecoveryDelay`. The memory limit tells the store to not record new entries once the process RSS memory reaches a certain percentage of the maximum memory allocated by V8.
 
 *All options are in (ms)
 *Scaling options are represented via and exponential curve with base and limit being the 2 edge values while steps is the number of events over that curve.
@@ -75,17 +74,17 @@ Event | Description
 --- | ---
 cacheHit | When the requested item is present in the microcache, or is already being fetched. Prevents another request from being created.
 cacheMiss | When the requested item is not present in the microcache and is not currently being fetched. A new request will be made.
-cacheFull | Whenever a store set is denied because process memory usage has reached it's acceptable limit or the number of maximum records was reached for that store.
+cacheFull | Whenever a store set is denied because process memory usage has reached its acceptable limit or the number of maximum records was reached for that store.
 coalescedHit | When a record query successfully hooks to the promise of the same record in transit.
 query | When a batch of requests is about to be sent.
 queryFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.
 retryCancelled | Indicates that the batch has reached the allowed number of retries and is now abandoning.
 querySuccess | Indicates that the batch request was successful.
-bumpCache | When a call for an item fully loaded in the microcache succeeds, it's ttl gets extended.
-clearCache | When an item in the microcache has reached it's ttl and is now being evicted.
+bumpCache | When a call for an item fully loaded in the microcache succeeds, its ttl gets extended.
+clearCache | When an item in the microcache has reached its ttl and is now being evicted.
 circuitBroken | When a batch call fails after the limit amount of retries, the circuit gets broken - all calls in the next ttl will automatically fail. It is assumed that there is a problem with the data-source.
 circuitRestored | Circuit temporarily restored, a tentative to the data-source may be sent.
-circuitRecovered | The tentative request was successful and the circuit it's assumed that the data-source has recovered.
+circuitRecovered | The tentative request was successful and the wrapper assumes that the data-source has recovered.
 storePluginErrored | The custom store has encountered an error
 storePluginRestored | The custom store has been re-instantiated
 
