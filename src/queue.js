@@ -35,7 +35,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
    */
   async function lookupCache(key, id, context) {
     if (config.cache !== null) {
-      const record = await store.get(recordKey(key, id));
+      const record = await targetStore.get(recordKey(key, id));
       
       if (record !== undefined && record !== null) {
         emitter.emit('cacheHit', { key, id, params: context.params });
@@ -264,7 +264,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
 
     if (config.cache) {
-      store.set(recordKey.bind(null, key), ids, records, { step: 0 });
+      targetStore.set(recordKey.bind(null, key), ids, records, { step: 0 });
     }
     if (breaker.status().step > 0) {
       breaker.restoreCircuit();
