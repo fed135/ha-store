@@ -16,6 +16,7 @@ function breaker(config, emitter) {
   let curve = tween(config.breaker);
 
   function closeCircuit() {
+    if (!config.breaker) return;
     active = false;
     clearTimeout(timer);
     timer = null;
@@ -24,6 +25,7 @@ function breaker(config, emitter) {
   }
 
   function restoreCircuit() {
+    if (!config.breaker) return;
     active = false;
     clearTimeout(timer);
     timer = null;
@@ -33,7 +35,9 @@ function breaker(config, emitter) {
   function openCircuit() {
     if (config.breaker && active === false) {
       const ttl = Math.round(curve(step));
-      step++;
+      if (step < config.breaker.steps) {
+        step++;
+      }
       active = true;
       emitter.emit('circuitBroken', status(ttl));
       timer = setTimeout(restoreCircuit, ttl);
