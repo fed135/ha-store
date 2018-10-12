@@ -6,6 +6,10 @@
 
 const { tween, basicParser, deferred, contextKey, recordKey } = require('./utils.js');
 
+/* Local variables -----------------------------------------------------------*/
+
+const notFoundSymbol = Symbol('Not Found');
+
 /* Methods -------------------------------------------------------------------*/
 
 function queue(config, emitter, store, storePlugin, breaker) {
@@ -55,7 +59,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       context.ids.push(id);
     }
     
-    return null;
+    return notFoundSymbol;
   }
 
   /**
@@ -121,7 +125,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       if (!(id in context.batchData)) context.batchData[id] = [];
       context.batchData[id].push(agg);
     }
-    if (entity !== null) {
+    if (entity !== notFoundSymbol) {
       if (!config.batch && startQueue === true) batch('direct', key, context);
       return entity;
     }
