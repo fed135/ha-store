@@ -45,7 +45,7 @@ describe('index', () => {
         cache: { limit: 30000, steps: 5, base: 1000, curve: exp },
         batch: { max: 100, tick: 50 },
         retry: { limit: 5000, steps: 3, base: 5, curve: exp },
-        breaker: { limit: 0xffffff, steps: 0xffff, base: 1000, curve: exp },
+        breaker: { limit: 65535, steps: 10, base: 1000, curve: exp },
       });
     });
 
@@ -63,7 +63,7 @@ describe('index', () => {
         cache: { limit: 30000, steps: 5, base: 2, curve: exp },
         batch: { max: 12, tick: 50 },
         retry: { limit: 35, steps: 3, base: 5, curve: exp },
-        breaker: { limit: 0xffffff, steps: 1, base: 1000, curve: exp },
+        breaker: { limit: 65535, steps: 1, base: 1000, curve: exp },
       });
     });
 

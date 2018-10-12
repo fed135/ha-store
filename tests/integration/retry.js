@@ -111,6 +111,7 @@ describe('Retrying', () => {
     });
 
     it('should retry the default amount of times before erroring', () => {
+      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -120,6 +121,7 @@ describe('Retrying', () => {
     });
 
     it('should retry the default amount of times before erroring for batches', () => {
+      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       testStore.get('foo', { language: 'fr' }).catch(() => {});
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {

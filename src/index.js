@@ -32,8 +32,8 @@ const baseConfig = {
   },
   breaker: {
     base: 1000,
-    steps: 0xffff,
-    limit: 0xffffff,
+    steps: 10,
+    limit: 0xffff,
     curve: exp,
   },
 }

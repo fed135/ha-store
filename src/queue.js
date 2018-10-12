@@ -6,6 +6,10 @@
 
 const { tween, basicParser, deferred, contextKey, recordKey } = require('./utils.js');
 
+/* Local variables -----------------------------------------------------------*/
+
+const notFoundSymbol = Symbol('Not Found');
+
 /* Methods -------------------------------------------------------------------*/
 
 function queue(config, emitter, store, storePlugin, breaker) {
@@ -55,7 +59,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       context.ids.push(id);
     }
     
-    return null;
+    return notFoundSymbol;
   }
 
   /**
@@ -121,7 +125,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       if (!(id in context.batchData)) context.batchData[id] = [];
       context.batchData[id].push(agg);
     }
-    if (entity !== null) {
+    if (entity !== notFoundSymbol) {
       if (!config.batch && startQueue === true) batch('direct', key, context);
       return entity;
     }
@@ -176,7 +180,9 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
 
     function handleQueryError(err) {
+      if (err instanceof Error) return handleQueryCriticalError(err);
       if (is_cancelled === true) return;
+      is_cancelled = true;
       clearTimeout(timer);
       targetIds.forEach((id) => {
         const expectation = context.promises.get(id);
@@ -190,6 +196,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
 
     function handleQueryCriticalError(err, override) {
       if (is_cancelled === true && override !== true) return;
+      is_cancelled = true;
       clearTimeout(timer);
       emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
       retry(key, targetIds, context, err);
@@ -221,7 +228,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function retry(key, ids, context, err, bd) {
     context.retryStep = context.retryStep + 1;
     if (config.retry && config.retry.steps >= context.retryStep) {
-      setTimeout(query.bind(null, 'retry', key, ids, context, bd), retryCurve(context.retryStep));
+      setTimeout(query.bind(null, 'retry', key, ids, context, bd), Math.round(retryCurve(context.retryStep)));
     }
     else {
       emitter.emit('retryCancelled', { key, ids, params: context.params, error: err, batchData: context.batchData });
@@ -267,7 +274,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       targetStore.set(recordKey.bind(null, key), ids, records, { step: 0 });
     }
     if (breaker.status().step > 0) {
-      breaker.restoreCircuit();
+      breaker.closeCircuit();
     }
   }
 
