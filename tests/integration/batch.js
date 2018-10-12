@@ -312,6 +312,7 @@ describe('Batching', () => {
     });
 
     it('should properly reject on single request', () => {
+      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -321,6 +322,7 @@ describe('Batching', () => {
     });
 
     it('should properly reject on multi request', () => {
+      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get(['abc', 'foo'], { language: 'en' })
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -330,6 +332,7 @@ describe('Batching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
+      testStore.config.retry = null;
       testStore.config.batch = null;
       return testStore.get('abc')
         .then(null, (error) => {

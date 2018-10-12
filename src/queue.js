@@ -176,7 +176,9 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
 
     function handleQueryError(err) {
+      if (err instanceof Error) return handleQueryCriticalError(err);
       if (is_cancelled === true) return;
+      is_cancelled = true;
       clearTimeout(timer);
       targetIds.forEach((id) => {
         const expectation = context.promises.get(id);
@@ -190,6 +192,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
 
     function handleQueryCriticalError(err, override) {
       if (is_cancelled === true && override !== true) return;
+      is_cancelled = true;
       clearTimeout(timer);
       emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
       retry(key, targetIds, context, err);
@@ -221,7 +224,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function retry(key, ids, context, err, bd) {
     context.retryStep = context.retryStep + 1;
     if (config.retry && config.retry.steps >= context.retryStep) {
-      setTimeout(query.bind(null, 'retry', key, ids, context, bd), retryCurve(context.retryStep));
+      setTimeout(query.bind(null, 'retry', key, ids, context, bd), Math.round(retryCurve(context.retryStep)));
     }
     else {
       emitter.emit('retryCancelled', { key, ids, params: context.params, error: err, batchData: context.batchData });
@@ -267,7 +270,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       targetStore.set(recordKey.bind(null, key), ids, records, { step: 0 });
     }
     if (breaker.status().step > 0) {
-      breaker.restoreCircuit();
+      breaker.closeCircuit();
     }
   }
 

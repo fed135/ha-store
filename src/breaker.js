@@ -31,8 +31,9 @@ function breaker(config, emitter) {
   }
 
   function openCircuit() {
-    if (config.breaker) {
-      const ttl = curve(++step);
+    if (config.breaker && active === false) {
+      const ttl = Math.round(curve(step));
+      step++;
       active = true;
       emitter.emit('circuitBroken', status(ttl));
       timer = setTimeout(restoreCircuit, ttl);
@@ -43,7 +44,7 @@ function breaker(config, emitter) {
     return { step, active, ttl };
   }
 
-  return { circuitError, openCircuit, closeCircuit, status };
+  return { circuitError, openCircuit, restoreCircuit, closeCircuit, status };
 }
 
 /* Exports -------------------------------------------------------------------*/
