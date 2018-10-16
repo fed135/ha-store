@@ -47,6 +47,13 @@ function breaker(config, emitter) {
         emitter.emit('circuitBroken', status(ttl));
         timer = setTimeout(restoreCircuit, ttl);
       }
+      else {
+        setTimeout(() => {
+          if (active === false && violations > 0) {
+            violations--;
+          }
+        }, config.breaker.toleranceFrame);
+      }
     }
   }
 

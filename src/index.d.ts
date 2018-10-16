@@ -13,6 +13,7 @@ type BreakerCurveConfig = {
   limit: number
   curve (progress: number, start: number, end: number): number
   tolerance: number
+  toleranceFrame: number
 }
 
 type Params = {
@@ -37,8 +38,12 @@ declare interface BatcherConfig {
   retry?: GenericCurveConfig
   breaker?: GenericCurveConfig
   store?: any
-  storePluginFallback?: boolean
-  storePluginRecoveryDelay?: number
+  storeOptions?: {
+    pluginFallback?: boolean
+    pluginRecoveryDelay?: number
+    memoryLimit?: number
+    recordLimit?: number
+  }
 }
 
 declare function batcher(BatcherConfig, emitter: EventEmitter): {

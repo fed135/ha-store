@@ -36,6 +36,7 @@ const baseConfig = {
     limit: 0xffff,
     curve: exp,
     tolerance: 1,
+    toleranceFrame: 10000,
   },
 }
 
