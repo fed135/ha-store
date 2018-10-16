@@ -23,7 +23,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
     if (config.storeOptions.pluginFallback === true) {
       targetStore = store;
       setTimeout(() => {
-        emitter.emit('storePluginRestored'), 
+        emitter.emit('storePluginRestored');
         targetStore = storePlugin && storePlugin(config, emitter) || store;
       }, config.storeOptions.pluginRecoveryDelay);
     }
@@ -210,7 +210,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
           handleQueryCriticalError(timeoutError, true);
         }, config.timeout);
       }
-      queryPromise = Promise.resolve()
+      Promise.resolve()
         .then(config.resolver.bind(null, targetIds, context.params, bd))
         .then(handleQuerySuccess, handleQueryError)
         .catch(handleQueryCriticalError);

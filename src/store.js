@@ -5,19 +5,25 @@
 /* Requires ------------------------------------------------------------------*/
 
 const { tween } = require('./utils.js');
-const v8 = require('v8');
 
-/* Local variables -----------------------------------------------------------*/
+/* Server variables ----------------------------------------------------------*/
 
-const memoryLimit = v8.getHeapStatistics().total_available_size;
+let memoryLimit = 1;
 let currentMemory = 0;
 
-/* Methods -------------------------------------------------------------------*/
+if (typeof window === 'undefined') {
+  memoryLimit = require('v8').getHeapStatistics().total_available_size;
+  currentMemory = 0;
 
-function checkMemory() {
-  setTimeout(checkMemory, 1000);
-  currentMemory = process.memoryUsage().rss;
+  function checkMemory() {
+    setTimeout(checkMemory, 1000);
+    currentMemory = process.memoryUsage().rss;
+  }
+
+  checkMemory();
 }
+
+/* Methods -------------------------------------------------------------------*/
 
 /**
  * Store constructor
@@ -37,7 +43,7 @@ function localStore(config, emitter, store) {
   function get(key) {
     const record = store.get(key);
     if (record) {
-      if (record.value !== undefined && record.timer !== undefined) {
+      if (record.value !== undefined && record.timer !== null) {
         record.bump = true;
       }
     }
@@ -61,15 +67,21 @@ function localStore(config, emitter, store) {
     return keys.map((id, i) => {
       if (storeSize + i + 1 > config.storeOptions.recordLimit) {
         emitter.emit('cacheFull', { reason: 'Too many records', current: config.storeOptions.recordLimit, limit: config.storeOptions.recordLimit });
-        return;
+        return false;
       }
-      let value = { value: values[id] };
+      let value = {
+        value: values[id],
+        timestamp: null,
+        step: null,
+        timer: null,
+        bump: null,
+      };
       if (opts && opts.step !== undefined) {
-        value.timestamp = now;
         value.step = opts.step;
         value.timer = setTimeout(lru.bind(null, recordKey(id)), stepSize);
       }
-      return store.set(recordKey(id), value);
+      store.set(recordKey(id), value);
+      return true;
     });
   }
 
@@ -119,8 +131,6 @@ function localStore(config, emitter, store) {
 
   return { get, set, clear, lru, size };
 }
-
-checkMemory();
 
 /* Exports -------------------------------------------------------------------*/
 

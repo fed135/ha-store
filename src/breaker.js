@@ -12,35 +12,56 @@ function breaker(config, emitter) {
   let active = false;
   const circuitError = new Error('Service unavailable (circuit-breaker)');
   let timer = null;
+  let toleranceTimers = [];
   let step = 0;
+  let violations = 0;
   let curve = tween(config.breaker);
+
+  function reset() {
+    clearTimeout(timer);
+    timer = null;
+    toleranceTimers.forEach(clearTimeout);
+    toleranceTimers = [];
+    violations = 0;
+  }
 
   function closeCircuit() {
     if (!config.breaker) return;
+    reset();
     active = false;
-    clearTimeout(timer);
-    timer = null;
     step = 0;
     emitter.emit('circuitRecovered', status());
   }
 
   function restoreCircuit() {
     if (!config.breaker) return;
+    reset();
     active = false;
-    clearTimeout(timer);
-    timer = null;
     emitter.emit('circuitRestored', status());
+  }
+
+  function decreaseViolation() {
+    if (active === false && violations > 0) {
+      violations--;
+    }
   }
 
   function openCircuit() {
     if (config.breaker && active === false) {
-      const ttl = Math.round(curve(step));
-      if (step < config.breaker.steps) {
-        step++;
+      violations++;
+      if (config.breaker.tolerance <= violations) {
+        reset();
+        const ttl = Math.round(curve(step));
+        if (step < config.breaker.steps) {
+          step++;
+        }
+        active = true;
+        emitter.emit('circuitBroken', status(ttl));
+        timer = setTimeout(restoreCircuit, ttl);
       }
-      active = true;
-      emitter.emit('circuitBroken', status(ttl));
-      timer = setTimeout(restoreCircuit, ttl);
+      else {
+        setTimeout(decreaseViolation, config.breaker.toleranceFrame);
+      }
     }
   }
 
