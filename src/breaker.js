@@ -20,7 +20,7 @@ function breaker(config, emitter) {
   function reset() {
     clearTimeout(timer);
     timer = null;
-    toleranceTimers.forEach(t => clearTimeout(t));
+    toleranceTimers.forEach(clearTimeout);
     toleranceTimers = [];
     violations = 0;
   }
