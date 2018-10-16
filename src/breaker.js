@@ -35,6 +35,12 @@ function breaker(config, emitter) {
     emitter.emit('circuitRestored', status());
   }
 
+  function decreaseViolation() {
+    if (active === false && violations > 0) {
+      violations--;
+    }
+  }
+
   function openCircuit() {
     if (config.breaker && active === false) {
       violations++;
@@ -48,11 +54,7 @@ function breaker(config, emitter) {
         timer = setTimeout(restoreCircuit, ttl);
       }
       else {
-        setTimeout(() => {
-          if (active === false && violations > 0) {
-            violations--;
-          }
-        }, config.breaker.toleranceFrame);
+        setTimeout(decreaseViolation, config.breaker.toleranceFrame);
       }
     }
   }
