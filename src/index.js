@@ -35,6 +35,7 @@ const baseConfig = {
     steps: 10,
     limit: 0xffff,
     curve: exp,
+    tolerance: 1,
   },
 }
 

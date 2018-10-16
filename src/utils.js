@@ -41,6 +41,7 @@ function basicParser(results, ids, params = {}) {
   ids = ids.map(id => `${id}`);
   if (Array.isArray(results)) {
     return results.reduce((acc, curr) => {
+      if (!curr || !curr.id) return acc;
       if (ids.includes(`${curr.id}`)) {
         acc[curr.id] = curr;
       }
