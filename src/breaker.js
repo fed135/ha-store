@@ -12,26 +12,31 @@ function breaker(config, emitter) {
   let active = false;
   const circuitError = new Error('Service unavailable (circuit-breaker)');
   let timer = null;
+  let toleranceTimers = [];
   let step = 0;
   let violations = 0;
   let curve = tween(config.breaker);
 
-  function closeCircuit() {
-    if (!config.breaker) return;
-    active = false;
+  function reset() {
     clearTimeout(timer);
     timer = null;
-    step = 0;
+    toleranceTimers.forEach(t => clearTimeout(t));
+    toleranceTimers = [];
     violations = 0;
+  }
+
+  function closeCircuit() {
+    if (!config.breaker) return;
+    reset();
+    active = false;
+    step = 0;
     emitter.emit('circuitRecovered', status());
   }
 
   function restoreCircuit() {
     if (!config.breaker) return;
+    reset();
     active = false;
-    clearTimeout(timer);
-    timer = null;
-    violations = 0;
     emitter.emit('circuitRestored', status());
   }
 
@@ -45,6 +50,7 @@ function breaker(config, emitter) {
     if (config.breaker && active === false) {
       violations++;
       if (config.breaker.tolerance <= violations) {
+        reset();
         const ttl = Math.round(curve(step));
         if (step < config.breaker.steps) {
           step++;
