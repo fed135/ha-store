@@ -52,7 +52,13 @@ describe('store', () => {
     it('should return a value if there\'s a value saved', async () => {
       testStore.set(recordKey, ['testValue'], { testValue: 'foo' });
       const val = await testStore.get('testValue');
-      expect(val).to.deep.equal({ value: 'foo' });
+      expect(val).to.deep.equal({
+        value: 'foo',
+        timestamp: null,
+        bump: null,
+        step: null,
+        timer: null,
+      });
       mapMock.expects('get').once().withArgs('testValue');
     });
 
@@ -114,7 +120,13 @@ describe('store', () => {
 
     it('should clear the record and return true if there\'s a value saved', async () => {
       const prior = await testStore.get('testValue');
-      expect(prior).to.deep.equal({ value: { value: 'foo' } });
+      expect(prior).to.deep.equal({
+        value: { value: 'foo' },
+        timestamp: null,
+        bump: null,
+        step: null,
+        timer: null,
+      });
       expect(testStore.clear('testValue')).to.be.true;
       mapMock.expects('delete').once().withArgs('testValue');
       const after = await testStore.get('testValue');

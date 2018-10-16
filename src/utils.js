@@ -39,21 +39,43 @@ function tween(opts) {
 function basicParser(results, ids, params = {}) {
   if (results === null || results === undefined) return {};
   ids = ids.map(id => `${id}`);
-  if (Array.isArray(results)) {
-    return results.reduce((acc, curr) => {
-      if (ids.includes(`${curr.id}`)) {
-        acc[curr.id] = curr;
-      }
-      return acc;
-    }, {});
-  }
-  const keys = Object.keys(results).map(id => `${id}`);
-  return keys.reduce((acc, curr) => {
-    if (ids.includes(curr)) {
-      acc[curr] = results[curr];
+  return Array.isArray(results)
+   ? arrayParser(results, ids, params)
+   : objectParser(results, ids, params);
+}
+
+/**
+ * Parses the results from the data-source query
+ * @param {array} results The raw results
+ * @param {array} ids The list of ids to look for in the response
+ * @param {*} params The original parameters of the query
+ * @returns {object} The indexed result set found
+ */
+function arrayParser(results, ids, params = {}) {
+  return results.reduce((acc, curr) => {
+    if (!curr || !curr.id) return acc;
+    if (ids.includes(`${curr.id}`)) {
+      acc[curr.id] = curr;
     }
     return acc;
   }, {});
+}
+
+/**
+ * Parses the results from the data-source query
+ * @param {object} results The raw results
+ * @param {array} ids The list of ids to look for in the response
+ * @param {*} params The original parameters of the query
+ * @returns {object} The indexed result set found
+ */
+function objectParser(results, ids, params = {}) {
+  const acc = {};
+  for (let key in results) {
+    if (ids.includes(key)) {
+      acc[key] = results[key];
+    }
+  }
+  return acc;
 }
 
 /**
