@@ -77,6 +77,7 @@ function localStore(config, emitter, store) {
         bump: null,
       };
       if (opts && opts.step !== undefined) {
+        value.timestamp = now;
         value.step = opts.step;
         value.timer = setTimeout(lru.bind(null, recordKey(id)), stepSize);
       }
