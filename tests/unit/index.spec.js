@@ -5,65 +5,103 @@
 /* Requires ------------------------------------------------------------------*/
 
 const queue = require('../../src/queue.js');
-const { exp, contextKey } = require('../../src/utils.js');
+const {exp, contextKey} = require('../../src/utils.js');
 const root = require('../../src/index.js');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
 /* Tests ---------------------------------------------------------------------*/
+const noop = () => {
+};
+
+function checkForPublicProperties(store) {
+  expect(store.get).to.not.be.undefined;
+  expect(store.set).to.not.be.undefined;
+  expect(store.clear).to.not.be.undefined;
+  expect(store.config).to.not.be.undefined;
+  expect(store.queue).to.not.be.undefined;
+  expect(store.breaker).to.not.be.undefined;
+}
 
 describe('index', () => {
-
   describe('#constructor', () => {
     it('should produce a batcher with all the expected properties when called with minimal arguments', () => {
-      const test = root({ resolver: () => {} });
-      expect(test).to.contain.keys(['get', 'set', 'clear', 'config']);
+      const test = root({resolver: noop});
+      checkForPublicProperties(test);
+    });
 
+    it('should hydrate the configuration with default values if none are provided', () => {
+      // TODO: Move to its own spec file (tests/unit/options.spec.js)
+      const defaultConfig = {
+        "storeOptions": {
+          "pluginRecoveryDelay": 10000,
+          "pluginFallback": true,
+          "memoryLimit": 0.9,
+          "recordLimit": Infinity,
+        },
+        "timeout": null,
+        "batch": {"tick": 50, "max": 100},
+        "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
+        "cache": {curve: exp, "base": 1000, "steps": 5, "limit": 30000},
+        "breaker": {
+          curve: exp,
+          "base": 1000,
+          "steps": 10,
+          "limit": 65535,
+          "tolerance": 1,
+          "toleranceFrame": 10000
+        },
+        resolver: noop,
+      };
+      const test = root({resolver: noop});
+
+      expect(defaultConfig).to.deep.equal(test.config, "Did you change the default configuration?");
     });
 
     it('should produce a batcher with all the expected properties when called with false arguments', () => {
       const test = root({
-        resolver: () => {},
+        resolver: () => {
+        },
         uniqueParams: ['a', 'b', 'c'],
         cache: null,
         batch: null,
         retry: null,
       });
-      expect(test).to.contain.keys(['get', 'set', 'clear', 'config']);
+      checkForPublicProperties(test);
     });
 
     it('should produce a batcher with all the default config when called with true requirements', () => {
       const test = root({
-        resolver: () => {},
+        resolver: noop,
         uniqueParams: ['a', 'b', 'c'],
         cache: true,
         batch: true,
         retry: true,
       });
-      expect(test).to.contain.keys(['get', 'set', 'clear', 'config']);
+      checkForPublicProperties(test);
       expect(test.config).to.deep.contain({
-        cache: { limit: 30000, steps: 5, base: 1000, curve: exp },
-        batch: { max: 100, tick: 50 },
-        retry: { limit: 5000, steps: 3, base: 5, curve: exp },
-        breaker: { limit: 65535, steps: 10, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000 },
+        cache: {limit: 30000, steps: 5, base: 1000, curve: exp},
+        batch: {max: 100, tick: 50},
+        retry: {limit: 5000, steps: 3, base: 5, curve: exp},
+        breaker: {limit: 65535, steps: 10, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000},
       });
     });
 
     it('should produce a batcher with all the merged config when called with custom requirements', () => {
       const test = root({
-        resolver: () => {},
+        resolver: noop,
         uniqueParams: ['a', 'b', 'c'],
-        cache: { base: 2 },
-        batch: { max: 12 },
-        retry: { limit: 35 },
-        breaker: { steps: 1 },
+        cache: {base: 2},
+        batch: {max: 12},
+        retry: {limit: 35},
+        breaker: {steps: 1},
       });
-      expect(test).to.contain.keys(['get', 'set', 'clear', 'config']);
+      checkForPublicProperties(test);
       expect(test.config).to.deep.contain({
-        cache: { limit: 30000, steps: 5, base: 2, curve: exp },
-        batch: { max: 12, tick: 50 },
-        retry: { limit: 35, steps: 3, base: 5, curve: exp },
-        breaker: { limit: 65535, steps: 1, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000 },
+        cache: {limit: 30000, steps: 5, base: 2, curve: exp},
+        batch: {max: 12, tick: 50},
+        retry: {limit: 35, steps: 3, base: 5, curve: exp},
+        breaker: {limit: 65535, steps: 1, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000},
       });
     });
 
@@ -74,38 +112,44 @@ describe('index', () => {
 
   describe('#get', () => {
     it('should handle single record queries', () => {
-      const test = root({ resolver: () => {} });
-      const queueMock = sinon.mock(test._queue);
+      const test = root({resolver: noop});
+      const queueMock = sinon.mock(test.queue);
       test.get('123abc');
       queueMock.expects('batch').once().withArgs('123abc');
     });
 
     it('should handle single record queries with params', () => {
-      const test = root({ resolver: () => {} });
-      const params = { foo: 'bar' };
-      const queueMock = sinon.mock(test._queue);
+      const test = root({resolver: noop});
+      const params = {foo: 'bar'};
+      const queueMock = sinon.mock(test.queue);
       test.get('123abc', params);
       queueMock.expects('batch').once().withArgs('123abc', params);
     });
 
     it('should skip batching if batch config is false', () => {
-      const test = root({ resolver: () => {}, batch: false });
-      const queueMock = sinon.mock(test._queue);
+      const test = root({
+        resolver: noop,
+        batch: false
+      });
+      const queueMock = sinon.mock(test.queue);
       test.get('123abc');
       queueMock.expects('push').once().withArgs('123abc');
     });
 
     it('should skip batching if batch config is false with params', () => {
-      const test = root({ resolver: () => {}, batch: false });
-      const params = { foo: 'bar' };
-      const queueMock = sinon.mock(test._queue);
+      const test = root({
+        resolver: noop,
+        batch: false,
+      });
+      const params = {foo: 'bar'};
+      const queueMock = sinon.mock(test.queue);
       test.get('123abc', params);
       queueMock.expects('push').once().withArgs('123abc', params);
     });
 
     it('should handle multi record queries', () => {
-      const test = root({ resolver: () => {} });
-      const queueMock = sinon.mock(test._queue);
+      const test = root({resolver: noop});
+      const queueMock = sinon.mock(test.queue);
       test.get(['123abc', '456def', '789ghi']);
       queueMock.expects('push')
         .once().withArgs('123abc')
@@ -114,9 +158,9 @@ describe('index', () => {
     });
 
     it('should handle multi record queries with params', () => {
-      const test = root({ resolver: () => {} });
-      const params = { foo: 'bar' };
-      const queueMock = sinon.mock(test._queue);
+      const test = root({resolver: noop});
+      const params = {foo: 'bar'};
+      const queueMock = sinon.mock(test.queue);
       test.get(['123abc', '456def', '789ghi'], params);
       queueMock.expects('push')
         .once().withArgs('123abc', params)
@@ -127,42 +171,42 @@ describe('index', () => {
 
   describe('#set', () => {
     it('should handle a collection of ids', () => {
-      const test = root({ resolver: () => {} });
-      const params = { foo: 'bar' };
-      const queueMock = sinon.mock(test._queue);
-      test.set({ foo123abc: 'test'}, ['123abc'], params);
+      const test = root({resolver: noop});
+      const params = {foo: 'bar'};
+      const queueMock = sinon.mock(test.queue);
+      test.set({foo123abc: 'test'}, ['123abc'], params);
       queueMock.expects('complete')
         .once()
-        .withArgs(contextKey([], params), ['123abc'], params, { foo123abc: 'test' });
+        .withArgs(contextKey([], params), ['123abc'], params, {foo123abc: 'test'});
     });
 
     it('should throw if ids are not passed', () => {
-      const test = root({ resolver: () => {} });
-      const params = { foo: 'bar' };
-      const queueMock = sinon.mock(test._queue);
-      expect(test.set.bind(null, { foo123abc: 'test'}, params)).to.throw('Missing required argument id list in batcher #set.');
+      const test = root({resolver: noop});
+      const params = {foo: 'bar'};
+      const queueMock = sinon.mock(test.queue);
+      expect(test.set.bind(null, {foo123abc: 'test'}, params)).to.throw('Missing required argument id list in batcher #set.');
     });
   });
 
   describe('#clear', () => {
     it('should return clear value', () => {
-      const test = root({ resolver: () => {} });
-      const storeMock = sinon.mock(test._queue.store);
+      const test = root({resolver: noop});
+      const storeMock = sinon.mock(test.queue.store);
       test.clear('123abc');
       storeMock.expects('clear').once().withArgs('123abc');
     });
 
     it('should return clear value with params', () => {
-      const test = root({ resolver: () => {}, uniqueParams: ['foo'] });
-      const params = { foo: 'bar' };
-      const storeMock = sinon.mock(test._queue.store);
+      const test = root({resolver: noop});
+      const params = {foo: 'bar'};
+      const storeMock = sinon.mock(test.queue.store);
       test.clear('123abc', params);
       storeMock.expects('clear').once().withArgs('foo=bar::123abc');
     });
 
     it('should handle multi record clear queries', () => {
-      const test = root({ resolver: () => {} });
-      const storeMock = sinon.mock(test._queue.store);
+      const test = root({resolver: noop});
+      const storeMock = sinon.mock(test.queue.store);
       test.clear(['123abc', '456def', '789ghi']);
       storeMock.expects('clear')
         .once().withArgs('123abc')
@@ -171,9 +215,12 @@ describe('index', () => {
     });
 
     it('should handle multi record clear queries with params', () => {
-      const test = root({ resolver: () => {}, uniqueParams: ['foo'] });
-      const params = { foo: 'bar' };
-      const storeMock = sinon.mock(test._queue.store);
+      const test = root({
+        resolver: noop,
+        uniqueParams: ['foo'],
+      });
+      const params = {foo: 'bar'};
+      const storeMock = sinon.mock(test.queue.store);
       test.clear(['123abc', '456def', '789ghi'], params);
       storeMock.expects('clear')
         .once().withArgs('foo=bar::123abc')
@@ -184,12 +231,12 @@ describe('index', () => {
 
   describe('#size', () => {
     it('should return size value', async () => {
-      const test = root({ resolver: () => {} });
-      const queueMock = sinon.mock(test._queue);
-      const storeMock = sinon.mock(test._queue.store);
+      const test = root({resolver: noop});
+      const queueMock = sinon.mock(test.queue);
+      const storeMock = sinon.mock(test.queue.store);
       test.get('123abc');
       const sizeValue = await test.size();
-      expect(sizeValue).to.deep.equal({ contexts: 1, records: 0 });
+      expect(sizeValue).to.deep.equal({contexts: 1, records: 0});
       queueMock.expects('size').once();
       storeMock.expects('size').once();
     });
