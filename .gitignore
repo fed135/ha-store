@@ -39,4 +39,11 @@ yarn-error.log
 NTH
 
 docs
+
+# Jetbrains IDE configuration folder
+.idea/
+
+
+# TODO: Revisit later
+yarn.lock
 package-lock.json
