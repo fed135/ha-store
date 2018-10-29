@@ -47,6 +47,21 @@ function hydrateStoreOptions(storeOptions = {}) {
 
 }
 
+function hydrateIfNotNull(baseConfig, defaultConfig) {
+  if (baseConfig === null) {
+    return null;
+  }
+
+  if (!baseConfig) {
+    return {...defaultConfig};
+  }
+
+  return {
+    ...defaultConfig,
+    ...baseConfig,
+  };
+}
+
 function hydrateConfig(config = {}) {
   return {
     ...config,
@@ -66,11 +81,7 @@ function hydrateConfig(config = {}) {
       ...defaultConfig.cache,
       ...config.cache || {},
     },
-    breaker: {
-      ...defaultConfig.breaker,
-      ...config.breaker || {},
-    },
-
+    breaker: hydrateIfNotNull(config.breaker, defaultConfig.breaker),
   };
 }
 

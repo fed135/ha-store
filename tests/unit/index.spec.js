@@ -3,17 +3,13 @@
  */
 
 /* Requires ------------------------------------------------------------------*/
-
-const queue = require('../../src/queue.js');
 const {exp, contextKey} = require('../../src/utils.js');
+const {noop} = require('./utils');
 const root = require('../../src/index.js');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
-/* Tests ---------------------------------------------------------------------*/
-const noop = () => {
-};
-
+/* Utils ---------------------------------------------------------------------*/
 function checkForPublicProperties(store) {
   expect(store.get).to.not.be.undefined;
   expect(store.set).to.not.be.undefined;
@@ -23,39 +19,13 @@ function checkForPublicProperties(store) {
   expect(store.breaker).to.not.be.undefined;
 }
 
+/* Tests ---------------------------------------------------------------------*/
+
 describe('index', () => {
   describe('#constructor', () => {
     it('should produce a batcher with all the expected properties when called with minimal arguments', () => {
       const test = root({resolver: noop});
       checkForPublicProperties(test);
-    });
-
-    it('should hydrate the configuration with default values if none are provided', () => {
-      // TODO: Move to its own spec file (tests/unit/options.spec.js)
-      const defaultConfig = {
-        "storeOptions": {
-          "pluginRecoveryDelay": 10000,
-          "pluginFallback": true,
-          "memoryLimit": 0.9,
-          "recordLimit": Infinity,
-        },
-        "timeout": null,
-        "batch": {"tick": 50, "max": 100},
-        "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
-        "cache": {curve: exp, "base": 1000, "steps": 5, "limit": 30000},
-        "breaker": {
-          curve: exp,
-          "base": 1000,
-          "steps": 10,
-          "limit": 65535,
-          "tolerance": 1,
-          "toleranceFrame": 10000
-        },
-        resolver: noop,
-      };
-      const test = root({resolver: noop});
-
-      expect(defaultConfig).to.deep.equal(test.config, "Did you change the default configuration?");
     });
 
     it('should produce a batcher with all the expected properties when called with false arguments', () => {
@@ -79,12 +49,6 @@ describe('index', () => {
         retry: true,
       });
       checkForPublicProperties(test);
-      expect(test.config).to.deep.contain({
-        cache: {limit: 30000, steps: 5, base: 1000, curve: exp},
-        batch: {max: 100, tick: 50},
-        retry: {limit: 5000, steps: 3, base: 5, curve: exp},
-        breaker: {limit: 65535, steps: 10, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000},
-      });
     });
 
     it('should produce a batcher with all the merged config when called with custom requirements', () => {
@@ -97,12 +61,6 @@ describe('index', () => {
         breaker: {steps: 1},
       });
       checkForPublicProperties(test);
-      expect(test.config).to.deep.contain({
-        cache: {limit: 30000, steps: 5, base: 2, curve: exp},
-        batch: {max: 12, tick: 50},
-        retry: {limit: 35, steps: 3, base: 5, curve: exp},
-        breaker: {limit: 65535, steps: 1, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000},
-      });
     });
 
     it('should throw if called with missing required arguments', () => {
