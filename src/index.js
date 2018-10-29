@@ -33,14 +33,15 @@ class HaStore extends EventEmitter {
       this.setMaxListeners(Infinity);
     }
 
-    const circuitBreaker = breaker(this.config, this);
-    this.breaker = {
-      ...circuitBreaker,
-      open: circuitBreaker.openCircuit,
-      close: circuitBreaker.restoreCircuit
-    };
+    this.breaker = breaker(this.config.breaker, this);
 
-    this.queue = queue(this.config, this, store(this.config, this), this.config.store, circuitBreaker);
+    this.queue = queue(
+      this.config,
+      this,
+      store(this.config, this),
+      this.config.store,
+      this.breaker,
+    );
   }
 
   /**
