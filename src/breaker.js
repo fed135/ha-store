@@ -4,7 +4,7 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const { tween } = require('./utils.js');
+const {tween} = require('./utils.js');
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -27,6 +27,7 @@ function breaker(config, emitter) {
 
   function closeCircuit() {
     if (!config.breaker) return;
+
     reset();
     active = false;
     step = 0;
@@ -35,6 +36,7 @@ function breaker(config, emitter) {
 
   function restoreCircuit() {
     if (!config.breaker) return;
+
     reset();
     active = false;
     emitter.emit('circuitRestored', status());
@@ -47,7 +49,9 @@ function breaker(config, emitter) {
   }
 
   function openCircuit() {
-    if (config.breaker && active === false) {
+    if (!config.breaker) return;
+
+    if (active === false) {
       violations++;
       if (config.breaker.tolerance <= violations) {
         reset();
@@ -58,18 +62,27 @@ function breaker(config, emitter) {
         active = true;
         emitter.emit('circuitBroken', status(ttl));
         timer = setTimeout(restoreCircuit, ttl);
-      }
-      else {
+      } else {
         setTimeout(decreaseViolation, config.breaker.toleranceFrame);
       }
     }
   }
 
   function status(ttl) {
-    return { step, active, ttl };
+    return {step, active, ttl};
   }
 
-  return { circuitError, openCircuit, restoreCircuit, closeCircuit, status };
+  return {
+    circuitError,
+    openCircuit,
+    restoreCircuit,
+    closeCircuit,
+    status,
+
+    // TODO DPL: Deprecate this contract and remove duplicated functions (also, `close` === `restore`?)
+    open: openCircuit,
+    close: restoreCircuit,
+  };
 }
 
 /* Exports -------------------------------------------------------------------*/
