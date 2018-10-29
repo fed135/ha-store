@@ -79,7 +79,7 @@ function breaker(config, emitter) {
     closeCircuit,
     status,
 
-    // TODO DPL: Deprecate this contract and remove duplicated functions (also, `close` === `restore`?)
+    // TODO DPL: Deprecate this contract and remove duplicated functions (keep xyzCircuit?)
     open: openCircuit,
     close: restoreCircuit,
   };

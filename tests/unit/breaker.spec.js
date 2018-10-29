@@ -28,23 +28,23 @@ describe('breaker', () => {
   let testCircuit;
   let testEmitter;
 
-  const assertIsInavtive = (status) => expect(status).to.be.deep.equal({active: false, step: 0, ttl: undefined});
+  const assertIsInactive = (status) => expect(status).to.be.deep.equal({active: false, step: 0, ttl: undefined});
 
   it('should be a noop if no configuration is supplied', () => {
     const stubbedEmitter = new EventEmitter();
     sinon.spy(stubbedEmitter, 'emit');
 
     const testBreaker = breaker({breaker: null}, stubbedEmitter);
-    assertIsInavtive(testBreaker.status());
+    assertIsInactive(testBreaker.status());
 
     testBreaker.openCircuit();
-    assertIsInavtive(testBreaker.status());
+    assertIsInactive(testBreaker.status());
 
     testBreaker.restoreCircuit();
-    assertIsInavtive(testBreaker.status());
+    assertIsInactive(testBreaker.status());
 
     testBreaker.closeCircuit();
-    assertIsInavtive(testBreaker.status());
+    assertIsInactive(testBreaker.status());
 
     sinon.assert.notCalled(stubbedEmitter.emit);
 
