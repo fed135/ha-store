@@ -187,7 +187,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       for (let i = 0; i < targetIds.length; i++) {
         const expectation = context.promises.get(targetIds[i]);
         if (expectation !== undefined) {
-          expectation.resolve(records[targetIds[i]]);
+          expectation.reject(err);
           context.promises.delete(targetIds[i]);
         }
       }
