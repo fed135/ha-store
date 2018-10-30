@@ -21,7 +21,7 @@ let cacheHits = 0;
 let sum = 0;
 let timeouts = 0;
 let batches = 0;
-const startHeap = process.memoryUsage().heapUsed;
+const startHeap = process.memoryUsage().rss;
 
 const languages = ['fr', 'en', 'pr', 'it', 'ge'];
 const now = Date.now();
@@ -54,7 +54,7 @@ async function hitStore() {
       .catch((err) => { console.log(err); process.exit(1)} );
   }
   else {
-    console.log(`${completed} completed requests\n${cacheHits} cache hits\n${JSON.stringify(await store.size())}\n${timeouts} timed out\navg response time ${(sum / completed).toFixed(3)}\n${batches} queries sent\n${((process.memoryUsage().heapUsed - startHeap) / 1024).toFixed(2)} Kbytes allocated`)
+    console.log(`${completed} completed requests\n${cacheHits} cache hits\n${JSON.stringify(await store.size())}\n${timeouts} timed out\navg response time ${(sum / completed).toFixed(3)}\n${batches} queries sent\n${((process.memoryUsage().rss - startHeap) / 1024).toFixed(2)} Kbytes allocated`)
     process.exit(0);
   }
 }
