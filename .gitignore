@@ -40,3 +40,8 @@ NTH
 
 docs
 package-lock.json
+yarn.lock
+
+
+# IDE configuration folder
+.idea/
