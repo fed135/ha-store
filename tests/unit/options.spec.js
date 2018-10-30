@@ -12,6 +12,26 @@ const expect = require('chai').expect;
 /* Tests ---------------------------------------------------------------------*/
 
 describe('options', () => {
+  const defaultConfig = {
+    "storeOptions": {
+      "pluginRecoveryDelay": 10000,
+      "pluginFallback": true,
+      "memoryLimit": 0.9,
+      "recordLimit": Infinity,
+    },
+    "timeout": null,
+    "batch": {"tick": 50, "max": 100},
+    "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
+    "cache": {curve: exp, "base": 1000, "steps": 5, "limit": 30000},
+    "breaker": {
+      curve: exp,
+      "base": 1000,
+      "steps": 10,
+      "limit": 65535,
+      "tolerance": 1,
+      "toleranceFrame": 10000
+    },
+  };
 
   describe('#basicParser', () => {
     it('should produce a batcher with all the default config when called with true requirements', () => {
@@ -50,29 +70,42 @@ describe('options', () => {
     });
 
     it('should hydrate the configuration with default values if none are provided', () => {
-      const defaultConfig = {
+      const finalConfig = hydrateConfig({});
+
+      expect(defaultConfig).to.deep.equal(finalConfig, "Did you change the default configuration?");
+    });
+
+    it.only('should hydrate a module\'s configuration if its base config is not `null`', () => {
+      const baseConfig = {
         "storeOptions": {
           "pluginRecoveryDelay": 10000,
           "pluginFallback": true,
           "memoryLimit": 0.9,
           "recordLimit": Infinity,
         },
-        "timeout": null,
-        "batch": {"tick": 50, "max": 100},
-        "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
-        "cache": {curve: exp, "base": 1000, "steps": 5, "limit": 30000},
-        "breaker": {
-          curve: exp,
-          "base": 1000,
-          "steps": 10,
-          "limit": 65535,
-          "tolerance": 1,
-          "toleranceFrame": 10000
-        },
+        "timeout": false,
+        "batch": {},
+        "retry": undefined,
+        "cache": 1,
+        "breaker": '',
       };
-      const finalConfig = hydrateConfig({});
 
-      expect(defaultConfig).to.deep.equal(finalConfig, "Did you change the default configuration?");
+      const finalConfig = hydrateConfig(baseConfig);
+
+      expect(finalConfig.batch).to.not.be.undefined;
+      expect(finalConfig.retry).to.not.be.undefined;
+      expect(finalConfig.cache).to.not.be.undefined;
+      expect(finalConfig.breaker).to.not.be.undefined;
+
+      expect(finalConfig.batch).to.not.be.null;
+      expect(finalConfig.retry).to.not.be.null;
+      expect(finalConfig.cache).to.not.be.null;
+      expect(finalConfig.breaker).to.not.be.null;
+
+      expect(finalConfig.batch).to.deep.equal(defaultConfig.batch);
+      expect(finalConfig.retry).to.deep.equal(defaultConfig.retry);
+      expect(finalConfig.cache).to.deep.equal(defaultConfig.cache);
+      expect(finalConfig.breaker).to.deep.equal(defaultConfig.breaker);
     });
 
     it('should not hydrate a module\'s configuration if its base config is `null`', () => {
@@ -91,9 +124,9 @@ describe('options', () => {
       };
 
       const finalConfig = hydrateConfig(baseConfig);
-      expect(finalConfig.batch).to.not.be.null;
-      expect(finalConfig.retry).to.not.be.null;
-      expect(finalConfig.cache).to.not.be.null;
+      expect(finalConfig.batch).to.be.null;
+      expect(finalConfig.retry).to.be.null;
+      expect(finalConfig.cache).to.be.null;
       expect(finalConfig.breaker).to.be.null;
     });
   });
