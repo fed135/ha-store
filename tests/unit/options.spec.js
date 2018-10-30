@@ -75,7 +75,7 @@ describe('options', () => {
       expect(defaultConfig).to.deep.equal(finalConfig, "Did you change the default configuration?");
     });
 
-    it.only('should hydrate a module\'s configuration if its base config is not `null`', () => {
+    it('should hydrate a module\'s configuration if its base config is not `null`', () => {
       const baseConfig = {
         "storeOptions": {
           "pluginRecoveryDelay": 10000,
