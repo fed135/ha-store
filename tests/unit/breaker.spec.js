@@ -5,7 +5,7 @@
 /* Requires ------------------------------------------------------------------*/
 
 const breaker = require('../../src/breaker.js');
-const { exp } = require('../../src/utils.js');
+const {exp} = require('../../src/utils.js');
 const EventEmitter = require('events').EventEmitter;
 const expect = require('chai').expect;
 const sinon = require('sinon');
@@ -27,18 +27,40 @@ const config = {
 describe('breaker', () => {
   let testCircuit;
   let testEmitter;
-  
+
+  const assertIsInactive = (status) => expect(status).to.be.deep.equal({active: false, step: 0, ttl: undefined});
+
+  it('should be a noop if no configuration is supplied', () => {
+    const stubbedEmitter = new EventEmitter();
+    sinon.spy(stubbedEmitter, 'emit');
+
+    const testBreaker = breaker({breaker: null}, stubbedEmitter);
+    assertIsInactive(testBreaker.status());
+
+    testBreaker.openCircuit();
+    assertIsInactive(testBreaker.status());
+
+    testBreaker.restoreCircuit();
+    assertIsInactive(testBreaker.status());
+
+    testBreaker.closeCircuit();
+    assertIsInactive(testBreaker.status());
+
+    sinon.assert.notCalled(stubbedEmitter.emit);
+
+  });
+
   describe('#closeCircuit', () => {
     beforeEach(() => {
       testEmitter = new EventEmitter();
       testCircuit = breaker(config, testEmitter);
     });
-      
+
     it('should close an opened circuit', (done) => {
       testCircuit.openCircuit();
       testEmitter.on('circuitRecovered', (status) => {
         expect(testCircuit.status()).to.deep.equal(status);
-        expect(testCircuit.status()).to.deep.equal({ step: 0, active: false, ttl: undefined });
+        expect(testCircuit.status()).to.deep.equal({step: 0, active: false, ttl: undefined});
         done();
       });
       testCircuit.closeCircuit();
@@ -50,7 +72,7 @@ describe('breaker', () => {
       testEmitter = new EventEmitter();
       testCircuit = breaker(config, testEmitter);
     });
-          
+
     it('should open a circuit', (done) => {
       testEmitter.on('circuitBroken', (status) => {
         expect(status.step).to.equal(1);
@@ -58,7 +80,7 @@ describe('breaker', () => {
         expect(status.ttl).to.be.at.least(1);
         testEmitter.on('circuitRestored', (savedStatus) => {
           expect(testCircuit.status()).to.deep.equal(savedStatus);
-          expect(testCircuit.status()).to.deep.equal({ step: 1, active: false, ttl: undefined });
+          expect(testCircuit.status()).to.deep.equal({step: 1, active: false, ttl: undefined});
           done();
         });
       });
@@ -76,7 +98,7 @@ describe('breaker', () => {
         expect(status.ttl).to.be.at.least(1);
         testEmitter.on('circuitRestored', (savedStatus) => {
           expect(testCircuit.status()).to.deep.equal(savedStatus);
-          expect(testCircuit.status()).to.deep.equal({ step: 1, active: false, ttl: undefined });
+          expect(testCircuit.status()).to.deep.equal({step: 1, active: false, ttl: undefined});
           done();
         });
       });

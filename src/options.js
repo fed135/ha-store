@@ -47,6 +47,21 @@ function hydrateStoreOptions(storeOptions = {}) {
 
 }
 
+function hydrateIfNotNull(baseConfig, defaultConfig) {
+  if (baseConfig === null) {
+    return null;
+  }
+
+  if (!baseConfig) {
+    return {...defaultConfig};
+  }
+
+  return {
+    ...defaultConfig,
+    ...baseConfig,
+  };
+}
+
 function hydrateConfig(config = {}) {
   return {
     ...config,
@@ -54,23 +69,10 @@ function hydrateConfig(config = {}) {
     storeOptions: {
       ...hydrateStoreOptions(config.storeOptions || {}),
     },
-    batch: {
-      ...defaultConfig.batch,
-      ...config.batch || {},
-    },
-    retry: {
-      ...defaultConfig.retry,
-      ...config.retry || {},
-    },
-    cache: {
-      ...defaultConfig.cache,
-      ...config.cache || {},
-    },
-    breaker: {
-      ...defaultConfig.breaker,
-      ...config.breaker || {},
-    },
-
+    batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
+    retry: hydrateIfNotNull(config.retry, defaultConfig.retry),
+    cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
+    breaker: hydrateIfNotNull(config.breaker, defaultConfig.breaker),
   };
 }
 
