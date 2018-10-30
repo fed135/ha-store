@@ -9,6 +9,7 @@ const { tween, basicParser, deferred, contextKey, recordKey } = require('./utils
 /* Local variables -----------------------------------------------------------*/
 
 const notFoundSymbol = Symbol('Not Found');
+const contextRecordKey = key => id => recordKey(key, id);
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -254,10 +255,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {*} results The query results
    */
   function complete(key, ids, context, results) {
-    function contextRecordKey(id) {
-      return recordKey(key, id);
-    }
-
     const parser = config.responseParser || basicParser;
     const records = parser(results, ids, context.params);
     for (let i = 0; i < ids.length; i++) {
@@ -276,7 +273,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
 
     if (config.cache) {
-      targetStore.set(contextRecordKey, ids, records, { step: 0 });
+      targetStore.set(contextRecordKey(key), ids, records, { step: 0 });
     }
     if (breaker.status().step > 0) {
       breaker.closeCircuit();
