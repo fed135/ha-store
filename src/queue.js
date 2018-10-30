@@ -9,6 +9,7 @@ const { tween, basicParser, deferred, contextKey, recordKey } = require('./utils
 /* Local variables -----------------------------------------------------------*/
 
 const notFoundSymbol = Symbol('Not Found');
+const contextRecordKey = key => id => recordKey(key, id);
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -133,7 +134,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
 
     if (config.batch) {
       if (context.timer === null) {
-        context.timer = setTimeout(batch.bind(null, 'batch', key, context), config.batch.tick);
+        context.timer = setTimeout(() => batch('batch', key, context), config.batch.tick);
       }
     }
     else {
@@ -184,13 +185,13 @@ function queue(config, emitter, store, storePlugin, breaker) {
       if (is_cancelled === true) return;
       is_cancelled = true;
       clearTimeout(timer);
-      targetIds.forEach((id) => {
-        const expectation = context.promises.get(id);
+      for (let i = 0; i < targetIds.length; i++) {
+        const expectation = context.promises.get(targetIds[i]);
         if (expectation !== undefined) {
           expectation.reject(err);
-          context.promises.delete(id);
+          context.promises.delete(targetIds[i]);
         }
-      });
+      }
       if (context.promises.size === 0) contexts.delete(context.key);
     }
 
@@ -211,7 +212,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
         }, config.timeout);
       }
       Promise.resolve()
-        .then(config.resolver.bind(null, targetIds, context.params, bd))
+        .then(() => config.resolver(targetIds, context.params, bd))
         .then(handleQuerySuccess, handleQueryError)
         .catch(handleQueryCriticalError);
     }
@@ -228,17 +229,18 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function retry(key, ids, context, err, bd) {
     context.retryStep = context.retryStep + 1;
     if (config.retry && config.retry.steps >= context.retryStep) {
-      setTimeout(query.bind(null, 'retry', key, ids, context, bd), Math.round(retryCurve(context.retryStep)));
+      setTimeout(() => query('retry', key, ids, context, bd), Math.round(retryCurve(context.retryStep)));
     }
     else {
       emitter.emit('retryCancelled', { key, ids, params: context.params, error: err, batchData: context.batchData });
-      ids.forEach((id) => {
-        const expectation = context.promises.get(id);
+      for (let i = 0; i < ids.length; i++) {
+        const expectation = context.promises.get(ids[i]);
         if (expectation !== undefined) {
           expectation.reject(err);
-          context.promises.delete(id);
+          context.promises.delete(ids[i]);
         }
-      });
+      }
+
       if (context.promises.size === 0) contexts.delete(context.key);
       breaker.openCircuit();
     }
@@ -255,13 +257,13 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function complete(key, ids, context, results) {
     const parser = config.responseParser || basicParser;
     const records = parser(results, ids, context.params);
-    ids.forEach((id) => {
-      const expectation = context.promises.get(id);
+    for (let i = 0; i < ids.length; i++) {
+      const expectation = context.promises.get(ids[i]);
       if (expectation !== undefined) {
-        expectation.resolve(records[id]);
-        context.promises.delete(id);
+        expectation.resolve(records[ids[i]]);
+        context.promises.delete(ids[i]);
       }
-    });
+    }
 
     if (context.ids.length > 0) {
       context.retryStep = 0;
@@ -271,7 +273,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
 
     if (config.cache) {
-      targetStore.set(recordKey.bind(null, key), ids, records, { step: 0 });
+      targetStore.set(contextRecordKey(key), ids, records, { step: 0 });
     }
     if (breaker.status().step > 0) {
       breaker.closeCircuit();

@@ -59,31 +59,31 @@ function localStore(config, emitter, store) {
   function set(recordKey, keys, values, opts={}) {
     if (currentMemory / memoryLimit > config.storeOptions.memoryLimit) {
       emitter.emit('cacheFull', { reason: 'Out of memory', current: currentMemory, limit: memoryLimit * config.storeOptions.memoryLimit });
-      return [];
+      return null;
     }
     const now = Date.now();
     const stepSize = curve(opts.step || 0);
     const storeSize = size();
-    return keys.map((id, i) => {
+    for (let i = 0; i < keys.length; i++) {
       if (storeSize + i + 1 > config.storeOptions.recordLimit) {
         emitter.emit('cacheFull', { reason: 'Too many records', current: config.storeOptions.recordLimit, limit: config.storeOptions.recordLimit });
-        return false;
+        continue;
       }
       let value = {
-        value: values[id],
+        value: values[keys[i]],
         timestamp: null,
         step: null,
         timer: null,
         bump: null,
       };
+      const key = recordKey(keys[i]);
       if (opts && opts.step !== undefined) {
         value.timestamp = now;
         value.step = opts.step;
-        value.timer = setTimeout(lru.bind(null, recordKey(id)), stepSize);
+        value.timer = setTimeout(() => lru(key), stepSize);
       }
-      store.set(recordKey(id), value);
-      return true;
-    });
+      store.set(key, value);
+    }
   }
 
   /**
@@ -111,12 +111,12 @@ function localStore(config, emitter, store) {
           const ttl = Math.min(record.timestamp + ext, record.timestamp + config.cache.limit);
           emitter.emit('cacheBump', { key, timestamp: record.timestamp, step: record.step, expires: ttl });
           clearTimeout(record.timer);
-          record.timer = setTimeout(clear.bind(null, key), ttl - now);
+          record.timer = setTimeout(() => clear(key), ttl - now);
           record.bump = false;
         }
         else {
           emitter.emit('cacheClear', { key, timestamp: record.timestamp, step: record.step, expires: now });
-          process.nextTick(clear.bind(null, key));
+          clear(key);
         }
       }
     }
