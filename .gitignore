@@ -39,8 +39,8 @@ yarn-error.log
 NTH
 
 docs
-package-lock.json
 yarn.lock
+dist/
 
 
 # IDE configuration folder
