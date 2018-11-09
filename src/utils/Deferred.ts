@@ -8,7 +8,7 @@ export default class Deferred<T> {
       (resolve: (result: T) => void, reject: (error: Error) => void) => {
         this.resolve = resolve;
         this.reject = reject;
-      }
+      },
     );
   }
 }

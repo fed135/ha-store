@@ -1,5 +1,5 @@
-import {Data, Middleware, IResult} from '../types';
-import {expect} from 'chai';
+import { Data, Middleware, IResult } from '../types';
+import { expect } from 'chai';
 import HaStore from '../HaStore';
 
 const testMiddleware = (modifier: (response: Data) => Data): Middleware => {
@@ -7,7 +7,7 @@ const testMiddleware = (modifier: (response: Data) => Data): Middleware => {
     const newResponse: Data = modifier(response);
     return next
       ? next(error, newResponse)
-      : {error, response: newResponse};
+      : { error, response: newResponse };
   };
 };
 
@@ -22,11 +22,11 @@ describe('HaStore class', () => {
         testMiddleware(data => `${data || ''}3`),
       ]);
 
-      const {response}: IResult = await store.get(
+      const { response }: IResult = await store.get(
         [0],
-        {region: 'us'},
+        { region: 'us' },
         (error: Error | null, response: Data) => {
-          return {error: null, response: null};
+          return { error: null, response: null };
         });
 
       expect(response).to.be.equal('0123');
