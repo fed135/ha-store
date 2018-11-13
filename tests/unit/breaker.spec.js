@@ -23,6 +23,11 @@ const config = {
 };
 
 /* Tests ---------------------------------------------------------------------*/
+const varToString = (value) => {
+  return typeof value === 'object'
+    ? JSON.stringify(value)
+    : `${value}`;
+}
 
 describe('breaker', () => {
   let testCircuit;
@@ -30,25 +35,32 @@ describe('breaker', () => {
 
   const assertIsInactive = (status) => expect(status).to.be.deep.equal({active: false, step: 0, ttl: undefined});
 
-  it('should be a noop if no configuration is supplied', () => {
-    const stubbedEmitter = new EventEmitter();
-    sinon.spy(stubbedEmitter, 'emit');
+  [
+    {breaker: null},
+    undefined,
+    null,
+    {},
+  ].forEach((config)=>(
+    it(`should be a noop if no configuration (${varToString(config)}) is supplied`, () => {
+      const stubbedEmitter = new EventEmitter();
+      sinon.spy(stubbedEmitter, 'emit');
 
-    const testBreaker = breaker({breaker: null}, stubbedEmitter);
-    assertIsInactive(testBreaker.status());
+      const testBreaker = breaker(config, stubbedEmitter);
+      assertIsInactive(testBreaker.status());
 
-    testBreaker.openCircuit();
-    assertIsInactive(testBreaker.status());
+      testBreaker.openCircuit();
+      assertIsInactive(testBreaker.status());
 
-    testBreaker.restoreCircuit();
-    assertIsInactive(testBreaker.status());
+      testBreaker.restoreCircuit();
+      assertIsInactive(testBreaker.status());
 
-    testBreaker.closeCircuit();
-    assertIsInactive(testBreaker.status());
+      testBreaker.closeCircuit();
+      assertIsInactive(testBreaker.status());
 
-    sinon.assert.notCalled(stubbedEmitter.emit);
+      sinon.assert.notCalled(stubbedEmitter.emit);
+    })
+  ));
 
-  });
 
   describe('#closeCircuit', () => {
     beforeEach(() => {
