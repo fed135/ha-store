@@ -9,6 +9,7 @@ const {tween} = require('./utils.js');
 /* Methods -------------------------------------------------------------------*/
 
 function breaker(config, emitter) {
+  config = config || {};
   let active = false;
   const circuitError = new Error('Service unavailable (circuit-breaker)');
   let timer = null;
