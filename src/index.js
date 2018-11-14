@@ -33,7 +33,7 @@ class HaStore extends EventEmitter {
       this.setMaxListeners(Infinity);
     }
 
-    this.breaker = breaker(this.config.breaker, this);
+    this.breaker = breaker(this.config, this);
 
     this.queue = queue(
       this.config,
