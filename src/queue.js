@@ -85,7 +85,9 @@ function queue(config, emitter, store, storePlugin, breaker) {
         retryStep: 0,
         timer: null,
       };
-      contexts.set(key, context);
+      if (config.batch !== null) {
+        contexts.set(key, context);
+      }
     }
     return context;
   }
