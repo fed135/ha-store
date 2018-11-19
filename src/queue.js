@@ -103,6 +103,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
     if (targetIds.length > 0) {
       query(type, key, targetIds, context);
     }
+    else contexts.delete(context.key)
   }
 
   /**
