@@ -85,9 +85,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
         retryStep: 0,
         timer: null,
       };
-      if (config.batch !== null) {
-        contexts.set(key, context);
-      }
+      contexts.set(key, context);
     }
     return context;
   }
@@ -105,6 +103,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
     if (targetIds.length > 0) {
       query(type, key, targetIds, context);
     }
+    else contexts.delete(context.key)
   }
 
   /**
