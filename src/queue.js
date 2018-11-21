@@ -166,9 +166,10 @@ function queue(config, emitter, store, storePlugin, breaker) {
         if ([Number, String, Boolean].includes(context.batchData[id].constructor)) {
           acc[id] = context.batchData[id]
         }
-        else {
+        else if (typeof context.batchData[id] === 'object'){
           acc[id] = JSON.parse(JSON.stringify(context.batchData[id]));
         }
+        else acc[id] = null;
         delete context.batchData[id];
       }
       return acc;
