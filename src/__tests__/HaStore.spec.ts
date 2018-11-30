@@ -13,7 +13,6 @@ const testMiddleware = (modifier: (response: Data) => Data): Middleware => {
 
 describe('HaStore class', () => {
   describe('middlewares', () => {
-
     test('should go through each middleware in order', async () => {
       const store = new HaStore([
         testMiddleware(data => `${data || ''}0`),
@@ -29,7 +28,8 @@ describe('HaStore class', () => {
           return { error: null, response: null };
         });
 
-      expect(response).to.be.equal('0123');
+      expect(response).to.equal('0123');
     });
   });
+
 });
