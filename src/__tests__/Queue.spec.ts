@@ -4,7 +4,7 @@ import {IRequestMetadata, IResult} from '../types';
 import Deferred from '../utils/Deferred';
 
 
-describe('HaStore class', () => {
+describe('Queue class', () => {
   const value: IRequestMetadata = {
     ids: ['1', '2', '3'],
     groupId: 'aaa',
@@ -29,6 +29,23 @@ describe('HaStore class', () => {
     });
   });
 
+  describe('get', () => {
+    it('should return all the values associated with the groupId', async () => {
+      const valueB = {...value};
+      const valueC = {
+        ...value,
+        groupId: 'bbb',
+      };
+      const queue = new Queue();
+      queue.add(value);
+      queue.add(valueB);
+      queue.add(valueC);
+
+      expect(queue.get('aaa')).to.be.deep.equal([value, valueB]);
+      expect(queue.get('bbb')).to.be.deep.equal([valueC]);
+      expect(queue.get('ccc')).to.be.deep.equal([]);
+    });
+  });
   describe('pop', () => {
     it('should return all elements from the same group', async () => {
       const valueB = {...value};

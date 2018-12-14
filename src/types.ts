@@ -9,14 +9,14 @@ export interface IParams {
   [keys: string]: SerializableValue;
 }
 
-export type Data = null | undefined | string;
+export type Data = null | undefined | string | number;
 
 export interface IResult {
   error: Error | null;
-  response: Data;
+  response: Response;
 }
 
-export type Middleware = (error: Error | null, response: Data, next?: Middleware) => IResult;
+export type Middleware = (error: Error | null, response: Response, next?: Middleware) => IResult;
 
 export interface IConfig {
   enable: boolean;
@@ -30,5 +30,8 @@ export interface IRequestMetadata {
   params?: IParams;
   groupId: GroupId;
   deferred: Deferred<IResult>;
-  middlewares: () => IResult;
 }
+
+export type Response = {
+  [id: string]: Data,
+};

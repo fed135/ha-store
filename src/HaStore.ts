@@ -1,23 +1,64 @@
 import Queue from './Queue';
-import {IParams, IRequestMetadata, IResult, Middleware, Serializable} from './types';
+import {Response, IParams, IRequestMetadata, IResult, Middleware, Serializable} from './types';
 import Deferred from './utils/Deferred';
+import Batcher from './Batcher';
 
-const resolveMiddlewares = (middlewares: Middleware[]) => (): IResult => {
+const resolveMiddlewares = (middlewares: Middleware[], result: IResult): IResult => {
   return middlewares.reduce(
-    (result: IResult, middleware: Middleware) => {
-      return middleware(result.error, result.response);
+    (currentResult: IResult, middleware: Middleware) => {
+      return middleware(currentResult.error, currentResult.response);
     },
-    {error: null, response: null},
+    {...result},
   );
 };
 
 export default class HaStore {
-  private queue: Queue = new Queue();
 
-  constructor(private middlewares: Middleware[] = []) {
+  constructor(
+    private resolver: (ids: Serializable[], params?: IParams) => Promise<IResult>,
+    private middlewares: Middleware[] = [],
+    private queue: Queue = new Queue(),
+    private batcher: Batcher = new Batcher(queue),
+  ) {
   }
 
-  public get(ids: Serializable[], params: IParams, resolver: Middleware): Promise<IResult> {
+  // DPL: TODO: :Move to tick class?
+  public async tick(): Promise<void> {
+    const metaDatas: IRequestMetadata[] = this.queue.pop();
+    if (!metaDatas) {
+      return;
+    }
+
+    const ids: Set<Serializable> = metaDatas
+      .map((metaData: IRequestMetadata) => metaData.ids)
+      .reduce(
+        (set: Set<Serializable>, ids: Serializable[]) => {
+          ids.forEach((id: Serializable) => set.add(id));
+          return set;
+        },
+        new Set<Serializable>(),
+      );
+
+    // Call the underlying service
+    const queryResult: IResult = resolveMiddlewares(
+      this.middlewares,
+      await this.resolver(Array.from(ids), metaDatas[0].params),
+    );
+
+    // Retrieve each piece of information and send it to whoever requested it
+    metaDatas.forEach((metaData: IRequestMetadata) => {
+      const result: Response = {};
+      metaData.ids.forEach((id: Serializable) => {
+        result[id] = queryResult.response[id];
+      });
+
+      if (metaData.deferred.resolve) {
+        metaData.deferred.resolve({error: queryResult.error, response: result});
+      }
+    });
+  }
+
+  public get(ids: Serializable[], params: IParams): Promise<IResult> {
     const groupId = Object.keys(params)
       .sort()
       .map(key => `[${key}:${params[key]}]`)
@@ -29,18 +70,20 @@ export default class HaStore {
       params,
       groupId,
       deferred,
-      middlewares: resolveMiddlewares([resolver, ...this.middlewares]),
     };
-
     this.queue.add(metaData);
 
     // Fake tick
     setTimeout(() => {
-      if (deferred.resolve) {
-        deferred.resolve(metaData.middlewares());
-      }
+      this.tick();
+      // if (deferred.resolve) {
+      //   deferred.resolve(this.resolver(ids));
+      // }
     }, 10);
 
-    return deferred.promise;
+    return deferred.promise
+      ? deferred.promise
+      : Promise.reject({error: 'Could not create deferred promise', response: null});
   }
 }
+

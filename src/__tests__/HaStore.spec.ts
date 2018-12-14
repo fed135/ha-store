@@ -1,35 +1,39 @@
-import { Data, Middleware, IResult } from '../types';
-import { expect } from 'chai';
+import {Response, Middleware, IResult, IParams, Serializable} from '../types';
+import {expect} from 'chai';
 import HaStore from '../HaStore';
 
-const testMiddleware = (modifier: (response: Data) => Data): Middleware => {
-  return (error: Error | null, response: Data, next?: Middleware): IResult => {
-    const newResponse: Data = modifier(response);
+const testMiddleware = (modifier: (response: Response) => Response): Middleware => {
+  return (error: Error | null, response: Response, next?: Middleware): IResult => {
+    const newResponse: Response = modifier(response);
     return next
       ? next(error, newResponse)
-      : { error, response: newResponse };
+      : {error, response: newResponse};
   };
 };
 
 describe('HaStore class', () => {
   describe('middlewares', () => {
-    test('should go through each middleware in order', async () => {
-      const store = new HaStore([
-        testMiddleware(data => `${data || ''}0`),
-        testMiddleware(data => `${data || ''}1`),
-        testMiddleware(data => `${data || ''}2`),
-        testMiddleware(data => `${data || ''}3`),
-      ]);
+    const resolver = async (ids: Serializable[], params?: IParams) => {
+      const response: Response = {};
+      ids.forEach((id: Serializable) => {
+        response[`${id}`] = Number(id);
+      });
+      return {response, error: null};
+    };
 
-      const { response }: IResult = await store.get(
-        [0],
-        { region: 'us' },
-        (error: Error | null, response: Data) => {
-          return { error: null, response: null };
-        });
+    it('should resolve all ids passed to the resolver', async () => {
+      const store = new HaStore(resolver);
 
-      expect(response).to.equal('0123');
+      const resultA: IResult = await store.
+      get([0], {region: 'us'});
+
+      const resultB: IResult = await store.get([0, 1, 3], {region: 'us'});
+
+      expect(resultA.response).to.deep.equal({"0": 0});
+      expect(resultB.response).to.deep.equal({"0": 0, "1": 1, "3": 3});
     });
   });
+
+  // DPL: TODO: Add a test to validate batching
 
 });
