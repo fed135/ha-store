@@ -69,5 +69,7 @@
     "tim mulqueen <tim.mulqueen@gmail.com>",
     "damon perron-laurin <damonperronlaurin@gmail.com>"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "@types/sinon": "^7.0.0"
+  }
 }

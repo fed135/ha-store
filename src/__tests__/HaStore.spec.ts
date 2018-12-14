@@ -1,19 +1,13 @@
 import {Response, Middleware, IResult, IParams, Serializable} from '../types';
 import {expect} from 'chai';
+import * as sinon from 'sinon';
 import HaStore from '../HaStore';
-
-const testMiddleware = (modifier: (response: Response) => Response): Middleware => {
-  return (error: Error | null, response: Response, next?: Middleware): IResult => {
-    const newResponse: Response = modifier(response);
-    return next
-      ? next(error, newResponse)
-      : {error, response: newResponse};
-  };
-};
 
 describe('HaStore class', () => {
   describe('middlewares', () => {
+    const resolverSpy = sinon.spy();
     const resolver = async (ids: Serializable[], params?: IParams) => {
+      resolverSpy(ids, params);
       const response: Response = {};
       ids.forEach((id: Serializable) => {
         response[`${id}`] = Number(id);
@@ -24,13 +18,16 @@ describe('HaStore class', () => {
     it('should resolve all ids passed to the resolver', async () => {
       const store = new HaStore(resolver);
 
-      const resultA: IResult = await store.
-      get([0], {region: 'us'});
+      return Promise.all([
+        store.get([0], {region: 'us'}),
+        store.get([0, 1, 3], {region: 'us'}),
+      ])
+        .then(([resultA, resultB]) => {
+          expect(resultA.response).to.deep.equal({"0": 0});
+          expect(resultB.response).to.deep.equal({"0": 0, "1": 1, "3": 3});
+          sinon.assert.calledOnce(resolverSpy);
+        });
 
-      const resultB: IResult = await store.get([0, 1, 3], {region: 'us'});
-
-      expect(resultA.response).to.deep.equal({"0": 0});
-      expect(resultB.response).to.deep.equal({"0": 0, "1": 1, "3": 3});
     });
   });
 

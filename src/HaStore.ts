@@ -65,6 +65,7 @@ export default class HaStore {
       .join('');
 
     const deferred = new Deferred<IResult>();
+    // DPL: TODO: Reuse metaData if group & ids are already present in queue
     const metaData: IRequestMetadata = {
       ids,
       params,
@@ -76,9 +77,6 @@ export default class HaStore {
     // Fake tick
     setTimeout(() => {
       this.tick();
-      // if (deferred.resolve) {
-      //   deferred.resolve(this.resolver(ids));
-      // }
     }, 10);
 
     return deferred.promise
