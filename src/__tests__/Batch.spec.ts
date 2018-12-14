@@ -1,11 +1,18 @@
 import {expect} from 'chai';
 import Batch from '../Batch';
-import {IRequestMetadata, Serializable} from "../types";
+import {IRequestMetadata, IResult, Serializable} from '../types';
+import Deferred from '../utils/Deferred';
 
 
 describe('Batch', () => {
   const value: IRequestMetadata = {
     ids: [0, 1, 2],
+    groupId: 'aaa',
+    middlewares: () => ({
+      error: null,
+      response: null,
+    }),
+    deferred: new Deferred<IResult>(),
   };
 
   describe('constructor', () => {

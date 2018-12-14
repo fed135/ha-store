@@ -1,5 +1,5 @@
 // TODO: DPL: Move types to their respective module/file
-import Deferred from "./utils/Deferred";
+import Deferred from './utils/Deferred';
 
 export type Serializable = number | string;
 export type Ids = Serializable[];

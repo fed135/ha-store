@@ -1,12 +1,18 @@
 import {expect} from 'chai';
 import Queue from '../Queue';
-import {IRequestMetadata} from "../types";
+import {IRequestMetadata, IResult} from '../types';
+import Deferred from '../utils/Deferred';
 
 
 describe('HaStore class', () => {
   const value: IRequestMetadata = {
     ids: ['1', '2', '3'],
     groupId: 'aaa',
+    middlewares: () => ({
+      error: null,
+      response: null,
+    }),
+    deferred: new Deferred<IResult>(),
   };
 
   describe('constructor', () => {
