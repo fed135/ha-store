@@ -18,6 +18,7 @@ export default class HaStore {
     private middlewares: Middleware[] = [],
     private queue: Queue = new Queue(),
   ) {
+    setInterval(this.tick.bind(this), 200);
   }
 
   // DPL: TODO: :Move to tick class?
@@ -71,11 +72,6 @@ export default class HaStore {
       deferred,
     };
     this.queue.add(metaData);
-
-    // Fake tick
-    setTimeout(() => {
-      this.tick();
-    }, 10);
 
     return deferred.promise
       ? deferred.promise
