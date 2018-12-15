@@ -1,7 +1,6 @@
 import Queue from './Queue';
 import {Response, IParams, IRequestMetadata, IResult, Middleware, Serializable} from './types';
 import Deferred from './utils/Deferred';
-import Batcher from './Batcher';
 
 const resolveMiddlewares = (middlewares: Middleware[], result: IResult): IResult => {
   return middlewares.reduce(
@@ -18,7 +17,6 @@ export default class HaStore {
     private resolver: (ids: Serializable[], params?: IParams) => Promise<IResult>,
     private middlewares: Middleware[] = [],
     private queue: Queue = new Queue(),
-    private batcher: Batcher = new Batcher(queue),
   ) {
   }
 

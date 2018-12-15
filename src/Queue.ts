@@ -2,7 +2,7 @@ import {GroupId, IRequestMetadata} from './types';
 
 /**
  * List and hold all requests for future use
- * Requests are grouped by id for easy retrieval by the Tick & Batcher
+ * Requests are grouped by id for easy retrieval by the tick function
  */
 export default class Queue<T extends IRequestMetadata = IRequestMetadata> {
   private list: { [groupId: string]: T[] } = {};

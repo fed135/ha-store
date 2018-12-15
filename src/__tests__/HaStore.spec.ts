@@ -1,4 +1,4 @@
-import {Response, Middleware, IResult, IParams, Serializable} from '../types';
+import {Response, IParams, Serializable} from '../types';
 import {expect} from 'chai';
 import * as sinon from 'sinon';
 import HaStore from '../HaStore';
@@ -27,10 +27,6 @@ describe('HaStore class', () => {
           expect(resultB.response).to.deep.equal({"0": 0, "1": 1, "3": 3});
           sinon.assert.calledOnce(resolverSpy);
         });
-
     });
   });
-
-  // DPL: TODO: Add a test to validate batching
-
 });

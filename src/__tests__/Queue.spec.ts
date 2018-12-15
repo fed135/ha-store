@@ -8,10 +8,6 @@ describe('Queue class', () => {
   const value: IRequestMetadata = {
     ids: ['1', '2', '3'],
     groupId: 'aaa',
-    middlewares: () => ({
-      error: null,
-      response: null,
-    }),
     deferred: new Deferred<IResult>(),
   };
 
