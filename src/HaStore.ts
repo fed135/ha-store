@@ -1,5 +1,5 @@
 import Queue from './Queue';
-import {IParams, IRequestMetadata, IResult, Middleware, Response, Serializable} from './types';
+import {Id, IParams, IRequestMetadata, IResult, Middleware, Response} from './types';
 import Deferred from './utils/Deferred';
 
 const resolveMiddlewares = <T>(middlewares: Middleware<T>[], result: IResult<T>): IResult<T> => {
@@ -14,7 +14,7 @@ const resolveMiddlewares = <T>(middlewares: Middleware<T>[], result: IResult<T>)
 export default class HaStore<T> {
 
   constructor(
-    private resolver: (ids: Serializable[], params?: IParams) => Promise<IResult<T>>,
+    private resolver: (ids: Id[], params?: IParams) => Promise<IResult<T>>,
     private middlewares: Middleware<T>[] = [],
     private queue: Queue<T> = new Queue(),
   ) {
@@ -23,31 +23,31 @@ export default class HaStore<T> {
 
   // DPL: TODO: :Move to tick class?
   public async tick(): Promise<void> {
-    const metaDatas: IRequestMetadata<T>[] = this.queue.pop();
-    if (!metaDatas || metaDatas.length === 0) {
+    const requestsData: IRequestMetadata<T>[] = this.queue.pop();
+    if (!requestsData || requestsData.length === 0) {
       return;
     }
 
-    const ids: Set<Serializable> = metaDatas
+    const ids: Set<Id> = requestsData
       .map((metaData: IRequestMetadata<T>) => metaData.ids)
       .reduce(
-        (set: Set<Serializable>, ids: Serializable[]) => {
-          ids.forEach((id: Serializable) => set.add(id));
+        (set: Set<Id>, ids: Id[]) => {
+          ids.forEach((id: Id) => set.add(id));
           return set;
         },
-        new Set<Serializable>(),
+        new Set<Id>(),
       );
 
     // Call the underlying service
     const queryResult: IResult<T> = resolveMiddlewares<T>(
       this.middlewares,
-      await this.resolver(Array.from(ids), metaDatas[0].params),
+      await this.resolver(Array.from(ids), requestsData[0].params),
     );
 
     // Retrieve each piece of information and send it to whoever requested it
-    metaDatas.forEach((metaData: IRequestMetadata<T>) => {
+    requestsData.forEach((metaData: IRequestMetadata<T>) => {
       const result: Response<T> = {};
-      metaData.ids.forEach((id: Serializable) => {
+      metaData.ids.forEach((id: Id) => {
         result[id] = queryResult.response[id];
       });
 
@@ -57,7 +57,7 @@ export default class HaStore<T> {
     });
   }
 
-  public get(ids: Serializable[], params: IParams = {}): Promise<IResult<T>> {
+  public get(ids: Id[], params: IParams = {}): Promise<IResult<T>> {
     const groupId = Object.keys(params)
       .sort()
       .map(key => `[${key}:${params[key]}]`)

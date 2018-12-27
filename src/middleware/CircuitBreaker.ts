@@ -1,9 +1,10 @@
-import { Data, IConfig, IResult, Middleware } from '../types';
+import { IConfig, IResult, Middleware, Response} from '../types';
 
-export default (config: IConfig): Middleware => {
-  return (error: Error | null, response: Data, next?: Middleware): IResult => {
+// DPL: TODO: Implement circuit breaking
+export default <T>(config: IConfig): Middleware<T> => {
+  return (error: Error | null, response: Response<T>, next?: Middleware<T>): IResult<T> => {
     return next && config.enable
-      ? next(error, 'breaker')
+      ? next(error, {})
       : { error, response };
   };
 };

@@ -1,4 +1,4 @@
-import {IParams, IResult, Response, Serializable} from '../types';
+import {IParams, IResult, Response, Id} from '../types';
 import {expect} from 'chai';
 import * as sinon from 'sinon';
 import HaStore from '../HaStore';
@@ -20,9 +20,9 @@ describe('HaStore class', () => {
       new Dog('Whiskey', 'boy'),
     ];
 
-    const getDogById = async (ids: Serializable[]): Promise<IResult<Dog>> => {
+    const getDogById = async (ids: Id[]): Promise<IResult<Dog>> => {
       const response: Response<Dog> = {};
-      ids.forEach((id: Serializable) => {
+      ids.forEach((id: Id) => {
         response[`${id}`] = store[Number(id)];
       });
       return {response, error: null};
@@ -46,10 +46,10 @@ describe('HaStore class', () => {
 
   describe('middlewares', () => {
     const resolverSpy = sinon.spy();
-    const echoResolver = async (ids: Serializable[], params?: IParams) => {
+    const echoResolver = async (ids: Id[], params?: IParams) => {
       resolverSpy(ids, params);
       const response: Response<number> = {};
-      ids.forEach((id: Serializable) => {
+      ids.forEach((id: Id) => {
         response[`${id}`] = Number(id);
       });
       return {response, error: null};

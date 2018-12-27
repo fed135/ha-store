@@ -1,15 +1,12 @@
 // TODO: DPL: Move types to their respective module/file
 import Deferred from './utils/Deferred';
 
-export type Serializable = number | string;
-export type Ids = Serializable[];
-export type SerializableValue = number[] | string[] | boolean[] | number | string | boolean;
+export type Id = number | string;
+export type IdValue = number[] | string[] | boolean[] | number | string | boolean;
 
 export interface IParams {
-  [keys: string]: SerializableValue;
+  [keys: string]: IdValue;
 }
-
-export type Data = null | undefined | string | number;
 
 export interface IResult<T> {
   error: Error | null;
@@ -26,7 +23,7 @@ export interface IConfig {
 export type GroupId = string;
 
 export interface IRequestMetadata<T> {
-  ids: Serializable[];
+  ids: Id[];
   params: IParams;
   groupId: GroupId;
   deferred: Deferred<IResult<T>>;
