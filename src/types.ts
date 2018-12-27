@@ -11,12 +11,12 @@ export interface IParams {
 
 export type Data = null | undefined | string | number;
 
-export interface IResult {
+export interface IResult<T> {
   error: Error | null;
-  response: Response;
+  response: Response<T>;
 }
 
-export type Middleware = (error: Error | null, response: Response, next?: Middleware) => IResult;
+export type Middleware<T> = (error: Error | null, response: Response<T>, next?: Middleware<T>) => IResult<T>;
 
 export interface IConfig {
   enable: boolean;
@@ -25,13 +25,13 @@ export interface IConfig {
 
 export type GroupId = string;
 
-export interface IRequestMetadata {
+export interface IRequestMetadata<T> {
   ids: Serializable[];
-  params?: IParams;
+  params: IParams;
   groupId: GroupId;
-  deferred: Deferred<IResult>;
+  deferred: Deferred<IResult<T>>;
 }
 
-export type Response = {
-  [id: string]: Data,
+export type Response<T> = {
+  [id: string]: T,
 };

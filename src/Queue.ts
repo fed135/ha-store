@@ -4,14 +4,14 @@ import {GroupId, IRequestMetadata} from './types';
  * List and hold all requests for future use
  * Requests are grouped by id for easy retrieval by the tick function
  */
-export default class Queue<T extends IRequestMetadata = IRequestMetadata> {
-  private list: { [groupId: string]: T[] } = {};
+export default class Queue<T> {
+  private list: { [groupId: string]: IRequestMetadata<T>[] } = {};
   private history: GroupId[] = [];
 
   constructor() {
   }
 
-  public add(value: T): void {
+  public add(value: IRequestMetadata<T>): void {
     if (!this.list[value.groupId]) {
       this.history.push(value.groupId);
       this.list[value.groupId] = [];
@@ -19,19 +19,19 @@ export default class Queue<T extends IRequestMetadata = IRequestMetadata> {
     this.list[value.groupId].push(value);
   }
 
-  public get(groupId: string): T[] {
+  public get(groupId: string): IRequestMetadata<T>[] {
     return this.list[groupId] || [];
   }
 
-  public pop(): T[] {
+  public pop(): IRequestMetadata<T>[] {
     if (!this.history.length) {
       return [];
     }
 
     const groupId = this.history.shift() as string;
-    const list = this.list[groupId];
+    const group = this.list[groupId];
     delete this.list[groupId];
 
-    return list;
+    return group;
   }
 }
