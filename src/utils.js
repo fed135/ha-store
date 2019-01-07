@@ -71,7 +71,7 @@ function arrayParser(results, ids, params = {}) {
 function objectParser(results, ids, params = {}) {
   const acc = {};
   for (let key in results) {
-    if (ids.includes(key)) {
+    if (ids.includes(key) && results[key] !== null && results[key] !== undefined) {
       acc[key] = results[key];
     }
   }
