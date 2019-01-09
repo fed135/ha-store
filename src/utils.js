@@ -69,7 +69,7 @@ function arrayParser(results, ids, params = {}) {
  * @returns {object} The indexed result set found
  */
 function objectParser(results, ids, params = {}) {
-  const acc = {};
+  const acc = Object.create(null);
   for (let key in results) {
     if (ids.includes(key) && results[key] !== null && results[key] !== undefined) {
       acc[key] = results[key];

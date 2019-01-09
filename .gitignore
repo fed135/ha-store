@@ -45,3 +45,7 @@ yarn.lock
 
 # IDE configuration folder
 .idea/
+
+# Clinic
+*.clinic-flame/
+*.clinic-flame.html

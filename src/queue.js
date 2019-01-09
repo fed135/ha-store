@@ -161,19 +161,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
       query(type, key, ids, context);
     }
 
-    bd = bd || targetIds.reduce((acc, id) => {
-      if (id in context.batchData) {
-        if ([Number, String, Boolean].includes(context.batchData[id].constructor)) {
-          acc[id] = context.batchData[id]
-        }
-        else if (typeof context.batchData[id] === 'object'){
-          acc[id] = JSON.parse(JSON.stringify(context.batchData[id]));
-        }
-        else acc[id] = null;
-        delete context.batchData[id];
-      }
-      return acc;
-    }, {});
+    bd = bd || context.batchData;
 
     function handleQuerySuccess(results) {
       if (is_cancelled === true) return;
@@ -259,6 +247,14 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function complete(key, ids, context, results) {
     const parser = config.responseParser || basicParser;
     const records = parser(results, ids, context.params);
+
+    if (config.cache) {
+      targetStore.set(contextRecordKey(key), ids, records, { step: 0 });
+    }
+    if (breaker.status().step > 0) {
+      breaker.closeCircuit();
+    }
+
     for (let i = 0; i < ids.length; i++) {
       const expectation = context.promises.get(ids[i]);
       if (expectation !== undefined) {
@@ -272,13 +268,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
     else {
       if (context.promises.size === 0) contexts.delete(context.key);
-    }
-
-    if (config.cache) {
-      targetStore.set(contextRecordKey(key), ids, records, { step: 0 });
-    }
-    if (breaker.status().step > 0) {
-      breaker.closeCircuit();
     }
   }
 

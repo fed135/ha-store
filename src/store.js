@@ -42,7 +42,7 @@ function localStore(config, emitter, store) {
    */
   function get(key) {
     const record = store.get(key);
-    if (record) {
+    if (record !== undefined) {
       if (record.value !== undefined && record.timer !== null) {
         record.bump = true;
       }
@@ -102,7 +102,7 @@ function localStore(config, emitter, store) {
    */
   function lru(key) {
     const record = store.get(key);
-    if (record) {
+    if (record !== undefined) {
       if (record.value && record.timer) {
         const now = record.timestamp + curve(record.step);
         if (record.step < config.cache.steps && record.bump === true) {
