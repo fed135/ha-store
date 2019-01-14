@@ -13,7 +13,7 @@ const contextRecordKey = key => id => recordKey(key, id);
 
 /* Methods -------------------------------------------------------------------*/
 
-function queue(config, emitter, store, storePlugin, breaker) {
+function queue(config, emitter, store, storePlugin) {
 
   // Local variables
   const contexts = new Map();
@@ -57,7 +57,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
     else {
       context.promises.set(id, deferred());
-      context.ids.push(id);
+      context.ids.push(`${id}`);
     }
     
     return notFoundSymbol;
@@ -108,7 +108,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
 
   /**
    * Main queue function
-   * - Checks circuit-breaker status
    * - Resolves context object and deferred handlers
    * - Looks-up cache
    * - Prepares data-source query timer/invocation
@@ -119,7 +118,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {boolean} startQueue Wether to start the queue immediately or not
    */
   async function push(id, params, agg, startQueue, uid) {
-    if (breaker.status().active === true) return Promise.reject(breaker.circuitError);
     const key = contextKey(config.uniqueParams, params);
     const context = resolveContext(key, params, uid);
     let entity = await lookupCache(key, id, context);
@@ -232,7 +230,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
       }
 
       if (context.promises.size === 0) contexts.delete(context.key);
-      breaker.openCircuit();
     }
   }
 
@@ -250,9 +247,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
 
     if (config.cache) {
       targetStore.set(contextRecordKey(key), ids, records, { step: 0 });
-    }
-    if (breaker.status().step > 0) {
-      breaker.closeCircuit();
     }
 
     for (let i = 0; i < ids.length; i++) {

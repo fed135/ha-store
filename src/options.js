@@ -17,14 +17,6 @@ const defaultConfig = {
     limit: 30000,
     curve: exp,
   },
-  breaker: {
-    base: 1000,
-    steps: 10,
-    limit: 0xffff,
-    curve: exp,
-    tolerance: 1,
-    toleranceFrame: 10000,
-  },
 };
 
 const defaultStoreOptions = {
@@ -72,7 +64,6 @@ function hydrateConfig(config = {}) {
     batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
     retry: hydrateIfNotNull(config.retry, defaultConfig.retry),
     cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
-    breaker: hydrateIfNotNull(config.breaker, defaultConfig.breaker),
   };
 }
 

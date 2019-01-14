@@ -6,17 +6,17 @@
 /* Init ----------------------------------------------------------------------*/
 
 const crypto = require('crypto');
-const { getAssets, getErroredRequest } = require('../integration/utils/dao.js');
+const { getAssets } = require('../integration/utils/dao.js');
 const store = require('../../src/index.js')({
   resolver: getAssets,
   uniqueParams: ['language'],
-  cache: { limit: 60000, steps: 5, base: 5000 },
-  batch: null, //{ tick: 10, limit: 10 },
+  cache: { limit: 5000, steps: 5, base: 500 },
+  batch: { tick: 5, limit: 20 },
   retry: { base: 5 },
 });
 const testDuration = 60000;
 const requestDelay = 0; // Watches the maximum request in relation to tick-time
-let sampleRange = 2;
+let sampleRange = 3;
 let completed = 0;
 let cacheHits = 0;
 let sum = 0;
@@ -37,15 +37,10 @@ async function hitStore() {
     setTimeout(() => {
       if (finished === false) timeouts++;
     }, 500);
-    // Simulate normal z-distribution
-    sampleRange = (Math.round(Math.random()*3) === 0) ? 1:2;
-    const randomError = (Math.round(Math.random()*10) === 0);
     const id = crypto.randomBytes(sampleRange).toString('hex');
     const language = languages[Math.floor(Math.random()*languages.length)];
     const before = Date.now();
-    if (randomError) store.config.resolver = getErroredRequest;
-    else store.config.resolver = getAssets;
-    store.get(id, { language }, crypto.randomBytes(8).toString('hex'))
+    store.get(id, { language }, Math.random().toString(36).substring(7))
       .then((result) => {
         /*if (!result || result.id !== id || result.language !== language) {
           console.log(result, id, language);

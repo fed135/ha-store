@@ -6,23 +6,6 @@
 
 const { tween } = require('./utils.js');
 
-/* Server variables ----------------------------------------------------------*/
-
-let memoryLimit = 1;
-let currentMemory = 0;
-
-if (typeof window === 'undefined') {
-  memoryLimit = require('v8').getHeapStatistics().total_available_size;
-  currentMemory = 0;
-
-  function checkMemory() {
-    setTimeout(checkMemory, 1000);
-    currentMemory = process.memoryUsage().rss;
-  }
-
-  checkMemory();
-}
-
 /* Methods -------------------------------------------------------------------*/
 
 /**
@@ -38,7 +21,6 @@ function localStore(config, emitter, store) {
   /**
    * Performs a query that returns a single entities to be cached
    * @param {string} key the key of the record to get from store
-   * @returns {Promise}
    */
   function get(key) {
     const record = store.get(key);
@@ -47,7 +29,7 @@ function localStore(config, emitter, store) {
         record.bump = true;
       }
     }
-    return Promise.resolve(record);
+    return record;
   }
 
   /**
@@ -57,10 +39,6 @@ function localStore(config, emitter, store) {
    * @returns {Promise}
    */
   function set(recordKey, keys, values, opts={}) {
-    if (currentMemory / memoryLimit > config.storeOptions.memoryLimit) {
-      emitter.emit('cacheFull', { reason: 'Out of memory', current: currentMemory, limit: memoryLimit * config.storeOptions.memoryLimit });
-      return null;
-    }
     const now = Date.now();
     const stepSize = curve(opts.step || 0);
     const storeSize = size();

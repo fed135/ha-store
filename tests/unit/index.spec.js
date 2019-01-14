@@ -3,20 +3,21 @@
  */
 
 /* Requires ------------------------------------------------------------------*/
-const {exp, contextKey} = require('../../src/utils.js');
-const {noop} = require('./utils');
+const {contextKey} = require('../../src/utils.js');
 const root = require('../../src/index.js');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
 /* Utils ---------------------------------------------------------------------*/
+
+const noop = () => {};
+
 function checkForPublicProperties(store) {
   expect(store.get).to.not.be.undefined;
   expect(store.set).to.not.be.undefined;
   expect(store.clear).to.not.be.undefined;
   expect(store.config).to.not.be.undefined;
   expect(store.queue).to.not.be.undefined;
-  expect(store.breaker).to.not.be.undefined;
 }
 
 /* Tests ---------------------------------------------------------------------*/
@@ -58,7 +59,6 @@ describe('index', () => {
         cache: {base: 2},
         batch: {max: 12},
         retry: {limit: 35},
-        breaker: {steps: 1},
       });
       checkForPublicProperties(test);
     });

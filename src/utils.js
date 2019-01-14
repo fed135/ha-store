@@ -38,7 +38,6 @@ function tween(opts) {
  */
 function basicParser(results, ids, params = {}) {
   if (results === null || results === undefined) return {};
-  ids = ids.map(id => `${id}`);
   return Array.isArray(results)
    ? arrayParser(results, ids, params)
    : objectParser(results, ids, params);
