@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
@@ -50,9 +50,6 @@
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
     "sinon": "^6.3.0"
-  },
-  "browser": {
-    "v8": false
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>",

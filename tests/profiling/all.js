@@ -14,7 +14,7 @@ const store = require('../../src/index.js')({
   batch: null, //{ tick: 10, limit: 10 },
   retry: { base: 5 },
 });
-const testDuration = 360000;
+const testDuration = 50000;
 const requestDelay = 0; // Watches the maximum request in relation to tick-time
 let sampleRange = 2;
 let completed = 0;
@@ -55,7 +55,7 @@ async function hitStore() {
         finished = true;
         completed++;
       })
-      .catch((err) => { /*console.log(err); process.exit(1)*/} );
+      .catch((err) => { console.log(err); process.exit(1)} );
   }
   else {
     console.log(`${completed} completed requests\n${cacheHits} cache hits\n${JSON.stringify(await store.size())}\n${timeouts} timed out\navg response time ${(sum / completed).toFixed(3)}\n${batches} queries sent\n${((process.memoryUsage().rss - startHeap) / 1024).toFixed(2)} Kbytes allocated`)
