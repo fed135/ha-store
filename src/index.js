@@ -51,7 +51,7 @@ class HaStore extends EventEmitter {
    */
   get(ids, params = {}, agg = null) {
     if (params === null) params = {};
-    const uid = Math.random().toString(36).substring(7);
+    const uid = Math.random().toString(36);
     const requestIds = (Array.isArray(ids)) ? ids : [ids];
     const promises = requestIds.map((id, i) => {
       return this.queue.push(id, params, agg, (this.config.batch === null && i === requestIds.length - 1), uid);
