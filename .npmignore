@@ -6,3 +6,4 @@ CONTRIBUTING.md
 .eslintrc
 *.log
 package-lock.json
+*.clinic*
