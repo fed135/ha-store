@@ -21,7 +21,6 @@ const config = {
     curve: exp,
   },
   storeOptions: {
-    memoryLimit: 0.9,
     recordLimit: Infinity,
   },
 };
@@ -181,25 +180,6 @@ describe('store', () => {
       emitterMock = sinon.mock(testEmitter);
     });
 
-    it('should not save if process memory has reached the limit', (done) => {
-      testStore = store({
-        cache: {
-          base: 1,
-          steps: 10,
-          limit: 100,
-          curve: exp,
-        },
-        storeOptions: { memoryLimit: 0, recordLimit: Infinity },
-      }, testEmitter, testMap);
-      const lruMock = sinon.mock(testStore);
-      testStore.set(recordKey, ['testLRUValue'], { testLRUValue: { value: 'foo' } }, { step: 0 });
-      setTimeout(() => {
-        lruMock.expects('lru').never();
-        emitterMock.expects('emit').once().withArgs('cacheFull');
-        done();
-      }, 11);
-    });
-
     it('should not save if record count has reached the limit', (done) => {
       testStore = store({
         cache: {
@@ -208,7 +188,7 @@ describe('store', () => {
           limit: 100,
           curve: exp,
         },
-        storeOptions: { memoryLimit: 0.9, recordLimit: 1 },
+        storeOptions: { recordLimit: 1 },
       }, testEmitter, testMap);
       const lruMock = sinon.mock(testStore);
       testStore.set(recordKey, ['testLRUValue', 'testLRUValue2'], { testLRUValue: { value: 'foo' }, testLRUValue2: { value: 'foo' } }, { step: 0 });

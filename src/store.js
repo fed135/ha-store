@@ -6,23 +6,6 @@
 
 const { tween } = require('./utils.js');
 
-/* Server variables ----------------------------------------------------------*/
-
-let memoryLimit = 1;
-let currentMemory = 0;
-
-if (typeof window === 'undefined') {
-  memoryLimit = require('v8').getHeapStatistics().total_available_size;
-  currentMemory = 0;
-
-  function checkMemory() {
-    setTimeout(checkMemory, 1000);
-    currentMemory = process.memoryUsage().rss;
-  }
-
-  checkMemory();
-}
-
 /* Methods -------------------------------------------------------------------*/
 
 /**
@@ -42,12 +25,12 @@ function localStore(config, emitter, store) {
    */
   function get(key) {
     const record = store.get(key);
-    if (record) {
+    if (record !== undefined) {
       if (record.value !== undefined && record.timer !== null) {
         record.bump = true;
       }
     }
-    return Promise.resolve(record);
+    return record;
   }
 
   /**
@@ -57,10 +40,6 @@ function localStore(config, emitter, store) {
    * @returns {Promise}
    */
   function set(recordKey, keys, values, opts={}) {
-    if (currentMemory / memoryLimit > config.storeOptions.memoryLimit) {
-      emitter.emit('cacheFull', { reason: 'Out of memory', current: currentMemory, limit: memoryLimit * config.storeOptions.memoryLimit });
-      return null;
-    }
     const now = Date.now();
     const stepSize = curve(opts.step || 0);
     const storeSize = size();
@@ -102,7 +81,7 @@ function localStore(config, emitter, store) {
    */
   function lru(key) {
     const record = store.get(key);
-    if (record) {
+    if (record !== undefined) {
       if (record.value && record.timer) {
         const now = record.timestamp + curve(record.step);
         if (record.step < config.cache.steps && record.bump === true) {
