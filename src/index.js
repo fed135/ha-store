@@ -7,7 +7,6 @@ const queue = require('./queue.js');
 const store = require('./store.js');
 const breaker = require('./breaker.js');
 const {contextKey, recordKey} = require('./utils.js');
-const {randomBytes} = require('crypto');
 const EventEmitter = require('events').EventEmitter;
 const {hydrateConfig} = require('./options');
 
@@ -52,7 +51,7 @@ class HaStore extends EventEmitter {
    */
   get(ids, params = {}, agg = null) {
     if (params === null) params = {};
-    const uid = randomBytes(16).toString('hex');
+    const uid = Math.random().toString(36);
     const requestIds = (Array.isArray(ids)) ? ids : [ids];
     const promises = requestIds.map((id, i) => {
       return this.queue.push(id, params, agg, (this.config.batch === null && i === requestIds.length - 1), uid);

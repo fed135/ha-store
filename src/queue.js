@@ -259,6 +259,14 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function complete(key, ids, context, results) {
     const parser = config.responseParser || basicParser;
     const records = parser(results, ids, context.params);
+
+    if (config.cache) {
+      targetStore.set(contextRecordKey(key), ids.filter(id => records[id] !== null && records[id] !== undefined), records, { step: 0 });
+    }
+    if (breaker.status().step > 0) {
+      breaker.closeCircuit();
+    }
+
     for (let i = 0; i < ids.length; i++) {
       const expectation = context.promises.get(ids[i]);
       if (expectation !== undefined) {
@@ -272,13 +280,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
     }
     else {
       if (context.promises.size === 0) contexts.delete(context.key);
-    }
-
-    if (config.cache) {
-      targetStore.set(contextRecordKey(key), ids, records, { step: 0 });
-    }
-    if (breaker.status().step > 0) {
-      breaker.closeCircuit();
     }
   }
 
