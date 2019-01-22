@@ -45,7 +45,7 @@ function localStore(config, emitter, store) {
     const storeSize = size();
     for (let i = 0; i < keys.length; i++) {
       if (storeSize + i + 1 > config.storeOptions.recordLimit) {
-        emitter.emit('cacheFull', { reason: 'Too many records', current: config.storeOptions.recordLimit, limit: config.storeOptions.recordLimit });
+        emitter.emit('cacheFull', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Too many records', current: config.storeOptions.recordLimit, limit: config.storeOptions.recordLimit });
         continue;
       }
       let value = {
@@ -88,13 +88,13 @@ function localStore(config, emitter, store) {
           record.step = record.step + 1;
           const ext = curve(record.step);
           const ttl = Math.min(record.timestamp + ext, record.timestamp + config.cache.limit);
-          emitter.emit('cacheBump', { key, timestamp: record.timestamp, step: record.step, expires: ttl });
+          emitter.emit('cacheBump', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: ttl });
           clearTimeout(record.timer);
           record.timer = setTimeout(() => clear(key), ttl - now);
           record.bump = false;
         }
         else {
-          emitter.emit('cacheClear', { key, timestamp: record.timestamp, step: record.step, expires: now });
+          emitter.emit('cacheClear', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: now });
           clear(key);
         }
       }
