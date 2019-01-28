@@ -95,7 +95,7 @@ function deferred() {
  * @param {*} params The parameters for the query
  * @returns {string} The context key
  */
-function contextKey(u, params) {
+function contextKey(u, params = {}) {
   return Array.from(u || []).map(opt => `${opt}=${JSON.stringify(params[opt])}`).join(';');
 }
 

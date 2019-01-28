@@ -14,6 +14,7 @@ function checkForPublicProperties(store) {
   expect(store.get).to.not.be.undefined;
   expect(store.set).to.not.be.undefined;
   expect(store.clear).to.not.be.undefined;
+  expect(store.getKey).to.not.be.undefined;
   expect(store.config).to.not.be.undefined;
   expect(store.queue).to.not.be.undefined;
   expect(store.breaker).to.not.be.undefined;
@@ -197,6 +198,28 @@ describe('index', () => {
       expect(sizeValue).to.deep.equal({contexts: 1, records: 0});
       queueMock.expects('size').once();
       storeMock.expects('size').once();
+    });
+  });
+
+  describe('#getKey', () => {
+    it('should return a record key when given an id', () => {
+      const test = root({resolver: noop});
+      expect(test.getKey('123abc')).to.be.equal('::123abc');
+    });
+
+    it('should return a record key when given an id and segregators', () => {
+      const test = root({resolver: noop, uniqueParams: ['language']});
+      expect(test.getKey('123abc')).to.be.equal('language=undefined::123abc');
+    });
+
+    it('should return a record key when given an id, segregators and params', () => {
+      const test = root({resolver: noop, uniqueParams: ['language']});
+      expect(test.getKey('123abc', {language:'fr'})).to.be.equal('language="fr"::123abc');
+    });
+
+    it('should return a record key when given an id, segregators and multiple params', () => {
+      const test = root({resolver: noop, uniqueParams: ['language', 'country']});
+      expect(test.getKey('123abc', {language:'fr',country:'FR'})).to.be.equal('language="fr";country="FR"::123abc');
     });
   });
 });

@@ -51,4 +51,5 @@ declare function batcher(BatcherConfig, emitter: EventEmitter): {
   set(items: any, ids: string[] | number[], params?: Params): Promise<any>
   clear(ids: RequestIds, params?: Params): void
   size(): Object
+  getKey(id: string | number, params?: Params): string
 }
