@@ -85,7 +85,7 @@ class HaStore extends EventEmitter {
       return ids.map(id => this.clear(id, params));
     }
 
-    return this.queue.store.clear(recordKey(contextKey(this.config.uniqueParams, params), ids));
+    return this.queue.store.clear(this.getKey(ids, params));
   }
 
   /**
@@ -97,6 +97,16 @@ class HaStore extends EventEmitter {
       contexts: this.queue.size(),
       records: await this.queue.store.size(),
     };
+  }
+
+  /**
+   * Returns a record key
+   * @param {string|number} id The id of the item
+   * @param {object} params The parameters for the request
+   * @returns {string} The record key
+   */
+  getKey(id, params) {
+    return recordKey(contextKey(this.config.uniqueParams, params), id);
   }
 }
 
