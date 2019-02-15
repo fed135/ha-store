@@ -46,7 +46,7 @@ declare interface BatcherConfig {
   }
 }
 
-declare function batcher(BatcherConfig, emitter: EventEmitter): {
+declare function batcher(config: BatcherConfig, emitter: EventEmitter): {
   get(ids: string | number, params?: Params): Promise<any>
   set(items: any, ids: string[] | number[], params?: Params): Promise<any>
   clear(ids: RequestIds, params?: Params): void
