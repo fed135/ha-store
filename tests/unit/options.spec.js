@@ -20,7 +20,7 @@ describe('options', () => {
       "recordLimit": Infinity,
     },
     "timeout": null,
-    "batch": {"tick": 50, "max": 100},
+    "batch": {"tick": 50, "max": 100, "min": 1},
     "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
     "cache": {curve: exp, "base": 1000, "steps": 5, "limit": 30000},
     "breaker": {
@@ -45,7 +45,7 @@ describe('options', () => {
 
       expect(test.config).to.deep.contain({
         cache: {limit: 30000, steps: 5, base: 1000, curve: exp},
-        batch: {max: 100, tick: 50},
+        batch: {max: 100, tick: 50, min: 1},
         retry: {limit: 5000, steps: 3, base: 5, curve: exp},
         breaker: {limit: 65535, steps: 10, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000},
       });
@@ -63,7 +63,7 @@ describe('options', () => {
 
       expect(test.config).to.deep.contain({
         cache: {limit: 30000, steps: 5, base: 2, curve: exp},
-        batch: {max: 12, tick: 50},
+        batch: {max: 12, tick: 50, min: 1},
         retry: {limit: 35, steps: 3, base: 5, curve: exp},
         breaker: {limit: 65535, steps: 1, base: 1000, curve: exp, tolerance: 1, toleranceFrame: 10000},
       });
