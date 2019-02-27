@@ -110,15 +110,10 @@ describe('Batching', () => {
 
     it('should properly bucket large requests with min', () => {
       testStore.config.batch = { max: 3, tick: 1, min: 2 };
-      return testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
+      testStore.get(['foo', 'bar', 'abc', 'def'], { language: 'en' });
+      return testStore.get('ghi', { language: 'en' })
         .then((result) => {
-          expect(result).to.deep.equal([
-            { id: 'foo', language: 'en' },
-            { id: 'bar', language: 'en' },
-            { id: 'abc', language: 'en' },
-            { id: 'def', language: 'en' },
-            { id: 'ghi', language: 'en' },
-          ]);
+          expect(result).to.deep.equal({ id: 'ghi', language: 'en' });
           mockSource.expects('getAssets')
             .once().withArgs(['foo', 'bar', 'abc'], { language: 'en' })
             .once().withArgs(['ghi', 'def'], { language: 'en' });
