@@ -32,8 +32,9 @@ declare interface BatcherConfig {
   ): any
   cache?: GenericCurveConfig
   batch?: {
-    tick: number,
+    tick: number
     max: number
+    min: number
   }
   retry?: GenericCurveConfig
   breaker?: GenericCurveConfig

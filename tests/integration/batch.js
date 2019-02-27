@@ -108,6 +108,18 @@ describe('Batching', () => {
         });
     });
 
+    it('should properly bucket large requests with min', () => {
+      testStore.config.batch = { max: 3, tick: 1, min: 2 };
+      testStore.get(['foo', 'bar', 'abc', 'def'], { language: 'en' });
+      return testStore.get('ghi', { language: 'en' })
+        .then((result) => {
+          expect(result).to.deep.equal({ id: 'ghi', language: 'en' });
+          mockSource.expects('getAssets')
+            .once().withArgs(['foo', 'bar', 'abc'], { language: 'en' })
+            .once().withArgs(['ghi', 'def'], { language: 'en' });
+        });
+    });
+
     it('should accumulate batch data', () => {
       testStore.get('foo', null, '1234567890');
       return testStore.get('foo', null, '2345678901')

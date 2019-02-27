@@ -4,6 +4,7 @@ const defaultConfig = {
   batch: {
     tick: 50,
     max: 100,
+    min: 1,
   },
   retry: {
     base: 5,
