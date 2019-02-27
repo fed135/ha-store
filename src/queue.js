@@ -153,6 +153,7 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {object} context The context object
    */
   function query(type, key, ids, context, bd) {
+    if (ids.length < config.batch.min) return;
     // Force-bucket
     let targetIds = ids.splice(0, config.batch ? config.batch.max: ids.length);
     let timer;
