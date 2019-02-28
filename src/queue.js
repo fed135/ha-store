@@ -99,11 +99,15 @@ function queue(config, emitter, store, storePlugin, breaker) {
   function batch(type, key, context) {
     clearTimeout(context.timer);
     context.timer = null;
-    const targetIds = context.ids.splice(0, context.ids.length);
-    if (targetIds.length > 0) {
-      query(type, key, targetIds, context);
+
+    const ids = context.ids.splice(0, context.ids.length);
+    const maxBatches = Math.ceil(ids.length / (config.batch && config.batch.max || ids.length));
+    const optimalBatchSize = Math.ceil(ids.length / maxBatches);
+    while (ids.length > 0) {
+      query(type, key, ids.splice(0, optimalBatchSize), context);
     }
-    else contexts.delete(context.key)
+
+    contexts.delete(context.key)
   }
 
   /**
@@ -153,16 +157,10 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {object} context The context object
    */
   function query(type, key, ids, context, bd) {
-    if (ids.length < (config.batch && config.batch.min || 1)) return;
-    // Force-bucket
-    let targetIds = ids.splice(0, config.batch ? config.batch.max: ids.length);
     let timer;
     let is_cancelled;
-    if (ids.length > 0) {
-      query(type, key, ids, context);
-    }
 
-    bd = bd || targetIds.reduce((acc, id) => {
+    bd = bd || ids.reduce((acc, id) => {
       if (id in context.batchData) {
         if ([Number, String, Boolean].includes(context.batchData[id].constructor)) {
           acc[id] = context.batchData[id]
@@ -179,8 +177,8 @@ function queue(config, emitter, store, storePlugin, breaker) {
     function handleQuerySuccess(results) {
       if (is_cancelled === true) return;
       clearTimeout(timer);
-      emitter.emit('querySuccess', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
-      complete(key, targetIds, context, results);
+      emitter.emit('querySuccess', { type, key, ids, params: context.params, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
+      complete(key, ids, context, results);
     }
 
     function handleQueryError(err) {
@@ -188,11 +186,11 @@ function queue(config, emitter, store, storePlugin, breaker) {
       if (is_cancelled === true) return;
       is_cancelled = true;
       clearTimeout(timer);
-      for (let i = 0; i < targetIds.length; i++) {
-        const expectation = context.promises.get(targetIds[i]);
+      for (let i = 0; i < ids.length; i++) {
+        const expectation = context.promises.get(ids[i]);
         if (expectation !== undefined) {
           expectation.reject(err);
-          context.promises.delete(targetIds[i]);
+          context.promises.delete(ids[i]);
         }
       }
       if (context.promises.size === 0) contexts.delete(context.key);
@@ -202,23 +200,21 @@ function queue(config, emitter, store, storePlugin, breaker) {
       if (is_cancelled === true && override !== true) return;
       is_cancelled = true;
       clearTimeout(timer);
-      emitter.emit('queryFailed', { type, key, ids: targetIds, params: context.params, error: err, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
-      retry(key, targetIds, context, err);
+      emitter.emit('queryFailed', { type, key, ids, params: context.params, error: err, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
+      retry(key, ids, context, err);
     }
 
-    if (targetIds.length > 0) {
-      emitter.emit('query', { type, key, ids: targetIds, params: context.params, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
-      if (config.timeout) {
-        timer = setTimeout(() => {
-          is_cancelled = true;
-          handleQueryCriticalError(timeoutError, true);
-        }, config.timeout);
-      }
-      Promise.resolve()
-        .then(() => config.resolver(targetIds, context.params, bd))
-        .then(handleQuerySuccess, handleQueryError)
-        .catch(handleQueryCriticalError);
+    emitter.emit('query', { type, key, ids, params: context.params, step: (type === 'retry') ? context.retryStep : undefined, batchData: bd });
+    if (config.timeout) {
+      timer = setTimeout(() => {
+        is_cancelled = true;
+        handleQueryCriticalError(timeoutError, true);
+      }, config.timeout);
     }
+    Promise.resolve()
+      .then(() => config.resolver(ids, context.params, bd))
+      .then(handleQuerySuccess, handleQueryError)
+      .catch(handleQueryCriticalError);
   }
 
   /**
