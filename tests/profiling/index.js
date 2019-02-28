@@ -14,7 +14,7 @@ const HA = require('../../src/index.js');
 
 // Setup
 const store = HA(settings.setup);
-const now = Date.now();
+const startTime = Date.now();
 
 // Suite
 const suite = {
@@ -31,7 +31,7 @@ store.on('query', () => { suite.batches++; });
 store.on('cacheHit', () => { suite.cacheHits++; });
 
 async function hitStore() {
-  if (Date.now() - now <  settings.test.testDuration) {
+  if (Date.now() - startTime <  settings.test.testDuration) {
     setTimeout(hitStore, settings.test.requestDelay);
     let finished = false;
     setTimeout(() => {
