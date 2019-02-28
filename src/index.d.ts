@@ -34,7 +34,6 @@ declare interface BatcherConfig {
   batch?: {
     tick: number
     max: number
-    min: number
   }
   retry?: GenericCurveConfig
   breaker?: GenericCurveConfig
