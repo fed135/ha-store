@@ -3,7 +3,7 @@ node_js:
 - '10'
 - '8'
 sudo: false
-script: npm test
+script: npm test && npm run bench
 jobs:
   include:
   - stage: npm release
