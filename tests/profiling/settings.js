@@ -2,9 +2,9 @@ const {getAssets} = require('./dao.js');
 
 module.exports = {
     test: {
-        testDuration: 6000,
+        testDuration: 1000,
         requestDelay: 0,
-        languages: ['fr'/*, 'en', 'ge'*/],
+        languages: ['fr', 'en', 'ge', 'it', 'pr'],
     },
     setup: {
         resolver: getAssets,
@@ -14,11 +14,11 @@ module.exports = {
         retry: { base: 1, step: 2 },
     },
     assert: {
-        completed: [30000, 100000],
-        cacheHits: [1000, 4000],
-        timeouts: [500, 4000],
-        batches: [20000, 60000],
-        rss: [30000, 60000],
-        avgBatchSize: [5, 50],
+        completed: [100000, 200000],
+        cacheHits: [40000, 70000],
+        timeouts: [500, 8000],
+        batches: [500, 4000],
+        rss: [90000, 200000],
+        avgBatchSize: [30, 50],
     },
 }

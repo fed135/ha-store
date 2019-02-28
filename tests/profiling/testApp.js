@@ -4,9 +4,10 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const { parentPort } = require('worker_threads');
 const settings = require('./settings');
 const HA = require('../../src/index.js');
+const {getAssets,getErroredRequest} = require('./dao');
+const crypto = require('crypto');
 
 /* Local variables -----------------------------------------------------------*/
 
@@ -53,16 +54,15 @@ store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.ids.le
 store.on('cacheHit', () => { suite.cacheHits++; });
 
 //End
-function complete() {
+async function complete() {
     handbreak = true;
     suite.avgBatchSize = Math.round(suite.avgBatchSize / suite.batches);
+    suite.size = await store.size();
+    suite.startHeap = process.memoryUsage().rss - suite.startHeap;
     
-    parentPort.postMessage(suite);
+    process.send(suite);
 }
 
 /* Init ----------------------------------------------------------------------*/
 
-parentPort.on('message', (msg) => {
-    if (msg.event && msg.event === 'finish') complete();
-    else handleRequest(msg.id, msg.language);
-});
+process.on('message', (msg) => msg === 'finish' ? complete() : handleRequest(msg.id, msg.language));

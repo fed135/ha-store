@@ -108,7 +108,7 @@ describe('Batching', () => {
         });
     });
 
-    it('should properly bucket very large requests (optimal back size)', () => {
+    it('should properly bucket very large requests (optimal batch size)', () => {
       testStore.config.batch = { max: 6, tick: 1 };
       testStore.get(['foo2', 'bar2', 'abc2', 'def2', 'ghi2']);
       return testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
