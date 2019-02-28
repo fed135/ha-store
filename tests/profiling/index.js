@@ -54,7 +54,7 @@ async function hitStore() {
         suite.sum += (Date.now() - before);
         finished = true;
         suite.completed++;
-      })
+      }, () => {})
       .catch((err) => { console.log(err); process.exit(1)} );
   }
   else {
