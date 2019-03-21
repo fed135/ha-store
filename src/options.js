@@ -17,21 +17,13 @@ const defaultConfig = {
     limit: 30000,
     curve: exp,
   },
-  breaker: {
-    base: 1000,
-    steps: 10,
-    limit: 0xffff,
-    curve: exp,
-    tolerance: 1,
-    toleranceFrame: 10000,
-  },
 };
 
 const defaultStoreOptions = {
   pluginRecoveryDelay: 10000,
   pluginFallback: true,
   recordLimit: Infinity, // TODO: set to v8 large_object_space threshold - 1
-  dropFactor: 1,
+  dropFactor: 0.1,
 };
 
 /* Methods -------------------------------------------------------------------*/
@@ -72,7 +64,6 @@ function hydrateConfig(config = {}) {
     batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
     retry: hydrateIfNotNull(config.retry, defaultConfig.retry),
     cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
-    breaker: hydrateIfNotNull(config.breaker, defaultConfig.breaker),
   };
 }
 

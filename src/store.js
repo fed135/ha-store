@@ -48,7 +48,7 @@ function localStore(config, emitter, store) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Too many records' });
         continue;
       }
-      if (Math.random() < ((totalTTL / size()) / config.cache.limit) / config.storeOptions.dropFactor) {
+      if (Math.random() < ((totalTTL / size() || 1) / config.cache.limit) * (config.cache.limit * config.storeOptions.dropFactor)) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Efficiency capped' });
         continue;
       }

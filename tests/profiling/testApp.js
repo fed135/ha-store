@@ -6,8 +6,8 @@
 
 const settings = require('./settings');
 const HA = require('../../src/index.js');
-const {getAssets,getErroredRequest} = require('./dao');
 const crypto = require('crypto');
+const v8 = require('v8');
 
 /* Local variables -----------------------------------------------------------*/
 
@@ -25,24 +25,22 @@ const suite = {
 
 const store = HA(settings.setup);
 
+console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
+
 /* Methods -------------------------------------------------------------------*/
 
 function handleRequest(id, language) {
-    const randomError = (Math.round(Math.random()*10) === 0);
     let finished = false;
     const before = Date.now();
     setTimeout(() => {
       if (finished === false) suite.timeouts++;
     }, 500);
-    if (randomError) store.config.resolver = getErroredRequest;
-    else store.config.resolver = getAssets;
     store.get(id, { language }, crypto.randomBytes(8).toString('hex'))
     .then((result) => {
         finished = true;
         if (handbreak) return;
         if (!result || result.id !== id || result.language !== language) {
-        console.log(result, 'does not match', id, language);
-        throw new Error('integrity test failed');
+            throw new Error(`Integrity test failed: ${result} does not match {${id} ${language}}`);
         }
         suite.sum += (Date.now() - before);
         suite.completed++;
@@ -53,14 +51,24 @@ function handleRequest(id, language) {
 store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.ids.length; });
 store.on('cacheHit', () => { suite.cacheHits++; });
 
+function roundMi(value) {
+    return Math.round((value / 1024 / 1024) * 1000) / 1000;
+}
+
+function parseMemorySpace(space) {
+    return `${space.space_name} = ${roundMi(space.space_used_size)}/${roundMi(space.space_size)}`;
+}
+
 //End
 async function complete() {
     handbreak = true;
     suite.avgBatchSize = Math.round(suite.avgBatchSize / suite.batches);
     suite.size = await store.size();
     suite.startHeap = process.memoryUsage().rss - suite.startHeap;
+    suite.memorySpaces = v8.getHeapSpaceStatistics().map(parseMemorySpace);
     
     process.send(suite);
+    process.exit(0);
 }
 
 /* Init ----------------------------------------------------------------------*/

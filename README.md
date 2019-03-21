@@ -21,7 +21,7 @@ Want to make your app faster and don't want to spend on extra infrastructure ? [
 **HA-store** is a generic wrapper for your data queries, it features: 
 
 - Smart micro-caching for 'hot' information (in-memory or using the [redis-adapter](https://github.com/fed135/ha-redis-adapter))
-- Request coalescing, batching, retrying and circuit-breaking
+- Request coalescing, batching and retrying
 - Insightful stats and [events](#Monitoring-and-events)
 - Lightweight, configurable and has **zero dependencies**
 
@@ -60,7 +60,6 @@ timeout | false | `null` | The maximum time allowed for the resolver to resolve.
 cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;step: 5,&#13;&#10;&nbsp;&nbsp;limit: 30000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Caching options for the data
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;tick: 50,&#13;&#10;&nbsp;&nbsp;max: 100&#13;&#10;}</pre> | Batching options for the requests
 retry | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 5,&#13;&#10;&nbsp;&nbsp;step: 3,&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Retry options for the requests
-breaker | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;step: 10,&#13;&#10;&nbsp;&nbsp;limit: 65535,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>,&#13;&#10;&nbsp;&nbsp;tolerance: 1,&#13;&#10;&nbsp;&nbsp;toleranceFrame: 10000&#13;&#10;}</pre> | Circuit-breaker options, enabled by default and triggers after the retry limit
 storeOptions | false | <pre>{&#13;&#10;&nbsp;&nbsp;pluginFallback: true,&#13;&#10;&nbsp;&nbsp;pluginRecoveryDelay: 10000,&#13;&#10;&nbsp;&nbsp;recordLimit: Infinity,&#13;&#10;&nbsp;&nbsp;dropFactor: 1&#13;&#10;}</pre> | If the store plugin errors and `pluginFallback` is true, the Store instance will attempt to fallback to the default in-memory store. It will then attempt to recover the original store every `storePluginRecoveryDelay`.
 
 *All options are in (ms)
@@ -82,9 +81,6 @@ retryCancelled | Indicates that the batch has reached the allowed number of retr
 querySuccess | Indicates that the batch request was successful.
 bumpCache | When a call for an item fully loaded in the microcache succeeds, its ttl gets extended.
 clearCache | When an item in the microcache has reached its ttl and is now being evicted.
-circuitBroken | When a batch call fails after the limit amount of retries, the circuit gets broken - all calls in the next ttl will automatically fail. It is assumed that there is a problem with the data-source.
-circuitRestored | Circuit temporarily restored, a tentative to the data-source may be sent.
-circuitRecovered | The tentative request was successful and the wrapper assumes that the data-source has recovered.
 storePluginErrored | The custom store has encountered an error
 storePluginRestored | The custom store has been re-instantiated
 

@@ -43,14 +43,14 @@ app.on('message', async (suite) => {
     ${(suite.startHeap / 1024).toFixed(2)} Kbytes allocated
   `);
 
+  console.log(suite.memorySpaces);
+
   for (const expectation in settings.assert) {
-    if (suite[expectation] <= settings.assert[expectation][0] || suite[expectation] >= settings.assert[expectation][1]) {
-      console.log(expectation, 'did not match expectation', settings.assert[expectation]);
-      throw new Error('performance test failed');
+    if (suite[expectation] < settings.assert[expectation][0] || suite[expectation] > settings.assert[expectation][1]) {
+      console.error(new Error(`Performance test failed: ${expectation} did not match expectation ${settings.assert[expectation]}`));
     }
   }
   process.exit(0);
 });
 
 hitStore();
-
