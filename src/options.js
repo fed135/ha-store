@@ -30,8 +30,8 @@ const defaultConfig = {
 const defaultStoreOptions = {
   pluginRecoveryDelay: 10000,
   pluginFallback: true,
-  memoryLimit: 0.9,
-  recordLimit: Infinity,
+  recordLimit: Infinity, // TODO: set to v8 large_object_space threshold - 1
+  dropFactor: 1,
 };
 
 /* Methods -------------------------------------------------------------------*/

@@ -43,6 +43,7 @@ declare interface BatcherConfig {
     pluginRecoveryDelay?: number
     memoryLimit?: number
     recordLimit?: number
+    dropFactor?: number
   }
 }
 

@@ -16,6 +16,7 @@ const { tween } = require('./utils.js');
  */
 function localStore(config, emitter, store) {
   store = store || new Map();
+  let totalTTL = 0;
   const curve = tween(config.cache);
   
   /**
@@ -42,10 +43,13 @@ function localStore(config, emitter, store) {
   function set(recordKey, keys, values, opts={}) {
     const now = Date.now();
     const stepSize = curve(opts.step || 0);
-    const storeSize = size();
     for (let i = 0; i < keys.length; i++) {
-      if (storeSize + i + 1 > config.storeOptions.recordLimit) {
-        emitter.emit('cacheFull', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Too many records', current: config.storeOptions.recordLimit, limit: config.storeOptions.recordLimit });
+      if (size() + 1 > config.storeOptions.recordLimit) {
+        emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Too many records' });
+        continue;
+      }
+      if (Math.random() < ((totalTTL / size()) / config.cache.limit) / config.storeOptions.dropFactor) {
+        emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Efficiency capped' });
         continue;
       }
       let value = {
@@ -55,6 +59,7 @@ function localStore(config, emitter, store) {
         timer: null,
         bump: null,
       };
+      totalTTL += stepSize;
       const key = recordKey(keys[i]);
       if (opts && opts.step !== undefined) {
         value.timestamp = now;
@@ -71,7 +76,14 @@ function localStore(config, emitter, store) {
    * @returns {boolean} Wether the key was removed or not 
    */
   function clear(key) {
-    if (key === '*') return !!store.clear();
+    if (key === '*') {
+      totalTTL = 0;
+      return !!store.clear();
+    }
+    const record = store.get(key);
+    if (record !== undefined) {
+      totalTTL -= curve(record.step);
+    }
     return !!store.delete(key);
   }
 
@@ -91,6 +103,7 @@ function localStore(config, emitter, store) {
           emitter.emit('cacheBump', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: ttl });
           clearTimeout(record.timer);
           record.timer = setTimeout(() => clear(key), ttl - now);
+          totalTTL += ext;
           record.bump = false;
         }
         else {
