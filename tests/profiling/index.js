@@ -13,7 +13,6 @@ const path = require('path');
 /* Init ----------------------------------------------------------------------*/
 
 // Setup
-<<<<<<< HEAD
 const app = fork(path.resolve(__dirname, './testApp.js'));
 const startTime = Date.now();
 
@@ -21,32 +20,6 @@ async function hitStore() {
   if (Date.now() - startTime <  settings.test.testDuration) {
     process.nextTick(hitStore);
     
-=======
-const store = HA(settings.setup);
-const startTime = Date.now();
-
-// Suite
-const suite = {
-  sampleRange: 2,
-  completed: 0,
-  cacheHits: 0,
-  sum: 0,
-  timeouts: 0,
-  batches: 0,
-  startHeap: process.memoryUsage().rss,
-};
-
-store.on('query', () => { suite.batches++; });
-store.on('cacheHit', () => { suite.cacheHits++; });
-
-async function hitStore() {
-  if (Date.now() - startTime <  settings.test.testDuration) {
-    setTimeout(hitStore, settings.test.requestDelay);
-    let finished = false;
-    setTimeout(() => {
-      if (finished === false) suite.timeouts++;
-    }, 500);
->>>>>>> dbb8bdae167b20efe994bc765b4a92ba38186cc8
     // Simulate normal z-distribution
     let sampleRange = (Math.round(Math.random()*3) === 0) ? 1:2;
     const id = crypto.randomBytes(sampleRange).toString('hex');
