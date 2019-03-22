@@ -60,7 +60,7 @@ timeout | false | `null` | The maximum time allowed for the resolver to resolve.
 cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 1000,&#13;&#10;&nbsp;&nbsp;step: 5,&#13;&#10;&nbsp;&nbsp;limit: 30000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Caching options for the data
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;tick: 50,&#13;&#10;&nbsp;&nbsp;max: 100&#13;&#10;}</pre> | Batching options for the requests
 retry | false | <pre>{&#13;&#10;&nbsp;&nbsp;base: 5,&#13;&#10;&nbsp;&nbsp;step: 3,&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;curve: <function(progress, start, end)>&#13;&#10;}</pre> | Retry options for the requests
-storeOptions | false | <pre>{&#13;&#10;&nbsp;&nbsp;pluginFallback: true,&#13;&#10;&nbsp;&nbsp;pluginRecoveryDelay: 10000,&#13;&#10;&nbsp;&nbsp;recordLimit: Infinity,&#13;&#10;&nbsp;&nbsp;dropFactor: 1&#13;&#10;}</pre> | If the store plugin errors and `pluginFallback` is true, the Store instance will attempt to fallback to the default in-memory store. It will then attempt to recover the original store every `storePluginRecoveryDelay`.
+storeOptions | false | <pre>{&#13;&#10;&nbsp;&nbsp;pluginFallback: true,&#13;&#10;&nbsp;&nbsp;pluginRecoveryDelay: 10000,&#13;&#10;&nbsp;&nbsp;recordLimit: Infinity,&#13;&#10;&nbsp;&nbsp;dropFactor: 1,&#13;&#10;&nbsp;&nbsp;scavengeCycle: 50&#13;&#10;}</pre> | If the store plugin errors and `pluginFallback` is true, the Store instance will attempt to fallback to the default in-memory store. It will then attempt to recover the original store every `storePluginRecoveryDelay`. `dropFactor` is the tuning element for the algorithm that marks records as relevant or not. A higher value (>1) means a more agressive marker, while a lower value (<1) makes it more allowing. `scavengeCycle` is the delay in ms between GC cycles for the store.
 
 *All options are in (ms)
 *Scaling options are represented via and exponential curve with base and limit being the 2 edge values while steps is the number of events over that curve.
@@ -73,7 +73,7 @@ Event | Description
 --- | ---
 cacheHit | When the requested item is present in the microcache, or is already being fetched. Prevents another request from being created.
 cacheMiss | When the requested item is not present in the microcache and is not currently being fetched. A new request will be made.
-cacheFull | Whenever a store set is denied because the maximum number of records was reached for that store.
+cacheSkip | Whenever a store set is denied because the maximum number of records was reached for that store, or it was marked as extraneous.
 coalescedHit | When a record query successfully hooks to the promise of the same record in transit.
 query | When a batch of requests is about to be sent.
 queryFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.

@@ -26,7 +26,7 @@ const suite = {
 
 const store = HA(settings.setup);
 
-console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
+// console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -68,11 +68,11 @@ async function complete() {
     suite.startHeap = process.memoryUsage().rss - suite.startHeap;
 
 
-    console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
+    // console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
 
-    heapdump.writeSnapshot((err, filename) => {
+    /*heapdump.writeSnapshot((err, filename) => {
         console.log('Heap dump written to', filename)
-    });
+    });*/
     
     process.send(suite);
     process.exit(0);

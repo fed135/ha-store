@@ -32,8 +32,9 @@ const defaultConfig = {
 const defaultStoreOptions = {
   pluginRecoveryDelay: 10000,
   pluginFallback: true,
-  recordLimit: Infinity, // TODO: set to v8 large_object_space threshold - 1
-  dropFactor: 0.1,
+  recordLimit: 256 * 256,
+  dropFactor: 1,
+  scavengeCycle: 50,
 };
 
 /* Methods -------------------------------------------------------------------*/
@@ -44,10 +45,10 @@ function hydrateStoreOptions(storeOptions = {}) {
     ...storeOptions,
     pluginRecoveryDelay: Number(storeOptions.pluginRecoveryDelay) || defaultStoreOptions.pluginRecoveryDelay,
     pluginFallback: (storeOptions.pluginFallback === undefined) ? true : storeOptions.pluginFallback,
-    memoryLimit: Math.max(0, Math.min(1, Number(storeOptions.memoryLimit) || defaultStoreOptions.memoryLimit)),
     recordLimit: Number(storeOptions.recordLimit) || defaultStoreOptions.recordLimit,
+    scavengeCycle: Number(storeOptions.scavengeCycle) || defaultStoreOptions.scavengeCycle,
+    dropFactor: Number(storeOptions.dropFactor) || defaultStoreOptions.dropFactor,
   };
-
 }
 
 function hydrateIfNotNull(baseConfig, defaultConfig) {

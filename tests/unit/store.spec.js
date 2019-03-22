@@ -22,6 +22,7 @@ const config = {
   },
   storeOptions: {
     recordLimit: Infinity,
+    scavengeCycle: 10,
   },
 };
 const recordKey = (id) => `${id}`;
@@ -30,7 +31,6 @@ const recordKey = (id) => `${id}`;
 
 describe('store', () => {
   let testStore;
-  let mapMock;
   let emitterMock;
   let testMap;
   let testEmitter;
@@ -39,13 +39,12 @@ describe('store', () => {
 
   describe('#get', () => {
     beforeEach(() => {
-      testMap = new Map();
+      testMap = {};
       testEmitter = new EventEmitter();
-      mapMock = sinon.mock(testMap);
       emitterMock = sinon.mock(testEmitter);
       testStore = store(config, testEmitter, testMap);
       valueRecord = { value: 'foo' };
-      evictableRecord = { value: 'bar', timer: 0 };
+      evictableRecord = { value: 'bar', ttl: 0 };
     });
     
     it('should return a value if there\'s a value saved', async () => {
@@ -56,31 +55,27 @@ describe('store', () => {
         timestamp: null,
         bump: null,
         step: null,
-        timer: null,
+        ttl: 0,
       });
-      mapMock.expects('get').once().withArgs('testValue');
     });
 
     it('should return a value and bump status if there\'s an evictable value saved', async () => {
       testStore.set(recordKey, ['testEvictable'], { testEvictable: 'bar' }, { step: 0 });
       const record = await testStore.get('testEvictable');
-      expect(record).to.contain.keys(['value', 'bump', 'step', 'timer', 'timestamp']);
+      expect(record).to.contain.keys(['value', 'bump', 'step', 'ttl', 'timestamp']);
       expect(record.value).to.equal('bar');
-      mapMock.expects('get').once().withArgs('testEvictable');
     });
 
     it('should return a null if the key is missing', async () => {
       const val = await testStore.get('test');
       expect(val).to.be.undefined;
-      mapMock.expects('get').once().withArgs('test');
     });
   });
 
   describe('#set', () => {
     beforeEach(() => {
-      testMap = new Map();
+      testMap = {};
       testEmitter = new EventEmitter();
-      mapMock = sinon.mock(testMap);
       emitterMock = sinon.mock(testEmitter);
       testStore = store(config, testEmitter, testMap);
     });
@@ -107,9 +102,8 @@ describe('store', () => {
 
   describe('#clear', () => {
     beforeEach(() => {
-      testMap = new Map();
+      testMap = {};
       testEmitter = new EventEmitter();
-      mapMock = sinon.mock(testMap);
       emitterMock = sinon.mock(testEmitter);
       testStore = store(config, testEmitter, testMap);
 
@@ -124,25 +118,22 @@ describe('store', () => {
         timestamp: null,
         bump: null,
         step: null,
-        timer: null,
+        ttl: 0,
       });
       expect(testStore.clear('testValue')).to.be.true;
-      mapMock.expects('delete').once().withArgs('testValue');
       const after = await testStore.get('testValue');
       expect(after).to.be.undefined;
     });
 
     it('should do nothing and return false if the key is missing', () => {
       expect(testStore.clear('testPromise')).to.be.false;
-      mapMock.expects('clear').once().withArgs('testPromise');
     });
   });
 
   describe('#lru', () => {
     beforeEach(() => {
-      testMap = new Map();
+      testMap = {};
       testEmitter = new EventEmitter();
-      mapMock = sinon.mock(testMap);
       emitterMock = sinon.mock(testEmitter);
       testStore = store(config, testEmitter, testMap);
     });
@@ -157,9 +148,8 @@ describe('store', () => {
 
   describe('#size', () => {
     beforeEach(() => {
-      testMap = new Map();
+      testMap = {};
       testEmitter = new EventEmitter();
-      mapMock = sinon.mock(testMap);
       emitterMock = sinon.mock(testEmitter);
       testStore = store(config, testEmitter, testMap);
     });
@@ -174,13 +164,9 @@ describe('store', () => {
 
   describe('#store limitations', () => {
     beforeEach(() => {
-      testMap = new Map();
+      testMap = {};
       testEmitter = new EventEmitter();
-      mapMock = sinon.mock(testMap);
       emitterMock = sinon.mock(testEmitter);
-    });
-
-    it('should not save if record count has reached the limit', (done) => {
       testStore = store({
         cache: {
           base: 1,
@@ -190,13 +176,12 @@ describe('store', () => {
         },
         storeOptions: { recordLimit: 1 },
       }, testEmitter, testMap);
-      const lruMock = sinon.mock(testStore);
+    });
+
+    it('should not save if record count has reached the limit', () => {
       testStore.set(recordKey, ['testLRUValue', 'testLRUValue2'], { testLRUValue: { value: 'foo' }, testLRUValue2: { value: 'foo' } }, { step: 0 });
-      setTimeout(() => {
-        lruMock.expects('lru').once().withArgs('testLRUValue');
-        emitterMock.expects('emit').once().withArgs('cacheFull');
-        done();
-      }, 11);
+      emitterMock.expects('emit').once().withArgs('cacheClear');
+      emitterMock.expects('emit').withArgs('cacheSkip');
     });
   });
 });

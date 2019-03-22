@@ -22,6 +22,14 @@ function localStore(config, emitter, store) {
   let totalTTL = 0;
   const curve = tween(config.cache);
   
+  function garbageCollect(bucket) {
+    setTimeout(garbageCollect, config.storeOptions.scavengeCycle);
+    const now = Date.now();
+    for (const key in store) {
+      if (store[key].ttl <= now) lru(key);
+    }
+  }
+
   /**
    * Performs a query that returns a single entities to be cached
    * @param {string} key the key of the record to get from store
@@ -30,7 +38,7 @@ function localStore(config, emitter, store) {
   function get(key) {
     const record = store[key];
     if (record !== undefined) {
-      if (record.value !== undefined && record.timer !== null) {
+      if (record.value !== undefined && record.ttl > 0) {
         record.bump = true;
       }
     }
@@ -45,13 +53,13 @@ function localStore(config, emitter, store) {
    */
   function set(recordKey, keys, values, opts={}) {
     const now = Date.now();
-    const stepSize = curve(opts.step || 0);
+    const stepSize = Math.round(curve(opts.step || 0));
     for (let i = 0; i < keys.length; i++) {
-      if (size() + 1 > config.storeOptions.recordLimit) {
+      if (storeSize + 1 > config.storeOptions.recordLimit) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Too many records' });
         continue;
       }
-      if (Math.random() < ((totalTTL / size() || 1) / config.cache.limit) * (config.cache.limit * config.storeOptions.dropFactor)) {
+      if (Math.random() < ((totalTTL / storeSize || 1) / config.cache.limit) * config.storeOptions.dropFactor) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Efficiency capped' });
         continue;
       }
@@ -59,7 +67,7 @@ function localStore(config, emitter, store) {
         value: values[keys[i]],
         timestamp: null,
         step: null,
-        timer: null,
+        ttl: 0,
         bump: null,
       };
       totalTTL += stepSize;
@@ -67,7 +75,7 @@ function localStore(config, emitter, store) {
       if (opts && opts.step !== undefined) {
         value.timestamp = now;
         value.step = opts.step;
-        value.timer = setTimeout(() => lru(key), stepSize);
+        value.ttl = now + stepSize;
       }
       storeSize++;
       store[key] = value;
@@ -89,8 +97,10 @@ function localStore(config, emitter, store) {
     if (record !== undefined) {
       storeSize--;
       totalTTL -= curve(record.step);
+      delete store[key];
+      return true;
     }
-    return !!delete store[key];
+    return false;
   }
 
   /**
@@ -100,15 +110,14 @@ function localStore(config, emitter, store) {
   function lru(key) {
     const record = store[key];
     if (record !== undefined) {
-      if (record.value && record.timer) {
-        const now = record.timestamp + curve(record.step);
+      if (record.value && record.ttl > 0) {
+        const now = Math.round(record.timestamp + curve(record.step));
         if (record.step < config.cache.steps && record.bump === true) {
           record.step = record.step + 1;
-          const ext = curve(record.step);
+          const ext = Math.round(curve(record.step));
           const ttl = Math.min(record.timestamp + ext, record.timestamp + config.cache.limit);
           emitter.emit('cacheBump', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: ttl });
-          clearTimeout(record.timer);
-          record.timer = setTimeout(() => lru(key), ttl - now);
+          record.ttl = ttl;
           totalTTL += ext;
           record.bump = false;
         }
@@ -127,6 +136,8 @@ function localStore(config, emitter, store) {
   async function size() {
     return storeSize;
   }
+
+  setTimeout(garbageCollect, config.storeOptions.scavengeCycle);
 
   return { get, set, clear, lru, size };
 }

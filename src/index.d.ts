@@ -31,9 +31,9 @@ declare interface BatcherConfig {
   storeOptions?: {
     pluginFallback?: boolean
     pluginRecoveryDelay?: number
-    memoryLimit?: number
     recordLimit?: number
     dropFactor?: number
+    scavengeCycle?: number
   }
 }
 
