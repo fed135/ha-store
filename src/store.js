@@ -92,7 +92,8 @@ function localStore(config, emitter, store) {
     if (key === '*') {
       totalTTL = 0;
       storeSize = 0;
-      return !!(store = {});
+      store = {};
+      return true;
     }
     const record = store[key];
     if (record !== undefined) {
