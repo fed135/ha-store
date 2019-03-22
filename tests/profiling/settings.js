@@ -15,7 +15,7 @@ module.exports = {
     },
     assert: {
         completed: [100000, 200000],
-        cacheHits: [40000, 70000],
+        cacheHits: [25000, 70000],
         timeouts: [500, 8000],
         batches: [500, 4000],
         rss: [90000, 200000],
