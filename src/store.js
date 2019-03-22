@@ -2,6 +2,8 @@
  * Record Store
  */
 
+'use strict';
+
 /* Requires ------------------------------------------------------------------*/
 
 const { tween } = require('./utils.js');
@@ -12,10 +14,11 @@ const { tween } = require('./utils.js');
  * Store constructor
  * @param {object} config The options for the store
  * @param {EventEmitter} emitter The event-emitter instance for the batcher
- * @param {Map} store A store instance to replace the default in-memory Map
+ * @param {Object} store A store instance to replace the default in-memory Dictionary
  */
 function localStore(config, emitter, store) {
-  store = store || new Map();
+  store = store || {};
+  let storeSize = 0;
   let totalTTL = 0;
   const curve = tween(config.cache);
   
@@ -25,7 +28,7 @@ function localStore(config, emitter, store) {
    * @returns {Promise}
    */
   function get(key) {
-    const record = store.get(key);
+    const record = store[key];
     if (record !== undefined) {
       if (record.value !== undefined && record.timer !== null) {
         record.bump = true;
@@ -66,7 +69,8 @@ function localStore(config, emitter, store) {
         value.step = opts.step;
         value.timer = setTimeout(() => lru(key), stepSize);
       }
-      store.set(key, value);
+      storeSize++;
+      store[key] = value;
     }
   }
 
@@ -78,13 +82,15 @@ function localStore(config, emitter, store) {
   function clear(key) {
     if (key === '*') {
       totalTTL = 0;
-      return !!store.clear();
+      storeSize = 0;
+      return !!(store = {});
     }
-    const record = store.get(key);
+    const record = store[key];
     if (record !== undefined) {
+      storeSize--;
       totalTTL -= curve(record.step);
     }
-    return !!store.delete(key);
+    return !!delete store[key];
   }
 
   /**
@@ -92,7 +98,7 @@ function localStore(config, emitter, store) {
    * @param {string} key The key to be evaluated for invalidation
    */
   function lru(key) {
-    const record = store.get(key);
+    const record = store[key];
     if (record !== undefined) {
       if (record.value && record.timer) {
         const now = record.timestamp + curve(record.step);
@@ -102,7 +108,7 @@ function localStore(config, emitter, store) {
           const ttl = Math.min(record.timestamp + ext, record.timestamp + config.cache.limit);
           emitter.emit('cacheBump', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: ttl });
           clearTimeout(record.timer);
-          record.timer = setTimeout(() => clear(key), ttl - now);
+          record.timer = setTimeout(() => lru(key), ttl - now);
           totalTTL += ext;
           record.bump = false;
         }
@@ -119,7 +125,7 @@ function localStore(config, emitter, store) {
    * @returns {number} The number of active records
    */
   async function size() {
-    return store.size;
+    return storeSize;
   }
 
   return { get, set, clear, lru, size };

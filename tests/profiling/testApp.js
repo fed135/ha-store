@@ -8,6 +8,7 @@ const settings = require('./settings');
 const HA = require('../../src/index.js');
 const crypto = require('crypto');
 const v8 = require('v8');
+const heapdump = require('heapdump');
 
 /* Local variables -----------------------------------------------------------*/
 
@@ -65,7 +66,13 @@ async function complete() {
     suite.avgBatchSize = Math.round(suite.avgBatchSize / suite.batches);
     suite.size = await store.size();
     suite.startHeap = process.memoryUsage().rss - suite.startHeap;
-    suite.memorySpaces = v8.getHeapSpaceStatistics().map(parseMemorySpace);
+
+
+    console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
+
+    heapdump.writeSnapshot((err, filename) => {
+        console.log('Heap dump written to', filename)
+    });
     
     process.send(suite);
     process.exit(0);

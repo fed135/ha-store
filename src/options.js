@@ -1,4 +1,14 @@
+/**
+ * Options
+ */
+
+'use strict';
+
+/* Requires ------------------------------------------------------------------*/
+
 const {exp} = require('./utils.js');
+
+/* Local variables -----------------------------------------------------------*/
 
 const defaultConfig = {
   batch: {
@@ -27,6 +37,7 @@ const defaultStoreOptions = {
 };
 
 /* Methods -------------------------------------------------------------------*/
+
 function hydrateStoreOptions(storeOptions = {}) {
   return {
     ...defaultStoreOptions,
@@ -66,5 +77,7 @@ function hydrateConfig(config = {}) {
     cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
   };
 }
+
+/* Exports -------------------------------------------------------------------*/
 
 module.exports = {hydrateConfig, hydrateStoreOptions};

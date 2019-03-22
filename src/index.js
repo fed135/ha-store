@@ -2,7 +2,10 @@
  * Batcher index
  */
 
+'use strict';
+
 /* Requires ------------------------------------------------------------------*/
+
 const queue = require('./queue.js');
 const store = require('./store.js');
 const {contextKey, recordKey} = require('./utils.js');
