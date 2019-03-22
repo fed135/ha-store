@@ -80,20 +80,20 @@ describe('store', () => {
       testStore = store(config, testEmitter, testMap);
     });
 
-    it('should save to the store and not schedule lru', (done) => {
+    it('should save to the store and not schedule checkExpiration', (done) => {
       const lruMock = sinon.mock(testStore);
       testStore.set(recordKey, ['testValue'], { testValue: { value: 'foo' } });
       setTimeout(() => {
-        lruMock.expects('lru').never();
+        lruMock.expects('checkExpiration').never();
         done();
       }, 11);
     });
 
-    it('should save to the store and schedule lru when there\'s a ttl', (done) => {
+    it('should save to the store and schedule checkExpiration when there\'s a ttl', (done) => {
       const lruMock = sinon.mock(testStore);
       testStore.set(recordKey, ['testLRUValue'], { testLRUValue: { value: 'foo' } }, { step: 0 });
       setTimeout(() => {
-        lruMock.expects('lru').once().withArgs('testLRUValue');
+        lruMock.expects('checkExpiration').once().withArgs('testLRUValue');
         emitterMock.expects('emit').once().withArgs('cacheClear');
         done();
       }, 11);
@@ -130,7 +130,7 @@ describe('store', () => {
     });
   });
 
-  describe('#lru', () => {
+  describe('#checkExpiration', () => {
     beforeEach(() => {
       testMap = {};
       testEmitter = new EventEmitter();
@@ -141,7 +141,7 @@ describe('store', () => {
     it('should extend the cache period if bump is true', () => {
       testStore.set(recordKey, ['testLRUValue'], { testLRUValue: 'foo' }, { step: 0 });
       testStore.get('testLRUValue');
-      testStore.lru('testLRUValue');
+      testStore.checkExpiration('testLRUValue');
       emitterMock.expects('emit').once().withArgs('cacheBump');
     });
   });

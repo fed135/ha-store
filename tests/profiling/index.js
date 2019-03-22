@@ -46,6 +46,7 @@ app.on('message', async (suite) => {
   for (const expectation in settings.assert) {
     if (suite[expectation] < settings.assert[expectation][0] || suite[expectation] > settings.assert[expectation][1]) {
       console.error(new Error(`Performance test failed: ${expectation} did not match expectation ${settings.assert[expectation]}`));
+      process.exit(1);
     }
   }
   process.exit(0);

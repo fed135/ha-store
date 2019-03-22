@@ -26,7 +26,7 @@ function localStore(config, emitter, store) {
     setTimeout(garbageCollect, config.storeOptions.scavengeCycle);
     const now = Date.now();
     for (const key in store) {
-      if (store[key].ttl <= now) lru(key);
+      if (store[key].ttl <= now) checkExpiration(key);
     }
   }
 
@@ -59,7 +59,8 @@ function localStore(config, emitter, store) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Too many records' });
         continue;
       }
-      if (Math.random() < ((totalTTL / storeSize || 1) / config.cache.limit) * config.storeOptions.dropFactor) {
+      const storageEfficiency = ((totalTTL / storeSize || 1) / config.cache.limit); // Generates a 0-1 number indicating current efficiency.
+      if (Math.random() < storageEfficiency * config.storeOptions.dropFactor) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Efficiency capped' });
         continue;
       }
@@ -107,7 +108,7 @@ function localStore(config, emitter, store) {
    * Attempts to invalidate a key once it's cache step time expires
    * @param {string} key The key to be evaluated for invalidation
    */
-  function lru(key) {
+  function checkExpiration(key) {
     const record = store[key];
     if (record !== undefined) {
       if (record.value && record.ttl > 0) {
@@ -139,7 +140,7 @@ function localStore(config, emitter, store) {
 
   setTimeout(garbageCollect, config.storeOptions.scavengeCycle);
 
-  return { get, set, clear, lru, size };
+  return { get, set, clear, checkExpiration, size };
 }
 
 /* Exports -------------------------------------------------------------------*/

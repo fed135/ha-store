@@ -47,7 +47,7 @@ function hydrateStoreOptions(storeOptions = {}) {
     pluginFallback: (storeOptions.pluginFallback === undefined) ? true : storeOptions.pluginFallback,
     recordLimit: Number(storeOptions.recordLimit) || defaultStoreOptions.recordLimit,
     scavengeCycle: Number(storeOptions.scavengeCycle) || defaultStoreOptions.scavengeCycle,
-    dropFactor: Number(storeOptions.dropFactor) || defaultStoreOptions.dropFactor,
+    dropFactor: (storeOptions.dropFactor === undefined) ? defaultStoreOptions.dropFactor : Number(storeOptions.dropFactor),
   };
 }
 
