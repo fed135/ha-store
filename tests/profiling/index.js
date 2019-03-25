@@ -53,4 +53,3 @@ app.on('message', async (suite) => {
 });
 
 hitStore();
-
