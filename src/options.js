@@ -1,4 +1,14 @@
+/**
+ * Options
+ */
+
+'use strict';
+
+/* Requires ------------------------------------------------------------------*/
+
 const {exp} = require('./utils.js');
+
+/* Local variables -----------------------------------------------------------*/
 
 const defaultConfig = {
   batch: {
@@ -17,34 +27,28 @@ const defaultConfig = {
     limit: 30000,
     curve: exp,
   },
-  breaker: {
-    base: 1000,
-    steps: 10,
-    limit: 0xffff,
-    curve: exp,
-    tolerance: 1,
-    toleranceFrame: 10000,
-  },
 };
 
 const defaultStoreOptions = {
   pluginRecoveryDelay: 10000,
   pluginFallback: true,
-  memoryLimit: 0.9,
-  recordLimit: Infinity,
+  recordLimit: 256 * 256,
+  dropFactor: 1,
+  scavengeCycle: 50,
 };
 
 /* Methods -------------------------------------------------------------------*/
+
 function hydrateStoreOptions(storeOptions = {}) {
   return {
     ...defaultStoreOptions,
     ...storeOptions,
     pluginRecoveryDelay: Number(storeOptions.pluginRecoveryDelay) || defaultStoreOptions.pluginRecoveryDelay,
     pluginFallback: (storeOptions.pluginFallback === undefined) ? true : storeOptions.pluginFallback,
-    memoryLimit: Math.max(0, Math.min(1, Number(storeOptions.memoryLimit) || defaultStoreOptions.memoryLimit)),
     recordLimit: Number(storeOptions.recordLimit) || defaultStoreOptions.recordLimit,
+    scavengeCycle: Number(storeOptions.scavengeCycle) || defaultStoreOptions.scavengeCycle,
+    dropFactor: (storeOptions.dropFactor === undefined) ? defaultStoreOptions.dropFactor : Number(storeOptions.dropFactor),
   };
-
 }
 
 function hydrateIfNotNull(baseConfig, defaultConfig) {
@@ -72,8 +76,9 @@ function hydrateConfig(config = {}) {
     batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
     retry: hydrateIfNotNull(config.retry, defaultConfig.retry),
     cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
-    breaker: hydrateIfNotNull(config.breaker, defaultConfig.breaker),
   };
 }
+
+/* Exports -------------------------------------------------------------------*/
 
 module.exports = {hydrateConfig, hydrateStoreOptions};
