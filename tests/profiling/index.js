@@ -5,31 +5,17 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const crypto = require('crypto');
 const settings = require('./settings');
 const {fork} = require('child_process');
 const path = require('path');
+const fs = require('fs');
+const split2 = require('split2');
 
 /* Init ----------------------------------------------------------------------*/
 
 // Setup
 const app = fork(path.resolve(__dirname, './testApp.js'));
-const startTime = Date.now();
-
-async function hitStore() {
-  if (Date.now() - startTime <  settings.test.testDuration) {
-    process.nextTick(hitStore);
-    
-    // Simulate normal z-distribution
-    let sampleRange = (Math.round(Math.random()*3) === 0) ? 1:2;
-    const id = crypto.randomBytes(sampleRange).toString('hex');
-    const language = settings.test.languages[Math.floor(Math.random()*settings.test.languages.length)];
-    app.send({ id, language });
-  }
-  else {
-    app.send('finish');
-  }
-}
+const stream = fs.createReadStream(path.resolve(__dirname, 'sample.txt'), 'utf-8').pipe(split2());
 
 app.on('message', async (suite) => {
   console.log(`
@@ -52,4 +38,11 @@ app.on('message', async (suite) => {
   process.exit(0);
 });
 
-hitStore();
+stream.on('data', (chunk) => {
+  const [id, language] = chunk.split(' ');
+  app.send({ id, language });
+});
+
+stream.on('end', () => {
+  app.send('finish');
+});
