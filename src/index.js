@@ -2,10 +2,12 @@
  * Batcher index
  */
 
+'use strict';
+
 /* Requires ------------------------------------------------------------------*/
+
 const queue = require('./queue.js');
 const store = require('./store.js');
-const breaker = require('./breaker.js');
 const {contextKey, recordKey} = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 const {hydrateConfig} = require('./options');
@@ -32,14 +34,11 @@ class HaStore extends EventEmitter {
       this.setMaxListeners(Infinity);
     }
 
-    this.breaker = breaker(this.config, this);
-
     this.queue = queue(
       this.config,
       this,
       store(this.config, this),
       this.config.store,
-      this.breaker,
     );
   }
 

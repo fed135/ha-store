@@ -13,7 +13,7 @@ const contextRecordKey = key => id => recordKey(key, id);
 
 /* Methods -------------------------------------------------------------------*/
 
-function queue(config, emitter, store, storePlugin, breaker) {
+function queue(config, emitter, store, storePlugin) {
 
   // Local variables
   const contexts = new Map();
@@ -107,12 +107,11 @@ function queue(config, emitter, store, storePlugin, breaker) {
       query(type, key, ids.splice(0, optimalBatchSize), context);
     }
 
-    contexts.delete(context.key)
+    contexts.delete(context.key);
   }
 
   /**
    * Main queue function
-   * - Checks circuit-breaker status
    * - Resolves context object and deferred handlers
    * - Looks-up cache
    * - Prepares data-source query timer/invocation
@@ -123,7 +122,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
    * @param {boolean} startQueue Wether to start the queue immediately or not
    */
   async function push(id, params, agg, startQueue, uid) {
-    if (breaker.status().active === true) return Promise.reject(breaker.circuitError);
     const key = contextKey(config.uniqueParams, params);
     const context = resolveContext(key, params, uid);
     let entity = await lookupCache(key, id, context);
@@ -193,7 +191,9 @@ function queue(config, emitter, store, storePlugin, breaker) {
           context.promises.delete(ids[i]);
         }
       }
-      if (context.promises.size === 0) contexts.delete(context.key);
+      if (context.promises.size === 0) {
+        contexts.delete(context.key);
+      }
     }
 
     function handleQueryCriticalError(err, override) {
@@ -241,7 +241,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
       }
 
       if (context.promises.size === 0) contexts.delete(context.key);
-      breaker.openCircuit();
     }
   }
 
@@ -259,9 +258,6 @@ function queue(config, emitter, store, storePlugin, breaker) {
 
     if (config.cache) {
       targetStore.set(contextRecordKey(key), ids.filter(id => records[id] !== null && records[id] !== undefined), records, { step: 0 });
-    }
-    if (breaker.status().step > 0) {
-      breaker.closeCircuit();
     }
 
     for (let i = 0; i < ids.length; i++) {

@@ -17,7 +17,6 @@ function checkForPublicProperties(store) {
   expect(store.getKey).to.not.be.undefined;
   expect(store.config).to.not.be.undefined;
   expect(store.queue).to.not.be.undefined;
-  expect(store.breaker).to.not.be.undefined;
 }
 
 /* Tests ---------------------------------------------------------------------*/
@@ -59,7 +58,6 @@ describe('index', () => {
         cache: {base: 2},
         batch: {max: 12},
         retry: {limit: 35},
-        breaker: {steps: 1},
       });
       checkForPublicProperties(test);
     });

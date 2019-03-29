@@ -7,15 +7,6 @@ type GenericCurveConfig = {
   curve (progress: number, start: number, end: number): number
 }
 
-type BreakerCurveConfig = {
-  base: number
-  steps: number
-  limit: number
-  curve (progress: number, start: number, end: number): number
-  tolerance: number
-  toleranceFrame: number
-}
-
 type Params = {
   [key: string]: string
 }
@@ -36,13 +27,13 @@ declare interface BatcherConfig {
     max: number
   }
   retry?: GenericCurveConfig
-  breaker?: GenericCurveConfig
   store?: any
   storeOptions?: {
     pluginFallback?: boolean
     pluginRecoveryDelay?: number
-    memoryLimit?: number
     recordLimit?: number
+    dropFactor?: number
+    scavengeCycle?: number
   }
 }
 
