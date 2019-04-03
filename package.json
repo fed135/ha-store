@@ -39,10 +39,8 @@
   "author": "frederic charette <fredericcharette@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "caching-map": "^1.0.2",
     "chai": "^4.2.0",
     "heapdump": "^0.3.12",
-    "lru_map": "^0.3.3",
     "mocha": "^6.0.0",
     "sinon": "^7.2.0",
     "split2": "^3.1.1"
