@@ -22,34 +22,12 @@ const defaultConfig = {
     curve: exp,
   },
   cache: {
-    base: 1000,
-    steps: 5,
-    limit: 30000,
-    curve: exp,
+    limit: 60000,
+    ttl: 60000,
   },
 };
 
-const defaultStoreOptions = {
-  pluginRecoveryDelay: 10000,
-  pluginFallback: true,
-  recordLimit: 256 * 256,
-  dropFactor: 1,
-  scavengeCycle: 50,
-};
-
 /* Methods -------------------------------------------------------------------*/
-
-function hydrateStoreOptions(storeOptions = {}) {
-  return {
-    ...defaultStoreOptions,
-    ...storeOptions,
-    pluginRecoveryDelay: Number(storeOptions.pluginRecoveryDelay) || defaultStoreOptions.pluginRecoveryDelay,
-    pluginFallback: (storeOptions.pluginFallback === undefined) ? true : storeOptions.pluginFallback,
-    recordLimit: Number(storeOptions.recordLimit) || defaultStoreOptions.recordLimit,
-    scavengeCycle: Number(storeOptions.scavengeCycle) || defaultStoreOptions.scavengeCycle,
-    dropFactor: (storeOptions.dropFactor === undefined) ? defaultStoreOptions.dropFactor : Number(storeOptions.dropFactor),
-  };
-}
 
 function hydrateIfNotNull(baseConfig, defaultConfig) {
   if (baseConfig === null) {
@@ -70,9 +48,6 @@ function hydrateConfig(config = {}) {
   return {
     ...config,
     timeout: Number(config.timeout) || null,
-    storeOptions: {
-      ...hydrateStoreOptions(config.storeOptions || {}),
-    },
     batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
     retry: hydrateIfNotNull(config.retry, defaultConfig.retry),
     cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
@@ -81,4 +56,4 @@ function hydrateConfig(config = {}) {
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = {hydrateConfig, hydrateStoreOptions};
+module.exports = {hydrateConfig};

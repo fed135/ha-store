@@ -13,17 +13,10 @@ const expect = require('chai').expect;
 
 describe('options', () => {
   const defaultConfig = {
-    "storeOptions": {
-      "pluginRecoveryDelay": 10000,
-      "pluginFallback": true,
-      "recordLimit": 65536,
-      "dropFactor": 1,
-      "scavengeCycle": 50,
-    },
     "timeout": null,
     "batch": {"tick": 50, "max": 100},
     "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
-    "cache": {curve: exp, "base": 1000, "steps": 5, "limit": 30000},
+    "cache": {"limit": 60000, "ttl": 60000},
   };
 
   describe('#basicParser', () => {
@@ -37,7 +30,7 @@ describe('options', () => {
       });
 
       expect(test.config).to.deep.contain({
-        cache: {limit: 30000, steps: 5, base: 1000, curve: exp},
+        cache: {limit: 60000, ttl:60000},
         batch: {max: 100, tick: 50},
         retry: {limit: 5000, steps: 3, base: 5, curve: exp},
       });
@@ -47,13 +40,13 @@ describe('options', () => {
       const test = batcher({
         resolver: noop,
         uniqueParams: ['a', 'b', 'c'],
-        cache: {base: 2},
+        cache: {limit: 2},
         batch: {max: 12},
         retry: {limit: 35},
       });
 
       expect(test.config).to.deep.contain({
-        cache: {limit: 30000, steps: 5, base: 2, curve: exp},
+        cache: {limit: 2, ttl:60000},
         batch: {max: 12, tick: 50},
         retry: {limit: 35, steps: 3, base: 5, curve: exp},
       });
@@ -67,13 +60,6 @@ describe('options', () => {
 
     it('should hydrate a module\'s configuration if its base config is not `null`', () => {
       const baseConfig = {
-        "storeOptions": {
-          "pluginRecoveryDelay": 10000,
-          "pluginFallback": true,
-          "recordLimit": 65536,
-          "dropFactor": 1,
-          "scavengeCycle": 50,
-        },
         "timeout": false,
         "batch": {},
         "retry": undefined,
@@ -97,13 +83,6 @@ describe('options', () => {
 
     it('should not hydrate a module\'s configuration if its base config is `null`', () => {
       const baseConfig = {
-        "storeOptions": {
-          "pluginRecoveryDelay": 10000,
-          "pluginFallback": true,
-          "recordLimit": 65536,
-          "dropFactor": 1,
-          "scavengeCycle": 50,
-        },
         "timeout": null,
         "batch": null,
         "retry": null,

@@ -34,11 +34,12 @@ class HaStore extends EventEmitter {
       this.setMaxListeners(Infinity);
     }
 
+    this.store = this.config.cache ? store(this.config, this) : null;
+
     this.queue = queue(
       this.config,
       this,
-      store(this.config, this),
-      this.config.store,
+      this.store,
     );
   }
 
@@ -84,7 +85,7 @@ class HaStore extends EventEmitter {
       return ids.map(id => this.clear(id, params));
     }
 
-    return this.queue.store.clear(this.getKey(ids, params));
+    return this.store.clear(this.getKey(ids, params));
   }
 
   /**
@@ -94,7 +95,7 @@ class HaStore extends EventEmitter {
   async size() {
     return {
       contexts: this.queue.size(),
-      records: await this.queue.store.size(),
+      records: await this.store.size(),
     };
   }
 

@@ -13,22 +13,12 @@ const contextRecordKey = key => id => recordKey(key, id);
 
 /* Methods -------------------------------------------------------------------*/
 
-function queue(config, emitter, store, storePlugin) {
+function queue(config, emitter, targetStore) {
 
   // Local variables
   const contexts = new Map();
   const timeoutError = new Error('TIMEOUT')
   const retryCurve = tween(config.retry);
-  let targetStore = storePlugin && storePlugin(config, emitter) || store;
-  emitter.on('storePluginErrored', () => {
-    if (config.storeOptions.pluginFallback === true) {
-      targetStore = store;
-      setTimeout(() => {
-        emitter.emit('storePluginRestored');
-        targetStore = storePlugin && storePlugin(config, emitter) || store;
-      }, config.storeOptions.pluginRecoveryDelay);
-    }
-  });
 
   /**
    * Attempts to read a query item from cache
@@ -42,9 +32,9 @@ function queue(config, emitter, store, storePlugin) {
     if (config.cache !== null) {
       const record = await targetStore.get(recordKey(key, id));
       
-      if (record !== undefined && record !== null) {
+      if (record !== undefined) {
         emitter.emit('cacheHit', { key, id, params: context.params });
-        return record.value;
+        return record;
       }
 
       emitter.emit('cacheMiss', { key, id, params: context.params });
@@ -284,7 +274,7 @@ function queue(config, emitter, store, storePlugin) {
     return contexts.size;
   }
 
-  return { batch, push, size, retry, query, resolveContext, complete, store: targetStore };
+  return { batch, push, size, retry, query, resolveContext, complete };
 }
 
 /* Exports -------------------------------------------------------------------*/

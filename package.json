@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
@@ -49,5 +49,8 @@
     "tim mulqueen <tim.mulqueen@gmail.com>",
     "damon perron-laurin <damonperronlaurin@gmail.com>"
   ],
-  "typings": "./src/index.d.ts"
+  "typings": "./src/index.d.ts",
+  "dependencies": {
+    "lru-native2": "git+https://github.com/d3m3vilurr/node-lru-native.git"
+  }
 }
