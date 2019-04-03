@@ -17,24 +17,16 @@ const { tween } = require('./utils.js');
  * @param {Object} store A store instance to replace the default in-memory Dictionary
  */
 function localStore(config, emitter, store) {
-  store = store || {};
+  store = store || {};
   let storeSize = 0;
   let totalTTL = 0;
   const curve = tween(config.cache);
   
-  function garbageCollect() {
+  function garbageCollect(bucket) {
     setTimeout(garbageCollect, config.storeOptions.scavengeCycle);
     const now = Date.now();
-    let marked = 0;
     for (const key in store) {
-      const record = store[key];
-      if (record !== undefined) {
-        if (record.ttl <= now) {
-          marked++;
-          checkExpiration(key, record);
-          if (marked >= 6000) return true; 
-        }
-      }
+      if (store[key].ttl <= now) checkExpiration(key);
     }
   }
 
@@ -46,7 +38,9 @@ function localStore(config, emitter, store) {
   function get(key) {
     const record = store[key];
     if (record !== undefined) {
-      record.bump = true;
+      if (record.value !== undefined && record.ttl > 0) {
+        record.bump = true;
+      }
     }
     return record;
   }
@@ -77,12 +71,12 @@ function localStore(config, emitter, store) {
         ttl: 0,
         bump: null,
       };
-      totalTTL += stepSize|0;
+      totalTTL += stepSize;
       const key = recordKey(keys[i]);
       if (opts && opts.step !== undefined) {
         value.timestamp = now;
         value.step = opts.step;
-        value.ttl = now + stepSize|0;
+        value.ttl = now + stepSize;
       }
       storeSize++;
       store[key] = value;
@@ -104,7 +98,7 @@ function localStore(config, emitter, store) {
     const record = store[key];
     if (record !== undefined) {
       storeSize--;
-      totalTTL -= curve(record.step)|0;
+      totalTTL -= curve(record.step);
       delete store[key];
       return true;
     }
@@ -115,19 +109,25 @@ function localStore(config, emitter, store) {
    * Attempts to invalidate a key once it's cache step time expires
    * @param {string} key The key to be evaluated for invalidation
    */
-  function checkExpiration(key, record) {
-    if (record.step < config.cache.steps && record.bump === true) {
-      record.step = record.step + 1;
-      const ext = Math.round(curve(record.step));
-      const ttl = Math.min(record.timestamp + ext|0, record.timestamp + config.cache.limit|0);
-      emitter.emit('cacheBump', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: ttl });
-      record.ttl = ttl;
-      totalTTL += ext|0;
-      record.bump = false;
-    }
-    else {
-      emitter.emit('cacheClear', { key, value: record.value, timestamp: record.timestamp, step: record.step });
-      clear(key);
+  function checkExpiration(key) {
+    const record = store[key];
+    if (record !== undefined) {
+      if (record.value && record.ttl > 0) {
+        const now = Math.round(record.timestamp + curve(record.step));
+        if (record.step < config.cache.steps && record.bump === true) {
+          record.step = record.step + 1;
+          const ext = Math.round(curve(record.step));
+          const ttl = Math.min(record.timestamp + ext, record.timestamp + config.cache.limit);
+          emitter.emit('cacheBump', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: ttl });
+          record.ttl = ttl;
+          totalTTL += ext;
+          record.bump = false;
+        }
+        else {
+          emitter.emit('cacheClear', { key, value: record.value, timestamp: record.timestamp, step: record.step, expires: now });
+          clear(key);
+        }
+      }
     }
   }
 
