@@ -57,30 +57,32 @@ function localStore(config, emitter, store) {
     for (let i = 0; i < keys.length; i++) {
       if (storeSize + 1 > config.storeOptions.recordLimit) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Too many records' });
-        continue;
+        return false;
       }
       const storageEfficiency = ((totalTTL / storeSize || 1) / config.cache.limit); // Generates a 0-1 number indicating current efficiency.
       if (Math.random() < storageEfficiency * config.storeOptions.dropFactor) {
         emitter.emit('cacheSkip', { omitted: { key: recordKey(keys[i]), value: values[keys[i]] }, reason: 'Efficiency capped' });
-        continue;
       }
-      let value = {
-        value: values[keys[i]],
-        timestamp: null,
-        step: null,
-        ttl: 0,
-        bump: null,
-      };
-      totalTTL += stepSize;
-      const key = recordKey(keys[i]);
-      if (opts && opts.step !== undefined) {
-        value.timestamp = now;
-        value.step = opts.step;
-        value.ttl = now + stepSize;
+      else {
+        let value = {
+          value: values[keys[i]],
+          timestamp: null,
+          step: null,
+          ttl: 0,
+          bump: null,
+        };
+        totalTTL += stepSize;
+        const key = recordKey(keys[i]);
+        if (opts && opts.step !== undefined) {
+          value.timestamp = now;
+          value.step = opts.step;
+          value.ttl = now + stepSize;
+        }
+        storeSize++;
+        store[key] = value;
       }
-      storeSize++;
-      store[key] = value;
     }
+    return true;
   }
 
   /**
