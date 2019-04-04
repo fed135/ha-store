@@ -19,7 +19,7 @@ function localStore(config, emitter) {
   const store = new lruNative({
     maxElements: config.cache.limit,
     maxAge: config.cache.ttl,
-    size: Math.ceil(config.cache.limit / 2),
+    size: Math.min(Math.ceil(config.cache.limit / 10), 1000),
   });
 
   /**
