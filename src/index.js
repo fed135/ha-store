@@ -81,6 +81,7 @@ class HaStore extends EventEmitter {
    * @returns {boolean} The result of the clearing
    */
   clear(ids, params) {
+    if (this.store === null) return true;
     if (Array.isArray(ids)) {
       return ids.map(id => this.clear(id, params));
     }
@@ -95,7 +96,7 @@ class HaStore extends EventEmitter {
   async size() {
     return {
       contexts: this.queue.size(),
-      records: await this.store.size(),
+      records: (this.store) ? await this.store.size() : 0,
     };
   }
 

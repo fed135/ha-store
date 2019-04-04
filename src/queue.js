@@ -29,7 +29,7 @@ function queue(config, emitter, targetStore) {
    * @returns {*|null} The cache result
    */
   async function lookupCache(key, id, context) {
-    if (config.cache !== null) {
+    if (targetStore !== null) {
       const record = await targetStore.get(recordKey(key, id));
       
       if (record !== undefined) {
@@ -246,7 +246,7 @@ function queue(config, emitter, targetStore) {
     const parser = config.responseParser || basicParser;
     const records = parser(results, ids, context.params);
 
-    if (config.cache) {
+    if (targetStore !== null) {
       targetStore.set(contextRecordKey(key), ids.filter(id => records[id] !== null && records[id] !== undefined), records, { step: 0 });
     }
 
