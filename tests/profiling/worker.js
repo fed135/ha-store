@@ -29,7 +29,6 @@ const store = HA(settings.setup);
 /* Methods -------------------------------------------------------------------*/
 
 function handleRequest(id, language) {
-    console.log('getting ', id, language)
     let finished = false;
     const before = Date.now();
     setTimeout(() => {
