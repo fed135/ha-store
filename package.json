@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
@@ -42,12 +42,16 @@
     "chai": "^4.2.0",
     "heapdump": "^0.3.12",
     "mocha": "^6.0.0",
-    "sinon": "^7.2.0"
+    "sinon": "^7.2.0",
+    "split2": "^3.1.1"
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>",
     "tim mulqueen <tim.mulqueen@gmail.com>",
     "damon perron-laurin <damonperronlaurin@gmail.com>"
   ],
-  "typings": "./src/index.d.ts"
+  "typings": "./src/index.d.ts",
+  "dependencies": {
+    "lru-native2": "git+https://github.com/d3m3vilurr/node-lru-native.git#9343e51263abfd8879c52f4f6b913c0aff1da05a"
+  }
 }
