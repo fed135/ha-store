@@ -52,6 +52,6 @@
   ],
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "lru-native2": "git+https://github.com/d3m3vilurr/node-lru-native.git#9343e51263abfd8879c52f4f6b913c0aff1da05a"
+    "lru-native2": "^1.1.0"
   }
 }
