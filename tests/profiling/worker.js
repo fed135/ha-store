@@ -12,8 +12,6 @@ const heapdump = require('heapdump');
 
 /* Local variables -----------------------------------------------------------*/
 
-let handbreak = false;
-
 const suite = {
     completed: 0,
     cacheHits: 0,
@@ -31,6 +29,7 @@ const store = HA(settings.setup);
 /* Methods -------------------------------------------------------------------*/
 
 function handleRequest(id, language) {
+    console.log('getting ', id, language)
     let finished = false;
     const before = Date.now();
     setTimeout(() => {
@@ -39,7 +38,6 @@ function handleRequest(id, language) {
     store.get(id, { language }, crypto.randomBytes(8).toString('hex'))
     .then((result) => {
         finished = true;
-        if (handbreak) return;
         if (!result || result.id !== id || result.language !== language) {
             throw new Error(`Integrity test failed: ${result} does not match {${id} ${language}}`);
         }
@@ -61,21 +59,22 @@ function parseMemorySpace(space) {
 }
 
 //End
-async function complete() {
-    handbreak = true;
-    suite.avgBatchSize = Math.round(suite.avgBatchSize / suite.batches);
-    suite.size = await store.size();
-    suite.startHeap = process.memoryUsage().rss - suite.startHeap;
+function complete() {
+    // give a chance to in-flight requests to complete
+    setTimeout(async () => {
+        suite.avgBatchSize = Math.round(suite.avgBatchSize / suite.batches);
+        suite.size = await store.size();
+        suite.startHeap = process.memoryUsage().rss - suite.startHeap;
 
+        // console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
 
-    // console.log(v8.getHeapSpaceStatistics().map(parseMemorySpace));
+        /*heapdump.writeSnapshot((err, filename) => {
+            console.log('Heap dump written to', filename)
+        });*/
 
-    /*heapdump.writeSnapshot((err, filename) => {
-        console.log('Heap dump written to', filename)
-    });*/
-    
-    process.send(suite);
-    process.exit(0);
+        process.send(suite);
+        process.exit(0);
+    }, 1000);
 }
 
 /* Init ----------------------------------------------------------------------*/

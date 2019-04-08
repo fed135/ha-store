@@ -14,8 +14,8 @@ const split2 = require('split2');
 /* Init ----------------------------------------------------------------------*/
 
 // Setup
-const app = fork(path.resolve(__dirname, './testApp.js'));
-const stream = fs.createReadStream(path.resolve(__dirname, 'sample.txt'), 'utf-8').pipe(split2());
+const app = fork(path.resolve(__dirname, './worker.js'));
+const stream = fs.createReadStream(path.resolve(settings.test.sampleFile), 'utf-8').pipe(split2());
 
 app.on('message', async (suite) => {
   console.log(`

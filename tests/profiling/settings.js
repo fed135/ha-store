@@ -2,9 +2,7 @@ const {getAssets} = require('./dao.js');
 
 module.exports = {
     test: {
-        testDuration: 1000,
-        requestDelay: 0,
-        languages: ['fr', 'en', 'ge', 'it', 'pr'],
+        sampleFile: './sample.txt',
     },
     setup: {
         resolver: getAssets,
