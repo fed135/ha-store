@@ -12,7 +12,7 @@ module.exports = {
         cache: { limit: 60000, steps: 5, base: 5000 },
         batch: { tick: 10, max: 50 },
         retry: { base: 1, step: 2 },
-        storeOptions: { dropFactor: 2.5, recordLimit: 60000 }
+        storeOptions: { dropFactor: 2.5, recordLimit: 60000, scavengeCycle: 50 }
     },
     assert: {
         completed: [90000, 200000],
