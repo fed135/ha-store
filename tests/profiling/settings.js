@@ -2,17 +2,14 @@ const {getAssets} = require('./dao.js');
 
 module.exports = {
     test: {
-        testDuration: 1000,
-        requestDelay: 0,
-        languages: ['fr', 'en', 'ge', 'it', 'pr'],
+        sampleFile: './sample.txt',
     },
     setup: {
         resolver: getAssets,
         uniqueParams: ['language'],
-        cache: { limit: 60000, steps: 5, base: 5000 },
+        cache: { limit: 60000, ttl: 60000 },
         batch: { tick: 10, max: 50 },
         retry: { base: 1, step: 2 },
-        storeOptions: { dropFactor: 2.5, recordLimit: 60000, scavengeCycle: 50 }
     },
     assert: {
         completed: [90000, 200000],
