@@ -7,7 +7,7 @@ module.exports = {
     setup: {
         resolver: getAssets,
         uniqueParams: ['language'],
-        cache: { limit: 60000, ttl: 60000 },
+        cache: { limit: 5000, ttl: 300000 },
         batch: { tick: 10, max: 50 },
         retry: { base: 1, step: 2 },
     },
