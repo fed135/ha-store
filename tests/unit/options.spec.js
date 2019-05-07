@@ -16,7 +16,7 @@ describe('options', () => {
     "timeout": null,
     "batch": {"tick": 50, "max": 100},
     "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
-    "cache": {"limit": 60000, "ttl": 60000},
+    "cache": {"limit": 5000, "ttl": 300000},
   };
 
   describe('#basicParser', () => {
@@ -30,7 +30,7 @@ describe('options', () => {
       });
 
       expect(test.config).to.deep.contain({
-        cache: {limit: 60000, ttl:60000},
+        cache: {limit: 5000, ttl: 300000},
         batch: {max: 100, tick: 50},
         retry: {limit: 5000, steps: 3, base: 5, curve: exp},
       });
@@ -46,7 +46,7 @@ describe('options', () => {
       });
 
       expect(test.config).to.deep.contain({
-        cache: {limit: 2, ttl:60000},
+        cache: {limit: 2, ttl: 300000},
         batch: {max: 12, tick: 50},
         retry: {limit: 35, steps: 3, base: 5, curve: exp},
       });
