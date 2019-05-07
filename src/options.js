@@ -22,8 +22,8 @@ const defaultConfig = {
     curve: exp,
   },
   cache: {
-    limit: 60000,
-    ttl: 60000,
+    limit: 5000,
+    ttl: 300000,
   },
 };
 

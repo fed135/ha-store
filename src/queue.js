@@ -150,13 +150,7 @@ function queue(config, emitter, targetStore) {
 
     bd = bd || ids.reduce((acc, id) => {
       if (id in context.batchData) {
-        if ([Number, String, Boolean].includes(context.batchData[id].constructor)) {
-          acc[id] = context.batchData[id]
-        }
-        else if (typeof context.batchData[id] === 'object'){
-          acc[id] = JSON.parse(JSON.stringify(context.batchData[id]));
-        }
-        else acc[id] = null;
+        acc[id] = context.batchData[id]
         delete context.batchData[id];
       }
       return acc;

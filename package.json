@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.14.1",
+  "version": "1.14.2",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
@@ -52,6 +52,6 @@
   ],
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "lru-native2": "^1.1.0"
+    "lru-native2": "^1.2.0"
   }
 }
