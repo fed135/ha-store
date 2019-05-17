@@ -6,9 +6,9 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const queue = require('./queue.js');
+const queue = require('./queries.js');
 const store = require('./store.js');
-const {contextKey, recordKey} = require('./utils.js');
+const {contextKey, recordKey, contextRecordKey} = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 const {hydrateConfig} = require('./options');
 
@@ -49,14 +49,11 @@ class HaStore extends EventEmitter {
    * @param {object} params (Optional)The Request parameters
    * @returns {Promise} The eventual single record
    */
-  get(ids, params = {}, agg = null) {
+  async get(ids, params = {}, agg = null) {
     if (params === null) params = {};
-    const uid = Math.random().toString(36);
     const requestIds = (Array.isArray(ids)) ? ids : [ids];
-    const promises = requestIds.map((id, i) => {
-      return this.queue.push(id, params, agg, (this.config.batch === null && i === requestIds.length - 1), uid);
-    });
-    return Promise.all(promises)
+    const key = contextKey(this.config.uniqueParams, params);
+    return Promise.all(await this.queue.getHandles(key, requestIds, params, agg))
       .then(response => (!Array.isArray(ids)) ? response[0] : response);
   }
 
@@ -71,7 +68,7 @@ class HaStore extends EventEmitter {
   set(items, ids, params = {}) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
     const key = contextKey(this.config.uniqueParams, params);
-    return this.queue.complete(key, ids, this.queue.resolveContext(key, params), items);
+    return this.store.set(contextRecordKey(key), ids, items);
   }
 
   /**
@@ -95,7 +92,7 @@ class HaStore extends EventEmitter {
    */
   async size() {
     return {
-      contexts: this.queue.size(),
+      ...this.queue.size(),
       records: (this.store) ? await this.store.size() : 0,
     };
   }

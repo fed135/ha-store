@@ -111,6 +111,8 @@ function recordKey(context, id) {
   return `${context}::${id}`;
 }
 
+const contextRecordKey = key => id => recordKey(key, id);
+
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = { deferred, exp, tween, basicParser, contextKey, recordKey };
+module.exports = { deferred, exp, tween, basicParser, contextKey, recordKey, contextRecordKey };

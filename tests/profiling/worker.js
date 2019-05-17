@@ -46,8 +46,8 @@ function handleRequest(id, language) {
     .catch((err) => { console.log(err); process.exit(1)} );
 }
 
-store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.ids.length; });
-store.on('cacheHit', () => { suite.cacheHits++; });
+store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.size; });
+store.on('cacheHit', evt => { suite.cacheHits+=evt.found; });
 
 function roundMi(value) {
     return Math.round((value / 1024 / 1024) * 1000) / 1000;
