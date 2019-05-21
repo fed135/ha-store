@@ -15,7 +15,7 @@ const {hydrateConfig} = require('./options');
 /* Local variable ------------------------------------------------------------*/
 
 class HaStore extends EventEmitter {
-  constructor(initialConfig = {}, emitter = new EventEmitter()) {
+  constructor(initialConfig, emitter) {
     super();
 
     // Parameter validation
@@ -34,7 +34,7 @@ class HaStore extends EventEmitter {
       this.setMaxListeners(Infinity);
     }
 
-    this.store = this.config.cache ? store(this.config, this) : null;
+    this.store = this.config.cache ? store(this.config) : null;
 
     this.queue = queue(
       this.config,
@@ -64,7 +64,6 @@ class HaStore extends EventEmitter {
    * @param {object} params (Optional)The Request parameters
    * @returns {Promise} The eventual single record
    */
-
   set(items, ids, params = {}) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
     const key = contextKey(this.config.uniqueParams, params);
@@ -109,6 +108,7 @@ class HaStore extends EventEmitter {
 }
 
 /* Exports -------------------------------------------------------------------*/
+
 function make(initialConfig = {}, emitter = new EventEmitter()) {
   return new HaStore(initialConfig, emitter);
 }
