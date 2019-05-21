@@ -39,7 +39,9 @@ function localStore(config, emitter) {
    */
   function set(recordKey, keys, values) {
     for (let i = 0; i < keys.length; i++) {
-      store.set(recordKey(keys[i]), values[keys[i]]);
+      if (values[keys[i]] !== undefined && values[keys[i]] !== null) {
+        store.set(recordKey(keys[i]), values[keys[i]]);
+      }
     }
     return true;
   }

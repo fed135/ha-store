@@ -3,11 +3,10 @@ const {basicParser, contextRecordKey, recordKey, deferred} = require('./utils');
 function queriesStore(config, emitter, targetStore) {
     const queries = {};
 
-    async function getHandles(key, ids, params, context) {
+    function getHandles(key, ids, params, context) {
         if (!(key in queries)) queries[key] = [];
 
-        const cached = ids
-            .map(async (id) => await targetStore.get(recordKey(key, id)));
+        const cached = ids.map(id => targetStore.get(recordKey(key, id)));
 
         const cacheHits = cached.filter(handle => handle !== undefined).length;
 
@@ -15,16 +14,19 @@ function queriesStore(config, emitter, targetStore) {
 
         const coalesced = cached
             .map((handle, i) => {
-                if (handle === undefined) handle = queries[key].find(query => query.handles[ids[i]]);
-                return handle.promise;
+                if (handle === undefined) {
+                    const existingQuery = queries[key].find(query => query.handles[ids[i]]);
+                    return existingQuery && existingQuery.handles[ids[i]].promise || undefined;
+                }
+                return handle;
             });
         
-        const missing = coalesced.filter(handle => !!(handle)).length;
+        const missing = coalesced.filter(handle => handle === undefined).length;
 
         if (missing < ids.length - cacheHits) emitter.emit('coalescedHit', { key, found: ids.length - missing - cacheHits });
         
         return coalesced.map((handle, i) => {
-            if (!handle) return assignQuery(key, ids[i], params, context, missing);
+            if (handle === undefined) return assignQuery(key, ids[i], params, context, missing);
             return handle;
         });
     }
@@ -74,11 +76,9 @@ function queriesStore(config, emitter, targetStore) {
         const entries = basicParser(rawResponse, ids, query.params);
 
         for (const handle in query.handles) {
-            if (entries[handle] !== null && entries[handle] !== undefined) {
-                targetStore.set(contextRecordKey(query.key), ids, entries);
-            }
             query.handles[handle].resolve(entries[handle]);
         }
+        targetStore.set(contextRecordKey(query.key), ids, entries);
         deleteQuery(query.key, query.uid);
     }
 

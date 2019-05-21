@@ -15,6 +15,7 @@ const heapdump = require('heapdump');
 const suite = {
     completed: 0,
     cacheHits: 0,
+    coalescedHit: 0,
     sum: 0,
     timeouts: 0,
     batches: 0,
@@ -48,6 +49,7 @@ function handleRequest(id, language) {
 
 store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.size; });
 store.on('cacheHit', evt => { suite.cacheHits+=evt.found; });
+store.on('coalescedHit', evt => { suite.coalescedHit+=evt.found; });
 
 function roundMi(value) {
     return Math.round((value / 1024 / 1024) * 1000) / 1000;
