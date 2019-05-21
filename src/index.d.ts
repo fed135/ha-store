@@ -1,12 +1,5 @@
 import { EventEmitter } from 'events'
 
-type GenericCurveConfig = {
-  base?: number
-  steps?: number
-  limit?: number
-  curve? (progress: number, start: number, end: number): number
-}
-
 type Params = {
   [key: string]: string
 }
@@ -29,7 +22,6 @@ declare interface BatcherConfig {
     tick?: number
     max?: number
   }
-  retry?: GenericCurveConfig
 }
 
 declare function batcher(config: BatcherConfig, emitter: EventEmitter): {
