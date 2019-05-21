@@ -21,6 +21,7 @@ app.on('message', async (suite) => {
   console.log(`
     ${suite.completed} completed requests
     ${suite.cacheHits} cache hits
+    ${suite.coalescedHit} coalesced hits
     ${JSON.stringify(suite.size)} in memory
     ${suite.timeouts} timed out
     avg response time ${(suite.sum / suite.completed).toFixed(3)}
