@@ -58,7 +58,7 @@ class HaStore extends EventEmitter {
         const errors = results.filter(r => r.status === 0);
         const entities = results.filter(r => r.status === 1);
         if (entities.length === 0) throw { errors: errors.map(e => e.reason) };
-        return (Array.isArray(ids)) ? results.map(r => r.value) : results[0].value;
+        return (Array.isArray(ids)) ? entities.map(r => r.value) : entities[0].value;
       });
   }
 
