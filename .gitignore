@@ -48,3 +48,6 @@ yarn.lock
 
 # Clinic
 *.clinic*
+
+# benchmark samples
+sample.txt

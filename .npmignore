@@ -7,3 +7,4 @@ CONTRIBUTING.md
 *.log
 package-lock.json
 *.clinic*
+sample.txt
