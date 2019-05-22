@@ -73,9 +73,8 @@ function queriesStore(config, emitter, targetStore) {
         const ids = Object.keys(query.handles);
         const entries = basicParser(rawResponse, ids, query.params);
 
-        for (const handle in query.handles) {
-            query.handles[handle].resolve(entries[handle]);
-        }
+        ids.forEach(id => query.handles[id].resolve(entries[id]));
+
         targetStore.set(contextRecordKey(query.key), ids, entries);
         deleteQuery(query.key, query.uid);
     }
