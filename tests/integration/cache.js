@@ -226,7 +226,7 @@ describe('Caching', () => {
     it('should not cache failed requests', () => {
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.deep.equal({ errors: [{ error: 'Something went wrong' }] });
           mockSource.expects('getFailedRequest')
             .once().withArgs(['abc'], { language: 'fr' });
         });
@@ -235,7 +235,7 @@ describe('Caching', () => {
     it('should not cache failed multi requests', () => {
       return testStore.get(['abc', 'foo'], { language: 'en' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.deep.equal({ errors: [{ error: 'Something went wrong' }, { error: 'Something went wrong' }] });
           mockSource.expects('getFailedRequest')
             .once().withArgs(['abc', 'foo'], { language: 'en' });
         });
@@ -245,7 +245,7 @@ describe('Caching', () => {
       testStore.config.batch = null;
       return testStore.get('abc')
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.deep.equal({ errors: [{ error: 'Something went wrong' }] });
           mockSource.expects('getFailedRequest')
             .once()
             .withArgs(['abc']);
@@ -269,24 +269,39 @@ describe('Caching', () => {
     });
 
     it('should not cache on rejected requests', () => {
-      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
+          expect(error).to.have.property('errors');
+          expect(error.errors.length).to.equal(1);
+          expect(error.errors[0]).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .once().withArgs(['abc'], { language: 'fr' });
         });
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.retry = null;
       testStore.config.batch = null;
       return testStore.get('abc')
         .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
+          expect(error).to.have.property('errors');
+          expect(error.errors.length).to.equal(1);
+          expect(error.errors[0]).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .once()
             .withArgs(['abc']);
+        });
+    });
+
+    it('should properly reject multi gets with disabled batching', () => {
+      testStore.config.batch = null;
+      return testStore.get(['abc', 'def'])
+        .then(null, (error) => {
+          expect(error).to.have.property('errors');
+          expect(error.errors.length).to.equal(2);
+          expect(error.errors[0]).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
+          mockSource.expects('getErroredRequest')
+            .once()
+            .withArgs(['abc', 'def']);
         });
     });
   });

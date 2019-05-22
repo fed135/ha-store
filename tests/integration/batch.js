@@ -287,7 +287,7 @@ describe('Batching', () => {
     it('should properly reject on single request', () => {
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.deep.equal({ errors: [{ error: 'Something went wrong' }] });
           mockSource.expects('getFailedRequest')
             .once().withArgs(['abc'], { language: 'fr' });
         });
@@ -296,7 +296,7 @@ describe('Batching', () => {
     it('should properly reject on multi request', () => {
       return testStore.get(['abc', 'foo'], { language: 'en' })
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.deep.equal({ errors: [{ error: 'Something went wrong' }, { error: 'Something went wrong' }] });
           mockSource.expects('getFailedRequest')
             .once().withArgs(['abc', 'foo'], { language: 'en' });
         });
@@ -306,7 +306,7 @@ describe('Batching', () => {
       testStore.config.batch = null;
       return testStore.get('abc')
         .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
+          expect(error).to.deep.equal({ errors: [{ error: 'Something went wrong' }] });
           mockSource.expects('getFailedRequest')
             .once()
             .withArgs(['abc']);
@@ -333,7 +333,8 @@ describe('Batching', () => {
       testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
+          expect(error).to.have.property('errors');
+          expect(error.errors[0]).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .once().withArgs(['abc'], { language: 'fr' });
         });
@@ -343,7 +344,8 @@ describe('Batching', () => {
       testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get(['abc', 'foo'], { language: 'en' })
         .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
+          expect(error).to.have.property('errors');
+          expect(error.errors[0]).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
             .once().withArgs(['abc', 'foo'], { language: 'en' });
         });
@@ -354,45 +356,9 @@ describe('Batching', () => {
       testStore.config.batch = null;
       return testStore.get('abc')
         .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
+          expect(error).to.have.property('errors');
+          expect(error.errors[0]).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
-            .once()
-            .withArgs(['abc']);
-        });
-    });
-  });
-  describe('Slow requests', () => {
-    let testStore;
-    let mockSource;
-    afterEach(() => {
-      testStore = null;
-      mockSource.restore();
-    });
-    beforeEach(() => {
-      mockSource = sinon.mock(dao);
-      testStore = store({
-        uniqueParams: ['language'],
-        resolver: dao.getSlowRequest,
-      });
-    });
-
-    it('should properly handle long single request', () => {
-      return testStore.get('abc', { language: 'fr' })
-        .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: 'fr' });
-          mockSource.expects('getSlowRequest')
-            .once()
-            .withArgs(['abc']);
-        });
-    });
-
-    it('should properly reject with short timeout allocation', () => {
-      testStore.config.timeout = 100;
-      testStore.config.retry = null;
-      return testStore.get('abc')
-        .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'TIMEOUT');
-          mockSource.expects('getSlowRequest')
             .once()
             .withArgs(['abc']);
         });
