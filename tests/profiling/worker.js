@@ -39,7 +39,7 @@ function handleRequest(id, language) {
     .then((result) => {
         finished = true;
         if (!result || result.id !== id || result.language !== language) {
-            throw new Error(`Integrity test failed: ${result} does not match {${id} ${language}}`);
+            throw new Error(`Integrity test failed: ${JSON.stringify(result)} does not match {${id} ${language}}`);
         }
         suite.sum += (Date.now() - before);
         suite.completed++;

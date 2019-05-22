@@ -8,7 +8,7 @@
 
 const queue = require('./queries.js');
 const store = require('./store.js');
-const {contextKey, recordKey, contextRecordKey} = require('./utils.js');
+const {contextKey, recordKey, contextRecordKey, reflect} = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 const {hydrateConfig} = require('./options');
 
@@ -49,12 +49,17 @@ class HaStore extends EventEmitter {
    * @param {object} params (Optional)The Request parameters
    * @returns {Promise} The eventual single record
    */
-  async get(ids, params = {}, agg = null) {
+  get(ids, params = {}, agg = null) {
     if (params === null) params = {};
     const requestIds = (Array.isArray(ids)) ? ids : [ids];
     const key = contextKey(this.config.uniqueParams, params);
-    return Promise.all(this.queue.getHandles(key, requestIds, params, agg))
-      .then(response => (!Array.isArray(ids)) ? response[0] : response);
+    return Promise.all(this.queue.getHandles(key, requestIds, params, agg).map(reflect))
+      .then(results => {
+        const errors = results.filter(r => r.status === 0);
+        const entities = results.filter(r => r.status === 1);
+        if (entities.length === 0) throw { errors: errors.map(e => e.reason) };
+        return (Array.isArray(ids)) ? results.map(r => r.value) : results[0].value;
+      });
   }
 
   /**
