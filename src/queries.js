@@ -34,8 +34,6 @@ function queriesStore(config, emitter, targetStore) {
     function assignQuery(key, id, params, context, total) {
         const query = queries[key].find(q => q.size < (config.batch && config.batch.max || total) && q.running === false) || createQuery(key, params);
 
-        if (query.size === 0 && config.batch === null) query.timer = setTimeout(() => runQuery(query), 0);
-
         query.size++;
         query.handles[id] = deferred();
         query.contexts.push(context);
@@ -46,7 +44,7 @@ function queriesStore(config, emitter, targetStore) {
         const query = { uid: Math.random().toString(36), key, params, handles: {}, running: false, timer: null, contexts: [], size: 0 };
         queries[key].push(query);
 
-        if (config.batch !== null) query.timer = setTimeout(() => runQuery(query), config.batch.tick);
+        query.timer = setTimeout(() => runQuery(query), config.batch && config.batch.tick || 0);
         return query;
     }
 
