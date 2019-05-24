@@ -7,6 +7,7 @@ const {hydrateConfig} = require('../../src/options');
 const batcher = require('../../src/index');
 const {noop} = require('./utils');
 const expect = require('chai').expect;
+const store = require('../../src/store');
 
 /* Tests ---------------------------------------------------------------------*/
 
@@ -14,6 +15,7 @@ describe('options', () => {
   const defaultConfig = {
     "batch": {"tick": 50, "max": 100},
     "cache": {"limit": 5000, "ttl": 300000},
+    "store": store,
   };
 
   describe('#basicParser', () => {
