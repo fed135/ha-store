@@ -32,7 +32,6 @@ function queriesStore(config, emitter, targetStore) {
     }
 
     function assignQuery(key, id, params, context, total) {
-        //console.log('assigning query for', key, id, params, context, total)
         const query = queries[key].find(q => q.size < (config.batch && config.batch.max || total) && q.running === false) || createQuery(key, params);
 
         query.size++;
