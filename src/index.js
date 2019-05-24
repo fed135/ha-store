@@ -7,7 +7,6 @@
 /* Requires ------------------------------------------------------------------*/
 
 const queue = require('./queries.js');
-const store = require('./store.js');
 const {contextKey, recordKey, contextRecordKey} = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 const {hydrateConfig} = require('./options');
@@ -34,7 +33,7 @@ class HaStore extends EventEmitter {
       this.setMaxListeners(Infinity);
     }
 
-    this.store = this.config.cache ? store(this.config) : null;
+    this.store = this.config.cache ? this.config.store(this.config) : null;
 
     this.queue = queue(
       this.config,
@@ -53,7 +52,8 @@ class HaStore extends EventEmitter {
     if (params === null) params = {};
     const requestIds = (Array.isArray(ids)) ? ids : [ids];
     const key = contextKey(this.config.uniqueParams, params);
-    return Promise.all(this.queue.getHandles(key, requestIds, params, agg))
+    const handles = await this.queue.getHandles(key, requestIds, params, agg);
+    return Promise.all(handles)
       .then(response => (!Array.isArray(ids)) ? response[0] : response);
   }
 

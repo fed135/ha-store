@@ -62,6 +62,16 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
+function reflect(promise) {
+  if (promise instanceof Promise) {
+    return promise.then(
+      value => ({ status: 1, value }),
+      error => ({ status: 0, reason: error }),
+    );
+  }
+  return Promise.resolve({ status: 1, value: promise });
+}
+
 function contextKey(u, params = {}) {
   return Array.from(u || []).map(opt => `${opt}=${JSON.stringify(params[opt])}`).join(';');
 }
@@ -74,4 +84,4 @@ const contextRecordKey = key => id => recordKey(key, id);
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = { deferred, basicParser, contextKey, recordKey, contextRecordKey };
+module.exports = { deferred, basicParser, contextKey, recordKey, contextRecordKey, reflect };

@@ -1,30 +1,30 @@
-const {basicParser, contextRecordKey, recordKey, deferred} = require('./utils');
+const {basicParser, contextRecordKey, recordKey, deferred, reflect} = require('./utils');
 
 function queriesStore(config, emitter, targetStore) {
     const queries = {};
 
-    function getHandles(key, ids, params, context) {
+    async function getHandles(key, ids, params, context) {
         if (!(key in queries)) queries[key] = [];
 
-        const cached = ids.map(id => targetStore.get(recordKey(key, id)));
+        const cached = await Promise.all(ids.map(id => targetStore.get(recordKey(key, id))).map(reflect));
 
-        const cacheHits = cached.filter(handle => handle !== undefined).length;
+        const cacheHits = cached.filter(handle => handle.status === 1 && handle.value !== undefined).length;
 
         if (cacheHits > 0) emitter.emit('cacheHit', { key, found: cacheHits });
 
         const coalesced = cached
             .map((handle, i) => {
-                if (handle === undefined) {
+                if (handle.status === 0 || handle.value === undefined) {
                     const existingQuery = queries[key].find(query => query.handles[ids[i]]);
                     return existingQuery && existingQuery.handles[ids[i]].promise || undefined;
                 }
-                return handle;
+                return handle.value;
             });
         
         const missing = coalesced.filter(handle => handle === undefined).length;
 
         if (missing < ids.length - cacheHits) emitter.emit('coalescedHit', { key, found: ids.length - missing - cacheHits });
-        
+
         return coalesced.map((handle, i) => {
             if (handle === undefined) return assignQuery(key, ids[i], params, context, missing);
             return handle;
@@ -32,6 +32,7 @@ function queriesStore(config, emitter, targetStore) {
     }
 
     function assignQuery(key, id, params, context, total) {
+        //console.log('assigning query for', key, id, params, context, total)
         const query = queries[key].find(q => q.size < (config.batch && config.batch.max || total) && q.running === false) || createQuery(key, params);
 
         query.size++;
