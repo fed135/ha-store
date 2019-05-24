@@ -3,7 +3,7 @@
  */
 
 /* Requires ------------------------------------------------------------------*/
-const {exp, contextKey} = require('../../src/utils.js');
+const {contextKey} = require('../../src/utils.js');
 const {noop} = require('./utils');
 const root = require('../../src/index.js');
 const expect = require('chai').expect;
@@ -35,7 +35,6 @@ describe('index', () => {
         uniqueParams: ['a', 'b', 'c'],
         cache: null,
         batch: null,
-        retry: null,
       });
       checkForPublicProperties(test);
     });
@@ -46,7 +45,6 @@ describe('index', () => {
         uniqueParams: ['a', 'b', 'c'],
         cache: true,
         batch: true,
-        retry: true,
       });
       checkForPublicProperties(test);
     });
@@ -57,7 +55,6 @@ describe('index', () => {
         uniqueParams: ['a', 'b', 'c'],
         cache: {base: 2},
         batch: {max: 12},
-        retry: {limit: 35},
       });
       checkForPublicProperties(test);
     });
@@ -72,7 +69,7 @@ describe('index', () => {
       const test = root({resolver: noop});
       const queueMock = sinon.mock(test.queue);
       test.get('123abc');
-      queueMock.expects('batch').once().withArgs('123abc');
+      queueMock.expects('getHandles').once().withArgs('', ['123abc'], undefined, undefined);
     });
 
     it('should handle single record queries with params', () => {
@@ -80,38 +77,14 @@ describe('index', () => {
       const params = {foo: 'bar'};
       const queueMock = sinon.mock(test.queue);
       test.get('123abc', params);
-      queueMock.expects('batch').once().withArgs('123abc', params);
-    });
-
-    it('should skip batching if batch config is false', () => {
-      const test = root({
-        resolver: noop,
-        batch: false
-      });
-      const queueMock = sinon.mock(test.queue);
-      test.get('123abc');
-      queueMock.expects('push').once().withArgs('123abc');
-    });
-
-    it('should skip batching if batch config is false with params', () => {
-      const test = root({
-        resolver: noop,
-        batch: false,
-      });
-      const params = {foo: 'bar'};
-      const queueMock = sinon.mock(test.queue);
-      test.get('123abc', params);
-      queueMock.expects('push').once().withArgs('123abc', params);
+      queueMock.expects('getHandles').once().withArgs('foo="bar"', ['123abc'], { foo: 'bar' }, undefined);
     });
 
     it('should handle multi record queries', () => {
       const test = root({resolver: noop});
       const queueMock = sinon.mock(test.queue);
       test.get(['123abc', '456def', '789ghi']);
-      queueMock.expects('push')
-        .once().withArgs('123abc')
-        .once().withArgs('456def')
-        .once().withArgs('789ghi');
+      queueMock.expects('getHandles').once().withArgs('', ['123abc', '456def', '789ghi'], undefined, undefined);
     });
 
     it('should handle multi record queries with params', () => {
@@ -119,10 +92,7 @@ describe('index', () => {
       const params = {foo: 'bar'};
       const queueMock = sinon.mock(test.queue);
       test.get(['123abc', '456def', '789ghi'], params);
-      queueMock.expects('push')
-        .once().withArgs('123abc', params)
-        .once().withArgs('456def', params)
-        .once().withArgs('789ghi', params);
+      queueMock.expects('getHandles').once().withArgs('foo="bar"', ['123abc', '456def', '789ghi'], { foo: 'bar' }, undefined);
     });
   });
 
@@ -130,9 +100,9 @@ describe('index', () => {
     it('should handle a collection of ids', () => {
       const test = root({resolver: noop});
       const params = {foo: 'bar'};
-      const queueMock = sinon.mock(test.queue);
+      const storeMock = sinon.mock(test.store);
       test.set({foo123abc: 'test'}, ['123abc'], params);
-      queueMock.expects('complete')
+      storeMock.expects('set')
         .once()
         .withArgs(contextKey([], params), ['123abc'], params, {foo123abc: 'test'});
     });
@@ -140,7 +110,6 @@ describe('index', () => {
     it('should throw if ids are not passed', () => {
       const test = root({resolver: noop});
       const params = {foo: 'bar'};
-      const queueMock = sinon.mock(test.queue);
       expect(test.set.bind(null, {foo123abc: 'test'}, params)).to.throw('Missing required argument id list in batcher #set.');
     });
   });
@@ -193,7 +162,7 @@ describe('index', () => {
       const storeMock = sinon.mock(test.store);
       test.get('123abc');
       const sizeValue = await test.size();
-      expect(sizeValue).to.deep.equal({contexts: 1, records: 0});
+      expect(sizeValue).to.deep.equal({contexts: 1, queries: 0, records: 0});
       queueMock.expects('size').once();
       storeMock.expects('size').once();
     });
