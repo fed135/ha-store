@@ -1,5 +1,5 @@
 const {getAssets} = require('./dao.js');
-//const redisStore = require('ha-redis-adapter');
+//const redisStore = require('ha-store-redis');
 
 module.exports = {
     test: {
