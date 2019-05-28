@@ -32,11 +32,15 @@ const store = HA(settings.setup);
 function handleRequest(id, language) {
     let finished = false;
     const before = Date.now();
-    setTimeout(() => {
-      //if (finished === false) suite.timeouts++;
+    const timeout = setTimeout(() => {
+      if (finished === false) {
+        suite.timeouts++;
+        console.log(`request timed out: { id: ${id}, lang: ${language}}`);
+      }
     }, 500);
     store.get(id, { language }, crypto.randomBytes(8).toString('hex'))
     .then((result) => {
+        clearTimeout(timeout);
         finished = true;
         if (!result || result.id !== id || result.language !== language) {
             throw new Error(`Integrity test failed: ${result} does not match {${id} ${language}}`);
