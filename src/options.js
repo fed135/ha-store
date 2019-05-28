@@ -4,6 +4,10 @@
 
 'use strict';
 
+/* Requires ------------------------------------------------------------------*/
+
+const store = require('./store.js');
+
 /* Local variables -----------------------------------------------------------*/
 
 const defaultConfig = {
@@ -37,6 +41,7 @@ function hydrateIfNotNull(baseConfig, defaultConfig) {
 function hydrateConfig(config = {}) {
   return {
     ...config,
+    store: config.store || store,
     batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
     cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
   };

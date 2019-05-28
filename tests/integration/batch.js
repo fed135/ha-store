@@ -28,10 +28,12 @@ describe('Batching', () => {
     });
 
     it('should batch single calls', () => {
-      testStore.get('foo');
-      return testStore.get('abc')
+      return Promise.all([
+        testStore.get('foo'),
+        testStore.get('abc')
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: undefined });
+          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['foo', 'abc']);
@@ -49,10 +51,12 @@ describe('Batching', () => {
     });
 
     it('should batch mixed calls', () => {
-      testStore.get(['foo', 'bar']);
-      return testStore.get('abc')
+      return Promise.all([
+        testStore.get(['foo', 'bar']),
+        testStore.get('abc')
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: undefined });
+          expect(result).to.deep.equal([[{ id: 'foo', language: undefined }, { id: 'bar', language: undefined }], { id: 'abc', language: undefined }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['foo', 'bar', 'abc']);
@@ -60,20 +64,24 @@ describe('Batching', () => {
     });
 
     it('should mix unique params matches', () => {
-      testStore.get(['foo', 'bar'], { language: 'fr' });
-      return testStore.get('abc', { language: 'fr' })
+      return Promise.all([
+        testStore.get(['foo', 'bar'], { language: 'fr' }),
+        testStore.get('abc', { language: 'fr' })
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc' , language: 'fr' });
+          expect(result).to.deep.equal([[{ id: 'foo', language: 'fr' }, { id: 'bar', language: 'fr' }], { id: 'abc', language: 'fr' }]);
           mockSource.expects('getAssets')
             .once().withArgs(['foo', 'bar', 'abc'], { language: 'fr' });
         });
     });
 
     it('should not mix unique params mismatches', () => {
-      testStore.get(['foo', 'bar'], { language: 'fr' });
-      return testStore.get('abc', { language: 'en' })
+      return Promise.all([
+        testStore.get(['foo', 'bar'], { language: 'fr' }),
+        testStore.get('abc', { language: 'en' })
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: 'en' });
+          expect(result).to.deep.equal([[{ id: 'foo', language: 'fr' }, { id: 'bar', language: 'fr' }], { id: 'abc', language: 'en' }]);
           mockSource.expects('getAssets')
             .once().withArgs(['abc'], { language: 'en' })
             .once().withArgs(['foo', 'bar'], { language: 'fr' });
@@ -81,10 +89,12 @@ describe('Batching', () => {
     });
 
     it('should coalesce duplicate entries', () => {
-      testStore.get('foo', { language: 'fr' });
-      return testStore.get('foo', { language: 'fr' })
+      return Promise.all([
+        testStore.get('foo', { language: 'fr' }),
+        testStore.get('foo', { language: 'fr' })
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: 'fr' });
+          expect(result).to.deep.equal([{ id: 'foo', language: 'fr' }, { id: 'foo', language: 'fr' }]);
           mockSource.expects('getAssets')
             .once().withArgs(['foo'], { language: 'fr' });
         });
@@ -110,54 +120,71 @@ describe('Batching', () => {
 
     it('should properly bucket very large requests (optimal batch size)', () => {
       testStore.config.batch = { max: 6, tick: 1 };
-      testStore.get(['foo2', 'bar2', 'abc2', 'def2', 'ghi2']);
-      return testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
+      return Promise.all([
+        testStore.get(['foo2', 'bar2', 'abc2', 'def2', 'ghi2']),
+        testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
+      ])
         .then((result) => {
-          expect(result).to.deep.equal([
+          expect(result).to.deep.equal([[
+            { id: 'foo2', language: undefined },
+            { id: 'bar2', language: undefined },
+            { id: 'abc2', language: undefined },
+            { id: 'def2', language: undefined },
+            { id: 'ghi2', language: undefined },
+          ],[
             { id: 'foo', language: 'en' },
             { id: 'bar', language: 'en' },
             { id: 'abc', language: 'en' },
             { id: 'def', language: 'en' },
             { id: 'ghi', language: 'en' },
-          ]);
+          ]]);
           mockSource.expects('getAssets')
-            .once().withArgs(['foo2', 'bar2', 'abc2', 'def2', 'ghi2', 'foo'], { language: 'en' })
+            .once().withArgs(['foo2', 'bar2', 'abc2', 'def2', 'ghi2', 'foo'])
             .once().withArgs(['bar', 'abc', 'def', 'ghi'], { language: 'en' })
         });
     });
 
     it('should accumulate batch data', () => {
-      testStore.get('foo', null, '1234567890');
-      return testStore.get('foo', null, '2345678901')
+      return Promise.all([
+        testStore.get('foo', null, '1234567890'),
+        testStore.get('foo', null, '2345678901')
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'foo', language: undefined }]);
           mockSource.expects('getAssets')
             .once()
-            .withArgs(['abc'], null, { 'foo': ['1234567890', '2345678901'] });
+            .withArgs(['abc'], null, ['1234567890', '2345678901']);
         });
     });
 
     it('should accumulate batch data, when batching is disabled', () => {
       testStore.config.batch = null;
-      testStore.get('foo');
-      return testStore.get('abc', null, '1234567890')
+      return Promise.all([
+        testStore.get('foo'),
+        testStore.get('abc', null, '1234567890')
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: undefined });
+          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
           mockSource.expects('getAssets')
             .once()
-            .withArgs(['abc'], null, { 'abc': ['1234567890'] });
+            .withArgs(['abc'], null, ['1234567890']);
         });
     });
 
     it('should support disabled batching', () => {
       testStore.config.batch = null;
-      testStore.get('foo');
-      return testStore.get('abc')
+      return Promise.all([
+        testStore.get('foo'),
+        testStore.get('abc')
+      ])
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: undefined });
+          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['abc']);
+          mockSource.expects('getAssets')
+            .once()
+            .withArgs(['foo']);
         });
     });
   });
@@ -178,10 +205,12 @@ describe('Batching', () => {
     });
 
     it('should batch single calls', () => {
-      testStore.get('foo');
-      return testStore.get('abc')
+      return Promise.all([
+        testStore.get('foo'),
+        testStore.get('abc')
+      ])
         .then((result) => {
-          expect(result).to.be.undefined;
+          expect(result).to.deep.equal([undefined, undefined]);
           mockSource.expects('getEmptyGroup')
             .once()
             .withArgs(['foo', 'abc']);
@@ -199,10 +228,12 @@ describe('Batching', () => {
     });
 
     it('should batch mixed calls', () => {
-      testStore.get(['foo', 'bar']);
-      return testStore.get('abc')
+      return Promise.all([
+        testStore.get(['foo', 'bar']),
+        testStore.get('abc')
+      ])
         .then((result) => {
-          expect(result).to.be.undefined;
+          expect(result).to.deep.equal([[undefined, undefined], undefined]);
           mockSource.expects('getEmptyGroup')
             .once()
             .withArgs(['foo', 'bar', 'abc']);
@@ -210,20 +241,24 @@ describe('Batching', () => {
     });
 
     it('should mix unique params matches', () => {
-      testStore.get(['foo', 'bar'], { language: 'fr' });
-      return testStore.get('abc', { language: 'fr' })
+      return Promise.all([
+        testStore.get(['foo', 'bar'], { language: 'fr' }),
+        testStore.get('abc', { language: 'fr' })
+      ])
         .then((result) => {
-          expect(result).to.be.undefined;
+          expect(result).to.deep.equal([[undefined, undefined], undefined]);
           mockSource.expects('getEmptyGroup')
             .once().withArgs(['foo', 'bar', 'abc'], { language: 'fr' });
         });
     });
 
     it('should not mix unique params mismatches', () => {
-      testStore.get(['foo', 'bar'], { language: 'fr' });
-      return testStore.get('abc', { language: 'en' })
+      return Promise.all([
+        testStore.get(['foo', 'bar'], { language: 'fr' }),
+        testStore.get('abc', { language: 'en' })
+      ])
         .then((result) => {
-          expect(result).to.be.undefined;
+          expect(result).to.deep.equal([[undefined, undefined], undefined]);
           mockSource.expects('getEmptyGroup')
             .once().withArgs(['abc'], { language: 'en' })
             .once().withArgs(['foo', 'bar'], { language: 'fr' });
@@ -232,10 +267,12 @@ describe('Batching', () => {
 
     it('should support disabled batching', () => {
       testStore.config.batch = null;
-      testStore.get('foo');
-      return testStore.get('abc')
+      return Promise.all([
+        testStore.get('foo'),
+        testStore.get('abc')
+      ])
         .then((result) => {
-          expect(result).to.be.undefined;
+          expect(result).to.deep.equal([undefined,undefined]);
           mockSource.expects('getEmptyGroup')
             .once()
             .withArgs(['abc']);
@@ -330,7 +367,6 @@ describe('Batching', () => {
     });
 
     it('should properly reject on single request', () => {
-      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -340,7 +376,6 @@ describe('Batching', () => {
     });
 
     it('should properly reject on multi request', () => {
-      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get(['abc', 'foo'], { language: 'en' })
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -350,49 +385,11 @@ describe('Batching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.retry = null;
       testStore.config.batch = null;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
           mockSource.expects('getErroredRequest')
-            .once()
-            .withArgs(['abc']);
-        });
-    });
-  });
-  describe('Slow requests', () => {
-    let testStore;
-    let mockSource;
-    afterEach(() => {
-      testStore = null;
-      mockSource.restore();
-    });
-    beforeEach(() => {
-      mockSource = sinon.mock(dao);
-      testStore = store({
-        uniqueParams: ['language'],
-        resolver: dao.getSlowRequest,
-      });
-    });
-
-    it('should properly handle long single request', () => {
-      return testStore.get('abc', { language: 'fr' })
-        .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: 'fr' });
-          mockSource.expects('getSlowRequest')
-            .once()
-            .withArgs(['abc']);
-        });
-    });
-
-    it('should properly reject with short timeout allocation', () => {
-      testStore.config.timeout = 100;
-      testStore.config.retry = null;
-      return testStore.get('abc')
-        .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'TIMEOUT');
-          mockSource.expects('getSlowRequest')
             .once()
             .withArgs(['abc']);
         });

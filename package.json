@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
@@ -44,7 +44,8 @@
     "heapdump": "^0.3.12",
     "mocha": "^6.0.0",
     "sinon": "^7.2.0",
-    "split2": "^3.1.1"
+    "split2": "^3.1.1",
+    "ha-store-redis": "^2.0.0"
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>",

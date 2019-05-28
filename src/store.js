@@ -21,6 +21,13 @@ function localStore(config) {
     return store.get(key);
   }
 
+  function getMulti(recordKey, keys) {
+    return keys.map((id) => {
+      if (id === undefined) return undefined;
+      return store.get(recordKey(id));
+    });
+  }
+
   /**
    * Performs a query that returns a single entities to be cached
    * @param {object} opts The options for the dao
@@ -48,7 +55,7 @@ function localStore(config) {
     return store.size();
   }
 
-  return { get, set, clear, size };
+  return { get, getMulti, set, clear, size };
 }
 
 /* Exports -------------------------------------------------------------------*/
