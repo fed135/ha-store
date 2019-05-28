@@ -41,7 +41,7 @@ function queriesStore(config, emitter, targetStore) {
         const sizeLimit = config.batch && config.batch.max || 1;
         const query = queries[key].find(q => q.size < sizeLimit && q.state === 0) || createQuery(key, params);
         query.size++;
-        query.handles[id] = deferred();
+        if (!(id in query.handles)) query.handles[id] = deferred();
         if (query.contexts.indexOf(context) == -1) query.contexts.push(context);
 
         if (query.size >= sizeLimit) runQuery(query);
