@@ -22,6 +22,9 @@ coverage
 # node-waf configuration
 .lock-wscript
 
+# macOS fs
+.DS_Store
+
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
