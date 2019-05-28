@@ -1,5 +1,6 @@
 const {getAssets} = require('./dao.js');
 //const redisStore = require('ha-store-redis');
+const redisStore = require('../../../ha-redis-adapter');
 
 module.exports = {
     test: {
@@ -7,7 +8,7 @@ module.exports = {
     },
     setup: {
         resolver: getAssets,
-        //store: redisStore('footage-api-ha-cache', { host: '0.0.0.0', port: 6379 }),
+        // store: redisStore('footage-api-ha-cache', { host: '0.0.0.0', port: 6379 }),
         uniqueParams: ['language'],
         cache: { limit: 5000, ttl: 300000 },
         batch: { tick: 10, max: 50 },
