@@ -51,7 +51,7 @@ function localStore(config) {
     return store.remove(key);
   }
 
-  async function size() {
+  function size() {
     return store.size();
   }
 

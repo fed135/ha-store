@@ -20,15 +20,18 @@ function queriesStore(config, emitter, targetStore) {
             }
         }
 
-        const cacheResult = await targetStore.getMulti(contextRecordKey(key), ids.map((id, i) => handles[i] === undefined ? id : undefined));
-        for (let i = 0; i < cacheResult.length; i++) {
-            if (cacheResult[i] !== undefined) {
-                numCached++;
-                handles[i] = cacheResult[i];
+        if (config.cache !== null) {
+            const cacheResult = await targetStore.getMulti(contextRecordKey(key), ids.map((id, i) => handles[i] === undefined ? id : undefined));
+            for (let i = 0; i < cacheResult.length; i++) {
+                if (cacheResult[i] !== undefined) {
+                    numCached++;
+                    handles[i] = cacheResult[i];
+                }
             }
-            else {
-                if (handles[i] === undefined) handles[i] = assignQuery(key, ids[i], params, context);
-            }
+        }
+
+        for (let i = 0; i < ids.length; i++) {
+            if (handles[i] === undefined) handles[i] = assignQuery(key, ids[i], params, context);
         }
 
         if (numCached > 0) emitter.emit('cacheHit', { key, found: numCached });
@@ -85,8 +88,7 @@ function queriesStore(config, emitter, targetStore) {
         const ids = Object.keys(query.handles);
         const entries = basicParser(rawResponse, ids, query.params);
         ids.forEach(id => query.handles[id].resolve(entries[id]));
-
-        targetStore.set(contextRecordKey(query.key), ids, entries);
+        if (config.cache !== null) targetStore.set(contextRecordKey(query.key), ids, entries);
         deleteQuery(query.key, query.uid);
     }
 
