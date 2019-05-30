@@ -89,10 +89,10 @@ class HaStore extends EventEmitter {
    * Returns the amount of records and contexts in memory
    * @returns {object}
    */
-  async size() {
+  size() {
     return {
       ...this.queue.size(),
-      records: (this.store) ? await this.store.size() : 0,
+      records: (this.store) ? this.store.size() : 0,
     };
   }
 

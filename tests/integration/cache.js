@@ -95,7 +95,7 @@ describe('Caching', () => {
         });
     });
 
-    it('should support disabled caching', () => {
+    it('should support disabled caching after boot', () => {
       testStore.config.cache = null;
       testStore.get('foo');
       return testStore.get('foo')
@@ -107,7 +107,7 @@ describe('Caching', () => {
         });
     });
 
-    it('should support disabled caching and batching', () => {
+    it('should support disabled caching and batching after boot', () => {
       testStore.config.cache = null;
       testStore.config.batch = null;
       testStore.get('foo');
@@ -117,6 +117,124 @@ describe('Caching', () => {
           mockSource.expects('getAssets')
             .twice()
             .withArgs(['foo']);
+        });
+    });
+  });
+
+  describe('Happy responses - disabled caching', () => {
+    let testStore;
+    let mockSource;
+    afterEach(() => {
+      testStore = null;
+      mockSource.restore();
+    });
+    beforeEach(() => {
+      mockSource = sinon.mock(dao);
+      testStore = store({
+        uniqueParams: ['language'],
+        resolver: dao.getAssets,
+        cache: null,
+      });
+    });
+
+    it('should cache single values', () => {
+      testStore.get('foo');
+      return testStore.get('foo')
+        .then((result) => {
+          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          mockSource.expects('getAssets')
+            .exactly(1)
+            .withArgs(['foo', 'abc']);
+        });
+    });
+
+    it('should cache multi values', () => {
+      testStore.get(['abc', 'foo'])
+      return testStore.get(['abc', 'foo'])
+        .then((result) => {
+          expect(result).to.deep.equal([{ id: 'abc', language: undefined }, { id: 'foo', language: undefined }]);
+          mockSource.expects('getAssets')
+            .exactly(1)
+            .withArgs(['foo', 'abc']);
+        });
+    });
+  });
+
+  describe('Happy responses - disabled batching', () => {
+    let testStore;
+    let mockSource;
+    afterEach(() => {
+      testStore = null;
+      mockSource.restore();
+    });
+    beforeEach(() => {
+      mockSource = sinon.mock(dao);
+      testStore = store({
+        uniqueParams: ['language'],
+        resolver: dao.getAssets,
+        batch: null,
+      });
+    });
+
+    it('should cache single values', () => {
+      testStore.get('foo');
+      return testStore.get('foo')
+        .then((result) => {
+          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          mockSource.expects('getAssets')
+            .exactly(1)
+            .withArgs(['foo', 'abc']);
+        });
+    });
+
+    it('should cache multi values', () => {
+      testStore.get(['abc', 'foo'])
+      return testStore.get(['abc', 'foo'])
+        .then((result) => {
+          expect(result).to.deep.equal([{ id: 'abc', language: undefined }, { id: 'foo', language: undefined }]);
+          mockSource.expects('getAssets')
+            .exactly(1)
+            .withArgs(['foo', 'abc']);
+        });
+    });
+  });
+
+  describe('Happy responses - everything disabled', () => {
+    let testStore;
+    let mockSource;
+    afterEach(() => {
+      testStore = null;
+      mockSource.restore();
+    });
+    beforeEach(() => {
+      mockSource = sinon.mock(dao);
+      testStore = store({
+        uniqueParams: ['language'],
+        resolver: dao.getAssets,
+        cache: null,
+        batch: null,
+      });
+    });
+
+    it('should cache single values', () => {
+      testStore.get('foo');
+      return testStore.get('foo')
+        .then((result) => {
+          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          mockSource.expects('getAssets')
+            .exactly(1)
+            .withArgs(['foo', 'abc']);
+        });
+    });
+
+    it('should cache multi values', () => {
+      testStore.get(['abc', 'foo'])
+      return testStore.get(['abc', 'foo'])
+        .then((result) => {
+          expect(result).to.deep.equal([{ id: 'abc', language: undefined }, { id: 'foo', language: undefined }]);
+          mockSource.expects('getAssets')
+            .exactly(1)
+            .withArgs(['foo', 'abc']);
         });
     });
   });
