@@ -8,6 +8,7 @@ function queriesStore(config, emitter, targetStore) {
 
         let numCoalesced = 0;
         let numCached = 0;
+        let numMisses = 0;
 
         const handles = [];
         for (let i = 0; i < ids.length; i++) {
@@ -31,10 +32,14 @@ function queriesStore(config, emitter, targetStore) {
         }
 
         for (let i = 0; i < ids.length; i++) {
-            if (handles[i] === undefined) handles[i] = assignQuery(key, ids[i], params, context);
+            if (handles[i] === undefined) {
+                numMisses++;
+                handles[i] = assignQuery(key, ids[i], params, context);
+            }
         }
 
         if (numCached > 0) emitter.emit('cacheHit', { key, found: numCached });
+        if (numMisses > 0) emitter.emit('cacheMiss', { key, found: numCached });
         if (numCoalesced > 0)  emitter.emit('coalescedHit', { key, found: numCoalesced });
 
         return handles;

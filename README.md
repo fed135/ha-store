@@ -69,6 +69,7 @@ HA-store emits events to track cache hits, miss and outbound requests.
 Event | Description
 --- | ---
 cacheHit | When the requested item is present in the microcache, or is already being fetched. Prevents another request from being created.
+cacheMiss | When the requested item not cached or coalesced and must be fetched.
 coalescedHit | When a record query successfully hooks to the promise of the same record in transit.
 query | When a batch of requests is about to be sent.
 queryFailed | Indicates that the batch has failed. Retry policy will dictate if it should be re-attempted.
