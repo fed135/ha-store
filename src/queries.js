@@ -8,15 +8,16 @@ function queriesStore(config, emitter, targetStore) {
 
         let numCoalesced = 0;
         let numCached = 0;
+        let numMisses = 0;
 
         const handles = [];
         for (let i = 0; i < ids.length; i++) {
             handles[i] = undefined;
 
-            const existingQuery = queries[key].find(query => query.handles[ids[i]]);
-            if (existingQuery && existingQuery.handles[ids[i]].promise) {
+            const existingQuery = queries[key].find(query => query.handles.has(ids[i]));
+            if (existingQuery) {
                 numCoalesced++;
-                handles[i] = existingQuery.handles[ids[i]].promise;
+                handles[i] = existingQuery.handles.get(ids[i]).promise;
             }
         }
 
@@ -31,10 +32,14 @@ function queriesStore(config, emitter, targetStore) {
         }
 
         for (let i = 0; i < ids.length; i++) {
-            if (handles[i] === undefined) handles[i] = assignQuery(key, ids[i], params, context);
+            if (handles[i] === undefined) {
+                numMisses++;
+                handles[i] = assignQuery(key, ids[i], params, context);
+            }
         }
 
         if (numCached > 0) emitter.emit('cacheHit', { key, found: numCached });
+        if (numMisses > 0) emitter.emit('cacheMiss', { key, found: numMisses });
         if (numCoalesced > 0)  emitter.emit('coalescedHit', { key, found: numCoalesced });
 
         return handles;
@@ -44,15 +49,15 @@ function queriesStore(config, emitter, targetStore) {
         const sizeLimit = config.batch && config.batch.max || 1;
         const query = queries[key].find(q => q.size < sizeLimit && q.state === 0) || createQuery(key, params);
         query.size++;
-        if (!(id in query.handles)) query.handles[id] = deferred();
+        if (!query.handles.has(id)) query.handles.set(id, deferred());
         if (query.contexts.indexOf(context) == -1) query.contexts.push(context);
 
         if (query.size >= sizeLimit) runQuery(query);
-        return query.handles[id].promise;
+        return query.handles.get(id).promise;
     }
 
     function createQuery(key, params) {
-        const query = { uid: Math.random().toString(36), key, params, handles: {}, state: 0, timer: null, contexts: [], size: 0 };
+        const query = { uid: Math.random().toString(36), key, params, handles: new Map(), state: 0, timer: null, contexts: [], size: 0 };
         queries[key].push(query);
 
         query.timer = setTimeout(() => runQuery(query), config.batch && config.batch.tick || 0);
@@ -69,25 +74,23 @@ function queriesStore(config, emitter, targetStore) {
         query.state = 1;
         clearTimeout(query.timer);
         emitter.emit('query', query);
-        config.resolver(Object.keys(query.handles), query.params, query.contexts)
+        config.resolver(Array.from(query.handles.keys()), query.params, query.contexts)
             .then(handleQuerySuccess.bind(null, query), handleQueryError.bind(null, query));
     }
 
     function handleQueryError(query, error) {
         query.state = 2;
         emitter.emit('queryFailed', { key: query.key, uid: query.uid, size: query.size, params: query.params, error });
-        for (const handle in query.handles) {
-            query.handles[handle].reject(error);
-        }
+        Array.from(query.handles.values()).forEach(handle => handle.reject(error));
         deleteQuery(query.key, query.uid);
     }
 
     function handleQuerySuccess(query, rawResponse) {
         query.state = 2;
         emitter.emit('querySuccess', { key: query.key, uid: query.uid, size: query.size, params: query.params });
-        const ids = Object.keys(query.handles);
+        const ids = Array.from(query.handles.keys());
         const entries = basicParser(rawResponse, ids, query.params);
-        ids.forEach(id => query.handles[id].resolve(entries[id]));
+        ids.forEach(id => query.handles.get(id).resolve(entries[id]));
         if (config.cache !== null) targetStore.set(contextRecordKey(query.key), ids, entries);
         deleteQuery(query.key, query.uid);
     }
