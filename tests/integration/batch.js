@@ -100,14 +100,13 @@ describe('Batching', () => {
         });
     });
 
-    // Objects sort numeric keys by default, which ruins user-specified ordering
     it('should maintain id ordering with numeric ids', () => {
       return Promise.all([
         testStore.get(2, { language: 'fr' }),
         testStore.get(1, { language: 'fr' })
       ])
         .then((result) => {
-          expect(result).to.deep.equal([{ id: '2', language: 'fr' }, { id: '1', language: 'fr' }]);
+          expect(result).to.deep.equal([{ id: 2, language: 'fr' }, { id: 1, language: 'fr' }]);
           mockSource.expects('getAssets')
             .once().withArgs(['2', '1'], { language: 'fr' });
         });
