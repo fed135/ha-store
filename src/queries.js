@@ -13,10 +13,10 @@ function queriesStore(config, emitter, targetStore) {
         for (let i = 0; i < ids.length; i++) {
             handles[i] = undefined;
 
-            const existingQuery = queries[key].find(query => query.handles[ids[i]]);
-            if (existingQuery && existingQuery.handles[ids[i]].promise) {
+            const existingQuery = queries[key].find(query => query.handles.has(ids[i]));
+            if (existingQuery) {
                 numCoalesced++;
-                handles[i] = existingQuery.handles[ids[i]].promise;
+                handles[i] = existingQuery.handles.get(ids[i]).promise;
             }
         }
 
