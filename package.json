@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.14.2",
+  "version": "1.15.0",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
@@ -40,6 +40,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "chai": "^4.2.0",
+    "ha-store-redis": "^2.0.1",
     "heapdump": "^0.3.12",
     "mocha": "^6.0.0",
     "sinon": "^7.2.0",
