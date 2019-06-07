@@ -1,5 +1,5 @@
 const {getAssets} = require('./dao.js');
-const redisStore = require('ha-store-redis');
+// const redisStore = require('ha-store-redis');
 
 module.exports = {
     test: {
@@ -8,7 +8,7 @@ module.exports = {
     setup: {
         resolver: getAssets,
         uniqueParams: ['language'],
-        store: redisStore('my-namespace', { host: '0.0.0.0', port: 6379 }),
+        // store: redisStore('my-namespace', { host: '0.0.0.0', port: 6379 }),
         cache: { limit: 5000, ttl: 300000 },
         batch: { tick: 10, max: 50 },
         retry: { base: 1, step: 2 },
