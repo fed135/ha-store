@@ -4,6 +4,7 @@
 
 /* Requires ------------------------------------------------------------------*/
 const {hydrateConfig} = require('../../src/options');
+const store = require('../../src/store');
 const batcher = require('../../src/index');
 const {exp} = require('../../src/utils');
 const {noop} = require('./utils');
@@ -14,6 +15,7 @@ const expect = require('chai').expect;
 describe('options', () => {
   const defaultConfig = {
     "timeout": null,
+    "store": store,
     "batch": {"tick": 50, "max": 100},
     "retry": {curve: exp, "base": 5, "steps": 3, "limit": 5000},
     "cache": {"limit": 5000, "ttl": 300000},
