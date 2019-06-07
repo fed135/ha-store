@@ -7,6 +7,7 @@
 /* Requires ------------------------------------------------------------------*/
 
 const {exp} = require('./utils.js');
+const store = require('./store.js');
 
 /* Local variables -----------------------------------------------------------*/
 
@@ -47,6 +48,7 @@ function hydrateIfNotNull(baseConfig, defaultConfig) {
 function hydrateConfig(config = {}) {
   return {
     ...config,
+    store: config.store || store,
     timeout: Number(config.timeout) || null,
     batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
     retry: hydrateIfNotNull(config.retry, defaultConfig.retry),

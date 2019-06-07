@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "1.14.2",
+  "version": "1.15.0",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {

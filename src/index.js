@@ -7,7 +7,6 @@
 /* Requires ------------------------------------------------------------------*/
 
 const queue = require('./queue.js');
-const store = require('./store.js');
 const {contextKey, recordKey} = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 const {hydrateConfig} = require('./options');
@@ -34,7 +33,7 @@ class HaStore extends EventEmitter {
       this.setMaxListeners(Infinity);
     }
 
-    this.store = this.config.cache ? store(this.config, this) : null;
+    this.store = this.config.cache ? this.config.store(this.config) : null;
 
     this.queue = queue(
       this.config,
