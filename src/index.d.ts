@@ -7,7 +7,7 @@ type Params = {
 type RequestIds = string | number | string[] | number[]
 type Serializable = string | number | boolean | { [key: string]: Serializable } | Array<Serializable>
 
-declare interface BatcherConfig {
+export interface HAStoreConfig {
   resolver(ids: RequestIds, params?: Params, context?: Serializable): Promise<Serializable>
   uniqueOptions?: string[]
   responseParser?(
@@ -33,4 +33,4 @@ export type HAStore = {
   getKey(id: string | number, params?: Params): string
 } & EventEmitter
 
-export default function batcher(config: BatcherConfig, emitter?: EventEmitter): HAStore
+export default function batcher(config: HAStoreConfig, emitter?: EventEmitter): HAStore
