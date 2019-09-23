@@ -32,7 +32,7 @@ export interface HAStoreConfig {
     tick?: number
     max?: number
   },
-  store: HAExternalStore
+  store?: HAExternalStore
 }
 
 export type HAStore = {
