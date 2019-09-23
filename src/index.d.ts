@@ -18,7 +18,7 @@ export type HAExternalStore = {
 
 export interface HAStoreConfig {
   resolver(ids: RequestIds, params?: Params, context?: Serializable): Promise<Serializable>
-  uniqueOptions?: string[]
+  uniqueParams?: string[]
   responseParser?(
     response: Serializable,
     requestedIds: string[] | number[],
