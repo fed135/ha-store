@@ -5,15 +5,16 @@ type Params = {
 }
 
 type RequestIds = string | number | string[] | number[]
+type Serializable = string | number | boolean | { [key: string]: Serializable } | Array<Serializable>
 
 declare interface BatcherConfig {
-  resolver(ids: RequestIds, params?: Params, batchData?: any): Promise<any>
+  resolver(ids: RequestIds, params?: Params, context?: Serializable): Promise<Serializable>
   uniqueOptions?: string[]
   responseParser?(
-    response: any,
+    response: Serializable,
     requestedIds: string[] | number[],
     params?: Params
-  ): any
+  ): object
   cache?: {
     limit?: number
     ttl?: number
@@ -24,10 +25,12 @@ declare interface BatcherConfig {
   }
 }
 
-declare function batcher(config: BatcherConfig, emitter: EventEmitter): {
+export type HAStore = {
   get(ids: string | number, params?: Params): Promise<any>
-  set(items: any, ids: string[] | number[], params?: Params): Promise<any>
+  set(items: Serializable, ids: string[] | number[], params?: Params): Promise<any>
   clear(ids: RequestIds, params?: Params): void
-  size(): Object
+  size(): { contexts: number, queries: number, records: number }
   getKey(id: string | number, params?: Params): string
-}
+} & EventEmitter
+
+export default function batcher(config: BatcherConfig, emitter?: EventEmitter): HAStore
