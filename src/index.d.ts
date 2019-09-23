@@ -36,7 +36,7 @@ export interface HAStoreConfig {
 }
 
 export type HAStore = {
-  get(ids: string | number, params?: Params): Promise<Serializable>
+  get(ids: string | number, params?: Params, context?: Serializable): Promise<Serializable>
   set(items: Serializable, ids: string[] | number[], params?: Params): Promise<Serializable>
   clear(ids: RequestIds, params?: Params): void
   size(): { contexts: number, queries: number, records: number }
