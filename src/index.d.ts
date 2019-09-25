@@ -7,7 +7,7 @@ type Params = {
 type RequestIds = string | number | string[] | number[]
 type Serializable = string | number | boolean | { [key: string]: Serializable } | Array<Serializable>
 
-export type HAExternalStore = {
+export interface HAExternalStore {
   get: (key: string) => Promise<Serializable>
   getMulti: (recordKey: (contextKey: string) => string, keys: RequestIds) => Promise<Serializable[]>
   set: (recordKey: (contextKey: string) => string, keys: RequestIds, values: Serializable) => Promise<Serializable>
@@ -35,12 +35,12 @@ export interface HAStoreConfig {
   store?: HAExternalStore
 }
 
-export type HAStore = {
+export interface HAStore extends EventEmitter {
   get(ids: string | number, params?: Params, context?: Serializable): Promise<Serializable>
   set(items: Serializable, ids: string[] | number[], params?: Params): Promise<Serializable>
   clear(ids: RequestIds, params?: Params): void
   size(): { contexts: number, queries: number, records: number }
   getKey(id: string | number, params?: Params): string
-} & EventEmitter
+}
 
 export default function batcher(config: HAStoreConfig, emitter?: EventEmitter): HAStore
