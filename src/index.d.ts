@@ -5,15 +5,25 @@ type Params = {
 }
 
 type RequestIds = string | number | string[] | number[]
+type Serializable = string | number | boolean | { [key: string]: Serializable } | Array<Serializable>
 
-declare interface BatcherConfig {
-  resolver(ids: RequestIds, params?: Params, batchData?: any): Promise<any>
-  uniqueOptions?: string[]
+export interface HAExternalStore {
+  get: (key: string) => Promise<Serializable>
+  getMulti: (recordKey: (contextKey: string) => string, keys: RequestIds) => Promise<Serializable[]>
+  set: (recordKey: (contextKey: string) => string, keys: RequestIds, values: Serializable) => Promise<Serializable>
+  clear: (key?: string) => boolean
+  size: () => number
+  connection?: any
+}
+
+export interface HAStoreConfig {
+  resolver(ids: RequestIds, params?: Params, context?: Serializable): Promise<Serializable>
+  uniqueParams?: string[]
   responseParser?(
-    response: any,
+    response: Serializable,
     requestedIds: string[] | number[],
     params?: Params
-  ): any
+  ): object
   cache?: {
     limit?: number
     ttl?: number
@@ -21,13 +31,16 @@ declare interface BatcherConfig {
   batch?: {
     tick?: number
     max?: number
-  }
+  },
+  store?: HAExternalStore
 }
 
-declare function batcher(config: BatcherConfig, emitter: EventEmitter): {
-  get(ids: string | number, params?: Params): Promise<any>
-  set(items: any, ids: string[] | number[], params?: Params): Promise<any>
+export interface HAStore extends EventEmitter {
+  get(ids: string | number, params?: Params, context?: Serializable): Promise<Serializable>
+  set(items: Serializable, ids: string[] | number[], params?: Params): Promise<Serializable>
   clear(ids: RequestIds, params?: Params): void
-  size(): Object
+  size(): { contexts: number, queries: number, records: number }
   getKey(id: string | number, params?: Params): string
 }
+
+export default function batcher(config: HAStoreConfig, emitter?: EventEmitter): HAStore

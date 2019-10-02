@@ -14,16 +14,14 @@
 
 ---
 
-## How it works
-
-Want to make your app faster and don't want to spend on extra infrastructure ? [Learn how](https://github.com/fed135/ha-store/wiki) you can do both with HA-store!
-
 **HA-store** is a generic wrapper for your data queries, it features: 
 
 - Smart TLRU cache for 'hot' information
 - Request coalescing and batching (solves the [Thundering Herd problem](https://en.wikipedia.org/wiki/Thundering_herd_problem))
 - Insightful stats and [events](#Monitoring-and-events)
 - Lightweight, configurable, battle-tested
+
+Learn how you can improve your app's performance, design and resiliancy [here](https://github.com/fed135/ha-store/wiki)!
 
 
 ## Installing
@@ -33,21 +31,36 @@ Want to make your app faster and don't want to spend on extra infrastructure ? [
 
 ## Usage
 
-```node
+```javascript
+// Create your store
 const store = require('ha-store');
 const itemStore = store({
-  resolver: getItems, // Your resolver can be an async function or should return a Promise
+  resolver: getItems,
   uniqueParams: ['language']
 });
 
-// Anywhere in your application
+// Define your resolver
+function getItem(ids, params, contexts) {
+  // Ids will be a list of all the unique requested items
+  // Params will be the parameters for the request, which must be declared in the `uniqueParams` config of the store
+  // Contexts will be the list of originating context information
 
-itemStore.get('123', { language: 'fr' })
+  // Now perform some exensive network call or database lookup...
+
+  // Then, respond with your data formatted into one of these two formats:
+    // a) [ { id: '123', language: 'fr', name: 'fred' } ]
+    // b) { '123': { language: 'fr', name: 'fred' } }
+}
+
+// Now to use your store
+itemStore.get('123', { language: 'fr' }, { some: 'context' })
   .then(item => /* The item you requested */);
 
-itemStore.get(['123', '456'], { language: 'en' })
+// You can even ask for more than one item at a time
+itemStore.get(['123', '456'], { language: 'en' }, { another: 'context' })
   .then(items => /* All the items you requested */);
 ```
+
 
 ## Options
 
@@ -81,6 +94,11 @@ You may also want to track the amount of `contexts` and `records` stored via the
 ## Testing
 
 `npm test`
+
+
+## Benchmarks
+
+Read instructions [here](./tests/profiling/README.md)
 
 `npm run bench`
 
