@@ -40,7 +40,7 @@ const itemStore = store({
 });
 
 // Define your resolver
-function getItem(ids, params, contexts) {
+function getItems(ids, params, contexts) {
   // Ids will be a list of all the unique requested items
   // Params will be the parameters for the request, which must be declared in the `uniqueParams` config of the store
   // Contexts will be the list of originating context information
