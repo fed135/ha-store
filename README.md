@@ -70,7 +70,7 @@ resolver | true | - | The method to wrap, and how to interpret the returned data
 responseParser | false | (system) | The method that format the results from the resolver into an indexed collection. Accepts indexed collections or arrays of objects with an `id` property. Uses the format `<function(response, requestedIds, params)>`
 uniqueParams | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
 store | false | `null` | A custom store for the data, like [ha-store-redis](https://github.com/fed135/ha-redis-adapter).
-cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;ttl: 300000&#13;&#10;}</pre> | Caching options for the data - `limit` - the maximum number of records, and `ttl` - time to live for a record.
+cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;ttl: 300000&#13;&#10;}</pre> | Caching options for the data - `limit` - the maximum number of records, and `ttl` - time to live for a record in milliseconds.
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;tick: 50,&#13;&#10;&nbsp;&nbsp;max: 100&#13;&#10;}</pre> | Batching options for the requests
 
 *All options are in (ms)
@@ -112,5 +112,5 @@ I am always looking for more maintainers, as well.
 
 ## License 
 
-[Apache 2.0](LICENSE) (c) 2019 Frederic Charette
+[Apache 2.0](LICENSE) (c) 2020 Frederic Charette
 
