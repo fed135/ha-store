@@ -112,5 +112,5 @@ I am always looking for more maintainers, as well.
 
 ## License 
 
-[Apache 2.0](LICENSE) (c) 2020 Frederic Charette
+[Apache 2.0](LICENSE) (c) 2021 Frederic Charette
 
