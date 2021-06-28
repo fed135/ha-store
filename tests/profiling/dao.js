@@ -13,7 +13,11 @@ function calculateResponseTime(numItems) {
 function getAssets(ids, { language }) {
     return new Promise((resolve, reject) => {
         simulateNetwork();
-        setTimeout(() => resolve(ids.map(id => ({ id, language }))), calculateResponseTime(ids.length));
+        setTimeout(() => resolve(ids.reduce((acc, id) => {
+            acc[id] = { id, language };
+            return acc;
+        }, {})
+        ), calculateResponseTime(ids.length));
     });
 }
 

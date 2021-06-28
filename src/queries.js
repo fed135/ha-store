@@ -1,4 +1,4 @@
-const {basicParser, contextRecordKey, deferred} = require('./utils');
+const {contextRecordKey, deferred} = require('./utils');
 
 function queriesStore(config, emitter, targetStore) {
     const queries = {};
@@ -70,12 +70,12 @@ function queriesStore(config, emitter, targetStore) {
         if (queries[key].length === 0) delete queries[key];
     }
 
-    async function runQuery(query) {
+    function runQuery(query) {
         query.state = 1;
         clearTimeout(query.timer);
         emitter.emit('query', query);
         config.resolver(Array.from(query.handles.keys()), query.params, query.contexts)
-            .then(handleQuerySuccess.bind(null, query), handleQueryError.bind(null, query));
+            .then((entries) => handleQuerySuccess(query, entries), (error) => handleQueryError(query, error));
     }
 
     function handleQueryError(query, error) {
@@ -85,13 +85,12 @@ function queriesStore(config, emitter, targetStore) {
         deleteQuery(query.key, query.uid);
     }
 
-    function handleQuerySuccess(query, rawResponse) {
+    function handleQuerySuccess(query, entries) {
         query.state = 2;
         emitter.emit('querySuccess', { key: query.key, uid: query.uid, size: query.size, params: query.params });
         const ids = Array.from(query.handles.keys());
-        const entries = basicParser(rawResponse, ids, query.params);
-        ids.forEach(id => query.handles.get(id).resolve(entries[id]));
-        if (config.cache !== null) targetStore.set(contextRecordKey(query.key), ids, entries);
+        ids.forEach(id => query.handles.get(id).resolve(entries?.[id]));
+        if (config.cache !== null) targetStore.set(contextRecordKey(query.key), ids, entries || {});
         deleteQuery(query.key, query.uid);
     }
 

@@ -3,7 +3,7 @@ const {getAssets} = require('./dao.js');
 
 module.exports = {
     test: {
-        sampleFile: './sample.txt',
+        sampleFile: './sample_distribution.txt',
     },
     setup: {
         resolver: getAssets,
@@ -15,8 +15,8 @@ module.exports = {
     },
     assert: {
         completed: [300000, 300000],
-        coalescedHit: [8000, 15000],
-        cacheHits: [35000, 45000],
+        coalescedHit: [8000, 50000],
+        cacheHits: [35000, 50000],
         timeouts: [0, 0],
         batches: [4800, 5300],
         rss: [50000, 80000],

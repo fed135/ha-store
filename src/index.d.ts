@@ -4,7 +4,6 @@ type Params = {
   [key: string]: string
 }
 
-type RequestIds = string | number | string[] | number[]
 type Serializable = string | number | boolean | { [key: string]: Serializable } | Array<Serializable>
 
 export interface HAExternalStore {
@@ -17,11 +16,11 @@ export interface HAExternalStore {
 }
 
 export interface HAStoreConfig {
-  resolver(ids: RequestIds, params?: Params, context?: Serializable): Promise<Serializable>
+  resolver(ids: string[], params?: Params, context?: Serializable): Promise<Serializable>
   uniqueParams?: string[]
   responseParser?(
     response: Serializable,
-    requestedIds: string[] | number[],
+    requestedIds: string[],
     params?: Params
   ): object
   cache?: {
@@ -36,8 +35,9 @@ export interface HAStoreConfig {
 }
 
 export interface HAStore extends EventEmitter {
-  get(ids: string | number | Array<string | number>, params?: Params, context?: Serializable): Promise<Serializable>
-  set(items: Serializable, ids: string[] | number[], params?: Params): Promise<Serializable>
+  get(id: string, params?: Params, context?: Serializable): Promise<Serializable>
+  getMany(id: string[], params?: Params, context?: Serializable): Promise<{status: string, value: Serializable}[]>
+  set(items: Serializable, ids: string[], params?: Params): Promise<Serializable>
   clear(ids: RequestIds, params?: Params): void
   size(): { contexts: number, queries: number, records: number }
   getKey(id: string | number, params?: Params): string

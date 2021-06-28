@@ -1,11 +1,3 @@
-/**
- * Record Store
- */
-
-'use strict';
-
-/* Requires ------------------------------------------------------------------*/
-
 const lruNative = require('lru-native2');
 
 /* Methods -------------------------------------------------------------------*/
@@ -28,12 +20,6 @@ function localStore(config) {
     });
   }
 
-  /**
-   * Performs a query that returns a single entities to be cached
-   * @param {object} opts The options for the dao
-   * @param {string} method The dao method to call
-   * @returns {undefined}
-   */
   function set(recordKey, keys, values) {
     for (let i = 0; i < keys.length; i++) {
       if (values[keys[i]] !== undefined && values[keys[i]] !== null) {

@@ -14,7 +14,7 @@ const split2 = require('split2');
 /* Init ----------------------------------------------------------------------*/
 
 // Setup
-const app = fork(path.resolve(__dirname, './worker.js')/*, { execArgv: ['--prof']}*/);
+const app = fork(path.resolve(__dirname, './worker.js'), /*{ execArgv: ['--inspect=10245']}*/);
 const stream = fs.createReadStream(path.resolve(settings.test.sampleFile), 'utf-8').pipe(split2());
 
 app.on('message', async (suite) => {
@@ -36,7 +36,9 @@ app.on('message', async (suite) => {
       process.exit(1);
     }
   }
-  process.exit(0);
+  //process.exit(0);
+
+
 });
 
 stream.on('data', (chunk) => {
