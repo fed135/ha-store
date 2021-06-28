@@ -30,7 +30,7 @@ describe('Batching', () => {
     it('should batch single calls', () => {
       return Promise.all([
         testStore.get('foo'),
-        testStore.get('abc')
+        testStore.get('abc'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
@@ -53,7 +53,7 @@ describe('Batching', () => {
     it('should batch mixed calls', () => {
       return Promise.all([
         testStore.get(['foo', 'bar']),
-        testStore.get('abc')
+        testStore.get('abc'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([[{ id: 'foo', language: undefined }, { id: 'bar', language: undefined }], { id: 'abc', language: undefined }]);
@@ -66,7 +66,7 @@ describe('Batching', () => {
     it('should mix unique params matches', () => {
       return Promise.all([
         testStore.get(['foo', 'bar'], { language: 'fr' }),
-        testStore.get('abc', { language: 'fr' })
+        testStore.get('abc', { language: 'fr' }),
       ])
         .then((result) => {
           expect(result).to.deep.equal([[{ id: 'foo', language: 'fr' }, { id: 'bar', language: 'fr' }], { id: 'abc', language: 'fr' }]);
@@ -78,7 +78,7 @@ describe('Batching', () => {
     it('should not mix unique params mismatches', () => {
       return Promise.all([
         testStore.get(['foo', 'bar'], { language: 'fr' }),
-        testStore.get('abc', { language: 'en' })
+        testStore.get('abc', { language: 'en' }),
       ])
         .then((result) => {
           expect(result).to.deep.equal([[{ id: 'foo', language: 'fr' }, { id: 'bar', language: 'fr' }], { id: 'abc', language: 'en' }]);
@@ -91,7 +91,7 @@ describe('Batching', () => {
     it('should coalesce duplicate entries', () => {
       return Promise.all([
         testStore.get('foo', { language: 'fr' }),
-        testStore.get('foo', { language: 'fr' })
+        testStore.get('foo', { language: 'fr' }),
       ])
         .then((result) => {
           expect(result).to.deep.equal([{ id: 'foo', language: 'fr' }, { id: 'foo', language: 'fr' }]);
@@ -103,7 +103,7 @@ describe('Batching', () => {
     it('should maintain id ordering with numeric ids', () => {
       return Promise.all([
         testStore.get(2, { language: 'fr' }),
-        testStore.get(1, { language: 'fr' })
+        testStore.get(1, { language: 'fr' }),
       ])
         .then((result) => {
           expect(result).to.deep.equal([{ id: 2, language: 'fr' }, { id: 1, language: 'fr' }]);
@@ -134,7 +134,7 @@ describe('Batching', () => {
       testStore.config.batch = { max: 6, tick: 1 };
       return Promise.all([
         testStore.get(['foo2', 'bar2', 'abc2', 'def2', 'ghi2']),
-        testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
+        testStore.get(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' }),
       ])
         .then((result) => {
           expect(result).to.deep.equal([[
@@ -159,7 +159,7 @@ describe('Batching', () => {
     it('should accumulate batch data', () => {
       return Promise.all([
         testStore.get('foo', null, '1234567890'),
-        testStore.get('foo', null, '2345678901')
+        testStore.get('foo', null, '2345678901'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'foo', language: undefined }]);
@@ -173,7 +173,7 @@ describe('Batching', () => {
       testStore.config.batch = null;
       return Promise.all([
         testStore.get('foo'),
-        testStore.get('abc', null, '1234567890')
+        testStore.get('abc', null, '1234567890'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
@@ -187,7 +187,7 @@ describe('Batching', () => {
       testStore.config.batch = null;
       return Promise.all([
         testStore.get('foo'),
-        testStore.get('abc')
+        testStore.get('abc'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
@@ -219,7 +219,7 @@ describe('Batching', () => {
     it('should batch single calls', () => {
       return Promise.all([
         testStore.get('foo'),
-        testStore.get('abc')
+        testStore.get('abc'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([undefined, undefined]);
@@ -242,7 +242,7 @@ describe('Batching', () => {
     it('should batch mixed calls', () => {
       return Promise.all([
         testStore.get(['foo', 'bar']),
-        testStore.get('abc')
+        testStore.get('abc'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([[undefined, undefined], undefined]);
@@ -255,7 +255,7 @@ describe('Batching', () => {
     it('should mix unique params matches', () => {
       return Promise.all([
         testStore.get(['foo', 'bar'], { language: 'fr' }),
-        testStore.get('abc', { language: 'fr' })
+        testStore.get('abc', { language: 'fr' }),
       ])
         .then((result) => {
           expect(result).to.deep.equal([[undefined, undefined], undefined]);
@@ -267,7 +267,7 @@ describe('Batching', () => {
     it('should not mix unique params mismatches', () => {
       return Promise.all([
         testStore.get(['foo', 'bar'], { language: 'fr' }),
-        testStore.get('abc', { language: 'en' })
+        testStore.get('abc', { language: 'en' }),
       ])
         .then((result) => {
           expect(result).to.deep.equal([[undefined, undefined], undefined]);
@@ -281,7 +281,7 @@ describe('Batching', () => {
       testStore.config.batch = null;
       return Promise.all([
         testStore.get('foo'),
-        testStore.get('abc')
+        testStore.get('abc'),
       ])
         .then((result) => {
           expect(result).to.deep.equal([undefined,undefined]);

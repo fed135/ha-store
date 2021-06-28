@@ -28,7 +28,7 @@ class HaStore extends EventEmitter {
     this.queue = queue(
       this.config,
       this,
-      this.store,
+      this.store
     );
   }
 
@@ -44,10 +44,10 @@ class HaStore extends EventEmitter {
     const key = contextKey(this.config.uniqueParams, params);
     return this.queue.getHandles(key, ids, params, agg)
       .then((handles) => Promise.allSettled(handles)
-          .then((responses) => ids.reduce((acc, curr, index) => {
-            acc[curr] = responses[index];
-            return acc;
-          }, {})));
+        .then((responses) => ids.reduce((acc, curr, index) => {
+          acc[curr] = responses[index];
+          return acc;
+        }, {})));
   }
 
   set(items, ids, params = {}) {
