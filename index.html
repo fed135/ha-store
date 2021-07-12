@@ -47,16 +47,14 @@
 			</div>
 		</div>
 		<p class="mb3 f5 lh-copy measure tl">
-			Want to make your app faster and don't want to spend on extra infrastructure ? With HA-store, you can do both !
-		</p>
-		<p class="mb3 f5 lh-copy measure tl">
 			HA-store is a generic wrapper for your data queries, it features:
 			<br/>
 			<ul>
-				<li>Smart micro-caching for 'hot' information (in-memory or using the redis-adapter)</li>
-				<li>Loads of features (request coalescing, batching, retrying and circuit-breaking)</li>
+
+				<li>Smart TLRU cache for 'hot' information</li>
+				<li>Request coalescing and batching (solves the Thundering Herd problem)</li>
 				<li>Insightful stats and events</li>
-				<li>Lightweight, low resource and has <b>zero dependencies</b></li>
+				<li>Lightweight, configurable, battle-tested</b></li>
 			</ul>
 		</p>
 		<div class="tc">
