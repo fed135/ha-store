@@ -46,7 +46,7 @@ function queriesStore(config, emitter, targetStore) {
   }
 
   function assignQuery(key, id, params, context) {
-    const sizeLimit = config.batch && config.batch.max || 1;
+    const sizeLimit = config.batch && config.batch.limit || 1;
     const query = queries[key].find(q => q.size < sizeLimit && q.state === 0) || createQuery(key, params);
     query.size++;
     if (!query.handles.has(id)) query.handles.set(id, deferred());
@@ -60,7 +60,7 @@ function queriesStore(config, emitter, targetStore) {
     const query = { uid: Math.random().toString(36), key, params, handles: new Map(), state: 0, timer: null, contexts: [], size: 0 };
     queries[key].push(query);
 
-    query.timer = setTimeout(() => runQuery(query), config.batch && config.batch.tick || 0);
+    query.timer = setTimeout(() => runQuery(query), config.batch && config.batch.delay || 0);
     return query;
   }
 

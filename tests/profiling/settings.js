@@ -8,9 +8,9 @@ module.exports = {
   setup: {
     resolver: getAssets,
     // store: redisStore('footage-api-ha-cache', { host: '0.0.0.0', port: 6379 }),
-    uniqueParams: ['language'],
+    delimiter: ['language'],
     cache: { limit: 5000, ttl: 300000 },
-    batch: { tick: 10, max: 50 },
+    batch: { delay: 10, limit: 50 },
     retry: { base: 1, step: 2 },
   },
   assert: {

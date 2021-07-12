@@ -34,14 +34,14 @@ class HaStore extends EventEmitter {
 
   get(ids, params = {}, agg = null) {
     if (params === null) params = {};
-    const key = contextKey(this.config.uniqueParams, params);
+    const key = contextKey(this.config.delimiter, params);
     return this.queue.getHandles(key, [ids], params, agg)
       .then(handles => handles[0]);
   }
 
   getMany(ids, params = {}, agg = null) {
     if (params === null) params = {};
-    const key = contextKey(this.config.uniqueParams, params);
+    const key = contextKey(this.config.delimiter, params);
     return this.queue.getHandles(key, ids, params, agg)
       .then((handles) => Promise.allSettled(handles)
         .then((responses) => ids.reduce((acc, curr, index) => {
@@ -52,7 +52,7 @@ class HaStore extends EventEmitter {
 
   set(items, ids, params = {}) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
-    const key = contextKey(this.config.uniqueParams, params);
+    const key = contextKey(this.config.delimiter, params);
     return this.store.set(contextRecordKey(key), ids, items);
   }
 
@@ -62,7 +62,7 @@ class HaStore extends EventEmitter {
       return ids.map(id => this.clear(id, params));
     }
 
-    return this.store.clear(this.getKey(ids, params));
+    return this.store.clear(this.getStorageKey(ids, params));
   }
 
   size() {
@@ -72,8 +72,8 @@ class HaStore extends EventEmitter {
     };
   }
 
-  getKey(id, params) {
-    return recordKey(contextKey(this.config.uniqueParams, params), id);
+  getStorageKey(id, params) {
+    return recordKey(contextKey(this.config.delimiter, params), id);
   }
 }
 
