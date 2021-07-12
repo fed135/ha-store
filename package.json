@@ -1,16 +1,18 @@
 {
   "name": "ha-store",
-  "version": "2.0.5",
+  "version": "3.0.0",
   "description": "Efficient data fetching",
   "main": "src/index.js",
   "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "yarn lint --fix",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "mocha ./tests/unit --exit",
     "test:integration": "mocha ./tests/integration --exit",
     "bench": "node ./tests/profiling/index.js"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=14.0.0"
   },
   "repository": {
     "type": "git",
@@ -18,20 +20,13 @@
   },
   "keywords": [
     "store",
-    "high",
     "availability",
-    "network",
     "optimize",
     "throughput",
-    "retry",
-    "request",
     "cache",
     "service",
     "batch",
-    "micro",
-    "latency",
     "congestion",
-    "control",
     "tlru"
   ],
   "bugs": {
@@ -40,12 +35,12 @@
   "author": "frederic charette <fredericcharette@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "chai": "^4.2.0",
-    "heapdump": "^0.3.12",
-    "mocha": "^6.0.0",
-    "sinon": "^7.2.0",
-    "split2": "^3.1.1",
-    "ha-store-redis": "^2.0.1"
+    "chai": "^4.3.0",
+    "eslint": "^7.29.0",
+    "ha-store-redis": "^2.0.1",
+    "mocha": "^9.0.0",
+    "sinon": "^11.1.0",
+    "split2": "^3.2.0"
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>",
@@ -54,6 +49,6 @@
   ],
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "lru-native2": "^1.2.0"
+    "lru-native2": "^1.2.5"
   }
 }

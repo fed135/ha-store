@@ -1,6 +1,7 @@
 {
+  "extends": "eslint:recommended",
   "parserOptions": {
-    "ecmaVersion": 9
+    "ecmaVersion": 11
   },
   "rules": {
     "arrow-body-style": "off",
@@ -62,5 +63,10 @@
     ],
     "linebreak-style": "off",
     "no-lonely-if": "off"
+  },
+  "env": {
+    "node": true,
+    "mocha": true,
+    "es6": true
   }
 }

@@ -1,11 +1,3 @@
-/**
- * Batcher index
- */
-
-'use strict';
-
-/* Requires ------------------------------------------------------------------*/
-
 const queue = require('./queries.js');
 const {contextKey, recordKey, contextRecordKey} = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
@@ -17,18 +9,16 @@ class HaStore extends EventEmitter {
   constructor(initialConfig, emitter) {
     super();
 
-    // Parameter validation
     if (typeof initialConfig.resolver !== 'function') {
       throw new Error(`config.resolver [${initialConfig.resolver}] is not a function`);
     }
 
-    if (emitter && !emitter.emit) {
+    if (!emitter?.emit) {
       throw new Error(`${emitter} is not an EventEmitter`);
     }
 
     this.config = hydrateConfig(initialConfig);
 
-    // Local variables
     if (this.setMaxListeners) {
       this.setMaxListeners(Infinity);
     }
@@ -38,57 +28,43 @@ class HaStore extends EventEmitter {
     this.queue = queue(
       this.config,
       this,
-      this.store,
+      this.store
     );
   }
 
-  /**
-   * Gets a list of records from source
-   * @param {string|number|array<string|number>} ids The id of the record to fetch
-   * @param {object} params (Optional)The Request parameters
-   * @returns {Promise} The eventual single record
-   */
-  async get(ids, params = {}, agg = null) {
+  get(id, params = {}, agg = null) {
     if (params === null) params = {};
-    const requestIds = (Array.isArray(ids)) ? ids : [ids];
-    const key = contextKey(this.config.uniqueParams, params);
-    const handles = await this.queue.getHandles(key, requestIds, params, agg);
-    return Promise.all(handles)
-      .then(response => (!Array.isArray(ids)) ? response[0] : response);
+    const key = contextKey(this.config.delimiter, params);
+    return this.queue.getHandles(key, [id], params, agg)
+      .then(handles => handles[0]);
   }
 
-  /**
-   * Inserts results into cache manually
-   * @param {*} items Raw results from a data-source to load into cache
-   * @param {array<string|number>} ids The id(s) to extract from the raw dataset
-   * @param {object} params (Optional)The Request parameters
-   * @returns {Promise} The eventual single record
-   */
+  getMany(ids, params = {}, agg = null) {
+    if (params === null) params = {};
+    const key = contextKey(this.config.delimiter, params);
+    return this.queue.getHandles(key, ids, params, agg)
+      .then((handles) => Promise.allSettled(handles)
+        .then((outcomes) => ids.reduce((handles, id, index) => {
+          handles[id] = outcomes[index];
+          return handles;
+        }, {})));
+  }
+
   set(items, ids, params = {}) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
-    const key = contextKey(this.config.uniqueParams, params);
+    const key = contextKey(this.config.delimiter, params);
     return this.store.set(contextRecordKey(key), ids, items);
   }
 
-  /**
-   * Clears one or more recors from temp store
-   * @param {string|number|array<string|number>} ids The id(s) to clear
-   * @param {object} params (Optional) The Request parameters
-   * @returns {boolean} The result of the clearing
-   */
   clear(ids, params) {
     if (this.store === null) return true;
     if (Array.isArray(ids)) {
       return ids.map(id => this.clear(id, params));
     }
 
-    return this.store.clear(this.getKey(ids, params));
+    return this.store.clear(this.getStorageKey(ids, params));
   }
 
-  /**
-   * Returns the amount of records and contexts in memory
-   * @returns {object}
-   */
   size() {
     return {
       ...this.queue.size(),
@@ -96,14 +72,8 @@ class HaStore extends EventEmitter {
     };
   }
 
-  /**
-   * Returns a record key
-   * @param {string|number} id The id of the item
-   * @param {object} params The parameters for the request
-   * @returns {string} The record key
-   */
-  getKey(id, params) {
-    return recordKey(contextKey(this.config.uniqueParams, params), id);
+  getStorageKey(id, params) {
+    return recordKey(contextKey(this.config.delimiter, params), id);
   }
 }
 

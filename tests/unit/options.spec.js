@@ -13,7 +13,7 @@ const store = require('../../src/store');
 
 describe('options', () => {
   const defaultConfig = {
-    "batch": {"tick": 50, "max": 100},
+    "batch": {"delay": 50, "limit": 100},
     "cache": {"limit": 5000, "ttl": 300000},
     "store": store,
   };
@@ -22,28 +22,28 @@ describe('options', () => {
     it('should produce a batcher with all the default config when called with true requirements', () => {
       const test = batcher({
         resolver: noop,
-        uniqueParams: ['a', 'b', 'c'],
+        delimiter: ['a', 'b', 'c'],
         cache: true,
         batch: true,
       });
 
       expect(test.config).to.deep.contain({
         cache: {limit: 5000, ttl: 300000},
-        batch: {max: 100, tick: 50},
+        batch: {limit: 100, delay: 50},
       });
     });
 
     it('should produce a batcher with all the merged config when called with custom requirements', () => {
       const test = batcher({
         resolver: noop,
-        uniqueParams: ['a', 'b', 'c'],
+        delimiter: ['a', 'b', 'c'],
         cache: {limit: 2},
-        batch: {max: 12},
+        batch: {limit: 12},
       });
 
       expect(test.config).to.deep.contain({
         cache: {limit: 2, ttl: 300000},
-        batch: {max: 12, tick: 50},
+        batch: {limit: 12, delay: 50},
       });
     });
 
