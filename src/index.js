@@ -13,7 +13,7 @@ class HaStore extends EventEmitter {
       throw new Error(`config.resolver [${initialConfig.resolver}] is not a function`);
     }
 
-    if (emitter && !emitter.emit) {
+    if (!emitter?.emit) {
       throw new Error(`${emitter} is not an EventEmitter`);
     }
 

@@ -3,7 +3,7 @@ const {getAssets} = require('./dao.js');
 
 module.exports = {
   test: {
-    sampleFile: './sample_distribution.txt',
+    sampleFile: './sample.txt',
   },
   setup: {
     resolver: getAssets,
