@@ -32,10 +32,10 @@ class HaStore extends EventEmitter {
     );
   }
 
-  get(ids, params = {}, agg = null) {
+  get(id, params = {}, agg = null) {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
-    return this.queue.getHandles(key, [ids], params, agg)
+    return this.queue.getHandles(key, [id], params, agg)
       .then(handles => handles[0]);
   }
 
