@@ -4,43 +4,39 @@ type Params = {
   [key: string]: string
 }
 
-type RequestIds = string | number | string[] | number[]
-type Serializable = string | number | boolean | { [key: string]: Serializable } | Array<Serializable>
-
 export interface HAExternalStore {
-  get: (key: string) => Promise<Serializable>
-  getMulti: (recordKey: (contextKey: string) => string, keys: RequestIds) => Promise<Serializable[]>
-  set: (recordKey: (contextKey: string) => string, keys: RequestIds, values: Serializable) => Promise<Serializable>
-  clear: (key?: string) => boolean
-  size: () => number
+  get<Response>(key: string): Promise<Response>
+  getMulti<Response>(recordKey: (contextKey: string) => string, keys: RequestIds): Promise<Response[]>
+  set<DataType>(recordKey: (contextKey: string) => string, keys: RequestIds, values: DataType): boolean
+  clear(key?: string): boolean
+  size(): number
   connection?: any
 }
 
 export interface HAStoreConfig {
-  resolver(ids: RequestIds, params?: Params, context?: Serializable): Promise<Serializable>
-  uniqueParams?: string[]
-  responseParser?(
-    response: Serializable,
-    requestedIds: string[] | number[],
-    params?: Params
-  ): object
+  resolver<Response>(ids: string[], params?: Params): Promise<{ [id: string]: Response }>
+  resolver<Response, Context>(ids: string[], params?: Params, context?: Context): Promise<{ [id: string]: Response }>
+  delimiter?: string[]
   cache?: {
     limit?: number
     ttl?: number
   }
   batch?: {
-    tick?: number
-    max?: number
+    delay?: number
+    limit?: number
   },
   store?: HAExternalStore
 }
 
 export interface HAStore extends EventEmitter {
-  get(ids: string | number | Array<string | number>, params?: Params, context?: Serializable): Promise<Serializable>
-  set(items: Serializable, ids: string[] | number[], params?: Params): Promise<Serializable>
-  clear(ids: RequestIds, params?: Params): void
+  get<Response>(id: string, params?: Params): Promise<Response>
+  get<Response, Context>(id: string, params?: Params, context?: Context): Promise<Response>
+  getMany<Response>(id: string[], params?: Params): Promise<{status: string, value: Response}[]>
+  getMany<Response, Context>(id: string[], params?: Params, context?: Context): Promise<{status: string, value: Response}[]>
+  set(items: { [id: string]: any }, ids: string[], params?: Params): boolean
+  clear(ids: string[], params?: Params): void
   size(): { contexts: number, queries: number, records: number }
-  getKey(id: string | number, params?: Params): string
+  getStorageKey(id: string, params?: Params): string
 }
 
 export default function batcher(config: HAStoreConfig, emitter?: EventEmitter): HAStore

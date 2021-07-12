@@ -1,0 +1,30 @@
+name: pr-validation
+
+on:
+  pull_request:
+    branches: 
+    - '*'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: npm install, build, and test
+      run: |
+        npm install
+        npm run lint
+        npm run test
+        wget --no-check-certificate --content-disposition https://gist.githubusercontent.com/fed135/56282783a4c13d87a7f89c178b5d08d7/raw/bacd6f814475726cee37a5a591cb313dd1542d2b/sample.txt && npm run bench
+      env:
+        CI: true

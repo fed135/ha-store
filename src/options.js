@@ -1,19 +1,11 @@
-/**
- * Options
- */
-
-'use strict';
-
-/* Requires ------------------------------------------------------------------*/
-
 const store = require('./store.js');
 
 /* Local variables -----------------------------------------------------------*/
 
 const defaultConfig = {
   batch: {
-    tick: 50,
-    max: 100,
+    delay: 50,
+    limit: 100,
   },
   cache: {
     limit: 5000,

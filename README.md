@@ -8,7 +8,7 @@
 <br/>
 
 [![ha-store](https://img.shields.io/npm/v/ha-store.svg)](https://www.npmjs.com/package/ha-store)
-[![Node](https://img.shields.io/badge/node->%3D8.0-blue.svg)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/node->%3D14.0-blue.svg)](https://nodejs.org)
 [![Build Status](https://travis-ci.org/fed135/ha-store.svg?branch=master)](https://travis-ci.org/fed135/ha-store)
 [![Dependencies Status](https://david-dm.org/fed135/ha-store.svg)](https://david-dm.org/fed135/ha-store)
 
@@ -36,29 +36,28 @@ Learn how you can improve your app's performance, design and resiliancy [here](h
 const store = require('ha-store');
 const itemStore = store({
   resolver: getItems,
-  uniqueParams: ['language']
+  delimiter: ['language']
 });
 
 // Define your resolver
 function getItems(ids, params, contexts) {
   // Ids will be a list of all the unique requested items
-  // Params will be the parameters for the request, which must be declared in the `uniqueParams` config of the store
+  // Params will be the parameters for the request, which must be declared in the `delimiter` config of the store
   // Contexts will be the list of originating context information
 
   // Now perform some exensive network call or database lookup...
 
-  // Then, respond with your data formatted into one of these two formats:
-    // a) [ { id: '123', language: 'fr', name: 'fred' } ]
-    // b) { '123': { language: 'fr', name: 'fred' } }
+  // Then, respond with your data formatted into this formats:
+  // { '123': { language: 'fr', name: 'fred' } }
 }
 
 // Now to use your store
-itemStore.get('123', { language: 'fr' }, { some: 'context' })
+itemStore.get('123', { language: 'fr' }, { requestId: '123' })
   .then(item => /* The item you requested */);
 
 // You can even ask for more than one item at a time
-itemStore.get(['123', '456'], { language: 'en' }, { another: 'context' })
-  .then(items => /* All the items you requested */);
+itemStore.getMany(['123', '456'], { language: 'en' }, { requestId: '123' })
+  .then(items => /* All the items you requested, in Promise.allSettled fashion */);
 ```
 
 
@@ -67,11 +66,10 @@ itemStore.get(['123', '456'], { language: 'en' }, { another: 'context' })
 Name | Required | Default | Description
 --- | --- | --- | ---
 resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<function(ids, params)>`
-responseParser | false | (system) | The method that format the results from the resolver into an indexed collection. Accepts indexed collections or arrays of objects with an `id` property. Uses the format `<function(response, requestedIds, params)>`
-uniqueParams | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
+delimiter | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
 store | false | `null` | A custom store for the data, like [ha-store-redis](https://github.com/fed135/ha-redis-adapter).
 cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;ttl: 300000&#13;&#10;}</pre> | Caching options for the data - `limit` - the maximum number of records, and `ttl` - time to live for a record in milliseconds.
-batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;tick: 50,&#13;&#10;&nbsp;&nbsp;max: 100&#13;&#10;}</pre> | Batching options for the requests
+batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;delay: 50,&#13;&#10;&nbsp;&nbsp;limit: 100&#13;&#10;}</pre> | Batching options for the requests
 
 *All options are in (ms)
 

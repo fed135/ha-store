@@ -14,7 +14,7 @@ function checkForPublicProperties(store) {
   expect(store.get).to.not.be.undefined;
   expect(store.set).to.not.be.undefined;
   expect(store.clear).to.not.be.undefined;
-  expect(store.getKey).to.not.be.undefined;
+  expect(store.getStorageKey).to.not.be.undefined;
   expect(store.config).to.not.be.undefined;
   expect(store.queue).to.not.be.undefined;
 }
@@ -32,7 +32,7 @@ describe('index', () => {
       const test = root({
         resolver: () => {
         },
-        uniqueParams: ['a', 'b', 'c'],
+        delimiter: ['a', 'b', 'c'],
         cache: null,
         batch: null,
       });
@@ -42,7 +42,7 @@ describe('index', () => {
     it('should produce a batcher with all the default config when called with true requirements', () => {
       const test = root({
         resolver: noop,
-        uniqueParams: ['a', 'b', 'c'],
+        delimiter: ['a', 'b', 'c'],
         cache: true,
         batch: true,
       });
@@ -52,9 +52,9 @@ describe('index', () => {
     it('should produce a batcher with all the merged config when called with custom requirements', () => {
       const test = root({
         resolver: noop,
-        uniqueParams: ['a', 'b', 'c'],
+        delimiter: ['a', 'b', 'c'],
         cache: {base: 2},
-        batch: {max: 12},
+        batch: {limit: 12},
       });
       checkForPublicProperties(test);
     });
@@ -143,7 +143,7 @@ describe('index', () => {
     it('should handle multi record clear queries with params', () => {
       const test = root({
         resolver: noop,
-        uniqueParams: ['foo'],
+        delimiter: ['foo'],
       });
       const params = {foo: 'bar'};
       const storeMock = sinon.mock(test.store);
@@ -168,25 +168,25 @@ describe('index', () => {
     });
   });
 
-  describe('#getKey', () => {
+  describe('#getStorageKey', () => {
     it('should return a record key when given an id', () => {
       const test = root({resolver: noop});
-      expect(test.getKey('123abc')).to.be.equal('::123abc');
+      expect(test.getStorageKey('123abc')).to.be.equal('::123abc');
     });
 
     it('should return a record key when given an id and segregators', () => {
-      const test = root({resolver: noop, uniqueParams: ['language']});
-      expect(test.getKey('123abc')).to.be.equal('language=undefined::123abc');
+      const test = root({resolver: noop, delimiter: ['language']});
+      expect(test.getStorageKey('123abc')).to.be.equal('language=undefined::123abc');
     });
 
     it('should return a record key when given an id, segregators and params', () => {
-      const test = root({resolver: noop, uniqueParams: ['language']});
-      expect(test.getKey('123abc', {language:'fr'})).to.be.equal('language="fr"::123abc');
+      const test = root({resolver: noop, delimiter: ['language']});
+      expect(test.getStorageKey('123abc', {language:'fr'})).to.be.equal('language="fr"::123abc');
     });
 
     it('should return a record key when given an id, segregators and multiple params', () => {
-      const test = root({resolver: noop, uniqueParams: ['language', 'country']});
-      expect(test.getKey('123abc', {language:'fr',country:'FR'})).to.be.equal('language="fr";country="FR"::123abc');
+      const test = root({resolver: noop, delimiter: ['language', 'country']});
+      expect(test.getStorageKey('123abc', {language:'fr',country:'FR'})).to.be.equal('language="fr";country="FR"::123abc');
     });
   });
 });
