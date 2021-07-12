@@ -47,7 +47,7 @@ function handleRequest(id, language) {
     .catch((err) => { console.log(err); process.exit(1)} );
 }
 
-store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.limit; });
+store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.size; });
 store.on('cacheHit', evt => { suite.cacheHits+=evt.found; });
 store.on('coalescedHit', evt => { suite.coalescedHit+=evt.found; });
 
