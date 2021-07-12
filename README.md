@@ -8,7 +8,7 @@
 <br/>
 
 [![ha-store](https://img.shields.io/npm/v/ha-store.svg)](https://www.npmjs.com/package/ha-store)
-[![Node](https://img.shields.io/badge/node->%3D8.0-blue.svg)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/node->%3D14.0-blue.svg)](https://nodejs.org)
 [![Build Status](https://travis-ci.org/fed135/ha-store.svg?branch=master)](https://travis-ci.org/fed135/ha-store)
 [![Dependencies Status](https://david-dm.org/fed135/ha-store.svg)](https://david-dm.org/fed135/ha-store)
 
