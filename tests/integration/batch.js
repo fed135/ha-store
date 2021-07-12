@@ -416,4 +416,30 @@ describe('Batching', () => {
         });
     });
   });
+
+  describe('Mixed multi requests', () => {
+    let testStore;
+    let mockSource;
+    afterEach(() => {
+      testStore = null;
+      mockSource.restore();
+    });
+    beforeEach(() => {
+      mockSource = sinon.mock(dao);
+      testStore = store({
+        delimiter: ['language'],
+        resolver: dao.getFailOnFoo,
+        batch: { limit: 1 },
+      });
+    });
+
+    it('should properly return a mix of valid items and errors', () => {
+      return testStore.getMany(['abc', 'foo'], { language: 'en' })
+        .then((result) => {
+          expect(result.abc).to.deep.equal({ status: 'fulfilled', value: { id: 'abc', language: 'en' } });
+          expect(result.foo.status).to.equal('rejected');
+          expect(result.foo.reason).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
+        });
+    });
+  });
 });

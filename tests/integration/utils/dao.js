@@ -19,6 +19,11 @@ function getPartialGroup(ids, { language }) {
   });
 }
 
+function getFailOnFoo(ids, params) {
+  if (ids[0] === 'foo') return getErroredRequest();
+  return getAssets(ids, params);
+}
+
 function getErroredRequest() {
   return new Promise(() => {
     throw new Error('Something went wrong');
@@ -46,5 +51,6 @@ module.exports = {
   getPartialGroup,
   getErroredRequest,
   getFailedRequest,
+  getFailOnFoo,
   getSlowRequest,
 };
