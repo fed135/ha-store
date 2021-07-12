@@ -44,9 +44,9 @@ class HaStore extends EventEmitter {
     const key = contextKey(this.config.delimiter, params);
     return this.queue.getHandles(key, ids, params, agg)
       .then((handles) => Promise.allSettled(handles)
-        .then((responses) => ids.reduce((acc, curr, index) => {
-          acc[curr] = responses[index];
-          return acc;
+        .then((outcomes) => ids.reduce((handles, id, index) => {
+          handles[id] = outcomes[index];
+          return handles;
         }, {})));
   }
 
