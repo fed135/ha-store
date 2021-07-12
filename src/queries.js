@@ -40,7 +40,7 @@ function queriesStore(config, emitter, targetStore) {
 
     if (numCached > 0) emitter.emit('cacheHit', { key, found: numCached });
     if (numMisses > 0) emitter.emit('cacheMiss', { key, found: numMisses });
-    if (numCoalesced > 0)  emitter.emit('coalescedHit', { key, found: numCoalesced });
+    if (numCoalesced > 0) emitter.emit('coalescedHit', { key, found: numCoalesced });
 
     return handles;
   }
