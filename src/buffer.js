@@ -10,7 +10,7 @@ function queryBuffer(config, emitter, targetStore) {
   class RequestBuffer {
     constructor(key, params) {
       this.uid = Math.random().toString(36);
-      this.status = 0;
+      this.state = 0;
       this.ids = [];
       this.contextKey = key;
       this.params = params;
@@ -23,32 +23,33 @@ function queryBuffer(config, emitter, targetStore) {
       const sizeLimit = config.batch?.limit || 1;
 
       if (this.ids.length >= sizeLimit) {
-        this.run();
+        this.run('limit');
         return this;
       }
       if (this.timer === null) {
-        this.timer = setTimeout(this.run.bind(this), config.batch?.delay || 0);
+        this.timer = setTimeout(this.run.bind(this, 'timeout'), config.batch?.delay || 0);
       }
+
       return this;
     }
 
-    run() {
+    run(cause) {
       this.state = 1;
       clearTimeout(this.timer);
-      emitter.emit('query', this);
+      emitter.emit('query', { cause, key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, contexts: this.contexts, ids: this.ids });
       config.resolver(this.ids, this.params, this.contexts)
         .then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
       
       if (numCached > 0) {
-        emitter.emit('cacheHit', { found: numCached });
+        emitter.emit('cacheHit', numCached);
         numCached = 0;
       }
       if (numMisses > 0) {
-        emitter.emit('cacheMiss', { found: numMisses });
+        emitter.emit('cacheMiss', numMisses);
         numMisses = 0;
       }
       if (numCoalesced > 0) {
-        emitter.emit('coalescedHit', { found: numCoalesced });
+        emitter.emit('coalescedHit', numCoalesced);
         numCoalesced = 0;
       }
     }
@@ -57,7 +58,7 @@ function queryBuffer(config, emitter, targetStore) {
       this.state = 2;
       emitter.emit('queryFailed', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, error });
       this.handle.reject(error);
-      buffers.splice(buffers.indexOf(this));
+      buffers.splice(buffers.indexOf(this), 1);
     }
   
     handleQuerySuccess(entries) {
@@ -65,11 +66,11 @@ function queryBuffer(config, emitter, targetStore) {
       emitter.emit('querySuccess', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params });
       this.handle.resolve(entries);
       if (config.cache !== null) targetStore.set(contextRecordKey(this.contextKey), this.ids, entries || {});
-      buffers.splice(buffers.indexOf(this));
+      buffers.splice(buffers.indexOf(this), 1);
     }
   }
 
-  async function getHandles(key, ids, params, context) {
+  const getHandles = (async function (key, ids, params, context) {
     const handles = Array.from(new Array(ids.length));
 
     if (config.cache !== null) {
@@ -97,10 +98,10 @@ function queryBuffer(config, emitter, targetStore) {
     }
 
     return handles;
-  }
+  });
 
   function assignQuery(key, id, params, context) {
-    let liveBuffer = buffers.find(buffer => buffer.contextKey === key);
+    let liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.state === 0);
     if (!liveBuffer) {
       liveBuffer = new RequestBuffer(key, params);
       buffers.push(liveBuffer);
@@ -115,8 +116,8 @@ function queryBuffer(config, emitter, targetStore) {
 
   function size() {
     return {
-      pendingBuffers: buffers.filter(buffer => buffer.status === 0).length,
-      activeBuffers: buffers.filter(buffer => buffer.status === 1).length,
+      pendingBuffers: buffers.filter(buffer => buffer.state === 0).length,
+      activeBuffers: buffers.filter(buffer => buffer.state === 1).length,
     }
   }
 
