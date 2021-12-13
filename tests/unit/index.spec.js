@@ -162,7 +162,11 @@ describe('index', () => {
       const storeMock = sinon.mock(test.store);
       test.get('123abc');
       const sizeValue = await test.size();
-      expect(sizeValue).to.deep.equal({contexts: 1, queries: 0, records: 0});
+      expect(sizeValue).to.deep.equal({
+        activeBuffers: 0,
+        pendingBuffers: 0,
+        records: 0,
+      });
       queueMock.expects('size').once();
       storeMock.expects('size').once();
     });

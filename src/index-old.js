@@ -1,4 +1,4 @@
-const queue = require('./buffer.js');
+const queue = require('./queries.js');
 const {contextKey, recordKey, contextRecordKey} = require('./utils.js');
 const EventEmitter = require('events').EventEmitter;
 const {hydrateConfig} = require('./options');
