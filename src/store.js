@@ -3,9 +3,9 @@ const lru = require('lru-cache');
 /* Methods -------------------------------------------------------------------*/
 
 function localStore(config) {
-   const store = new lru({
-       max: config.cache.limit,
-       maxAge: config.cache.ttl,
+  const store = new lru({
+    max: config.cache.limit,
+    maxAge: config.cache.ttl,
   });
 
   function get(key) {

@@ -70,7 +70,7 @@ function queryBuffer(config, emitter, targetStore) {
     }
   }
 
-  const getHandles = (async function (key, ids, params, context) {
+  const getHandles = (async function(key, ids, params, context) {
     const handles = Array.from(new Array(ids.length));
 
     if (config.cache !== null) {
