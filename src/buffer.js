@@ -37,8 +37,8 @@ function queryBuffer(config, emitter, targetStore) {
       this.state = 1;
       clearTimeout(this.timer);
       emitter.emit('query', { cause, key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, contexts: this.contexts, ids: this.ids });
-      config.resolver(this.ids, this.params, this.contexts)
-        .then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
+      const request = config.resolver(this.ids, this.params, this.contexts);
+      (request instanceof Promise ? request : Promise.resolve(request)).then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
       
       if (numCached > 0) {
         emitter.emit('cacheHit', numCached);
