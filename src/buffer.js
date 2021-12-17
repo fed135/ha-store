@@ -70,21 +70,14 @@ function queryBuffer(config, emitter, targetStore) {
     }
   }
 
-  const getHandles = (async function(key, ids, params, context) {
+  function getHandles(key, ids, params, context, cacheResult) {
     const handles = Array.from(new Array(ids.length));
-
-    if (config.cache !== null) {
-      const cacheResult = await targetStore.getMulti(contextRecordKey(key), ids.map((id, i) => handles[i] === undefined ? id : undefined));
-      for (let i = 0; i < cacheResult.length; i++) {
-        if (cacheResult[i] !== undefined) {
-          numCached++;
-          handles[i] = cacheResult[i];
-        }
-      }
-    }
-
     for (let i = 0; i < ids.length; i++) {
-      if (handles[i] === undefined) {
+      if (cacheResult[i] !== undefined) {
+        numCached++;
+        handles[i] = cacheResult[i];
+      }
+      else {
         const liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.ids.includes(ids[i]));
         if (liveBuffer) {
           numCoalesced++;
@@ -98,7 +91,7 @@ function queryBuffer(config, emitter, targetStore) {
     }
 
     return handles;
-  });
+  }
 
   function assignQuery(key, id, params, context) {
     let liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.state === 0);

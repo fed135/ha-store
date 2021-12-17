@@ -24,6 +24,8 @@ class HaStore extends EventEmitter {
     }
 
     this.store = this.config.cache ? this.config.store(this.config) : null;
+    this.storeGetMulti = (key, ids) => this.store.getMulti(contextRecordKey(key), ids);
+    this.storeGet = (key, id) => ([ this.store.get(recordKey(key, id)) ]);
 
     this.queue = queue(
       this.config,
@@ -35,14 +37,18 @@ class HaStore extends EventEmitter {
   get(id, params = {}, agg = null) {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
-    return this.queue.getHandles(key, [id], params, agg)
+
+    return Promise.resolve(this.store && this.storeGet(key, id) || [])
+      .then((cacheResult) => this.queue.getHandles(key, [id], params, agg, cacheResult))
       .then(handles => handles[0]);
   }
 
   getMany(ids, params = {}, agg = null) {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
-    return this.queue.getHandles(key, ids, params, agg)
+
+    return Promise.resolve(this.store && this.storeGetMulti(key, ids) || [])
+      .then((cacheResult) => this.queue.getHandles(key, ids, params, agg, cacheResult))
       .then((handles) => Promise.allSettled(handles)
         .then((outcomes) => ids.reduce((handles, id, index) => {
           handles[id] = outcomes[index];
