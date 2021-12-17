@@ -26,6 +26,7 @@ function queryBuffer(config, emitter, targetStore) {
         this.run('limit');
         return this;
       }
+      
       if (this.timer === null) {
         this.timer = setTimeout(this.run.bind(this, 'timeout'), config.batch?.delay || 0);
       }
