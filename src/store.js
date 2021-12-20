@@ -1,12 +1,11 @@
-const lruNative = require('lru-native2');
+const lru = require('lru-cache');
 
 /* Methods -------------------------------------------------------------------*/
 
 function localStore(config) {
-  const store = new lruNative({
-    maxElements: config.cache.limit,
+  const store = new lru({
+    max: config.cache.limit,
     maxAge: config.cache.ttl,
-    size: Math.min(Math.ceil(config.cache.limit / 10), 1000),
   });
 
   function get(key) {
@@ -31,14 +30,14 @@ function localStore(config) {
 
   function clear(key) {
     if (key === '*') {
-      store.clear();
+      store.reset();
       return true;
     }
-    return store.remove(key);
+    return store.del(key);
   }
 
   function size() {
-    return store.size();
+    return store.itemCount;
   }
 
   return { get, getMulti, set, clear, size };
