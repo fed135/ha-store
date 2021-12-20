@@ -1,5 +1,11 @@
 const {contextRecordKey, deferred} = require('./utils');
 
+const BufferState = {
+  PENDING: 0,
+  RUNNING: 1,
+  COMPLETED: 2,
+};
+
 function queryBuffer(config, emitter, targetStore) {
   const buffers = [];
 
@@ -10,7 +16,7 @@ function queryBuffer(config, emitter, targetStore) {
   class RequestBuffer {
     constructor(key, params) {
       this.uid = Math.random().toString(36);
-      this.state = 0;
+      this.state = BufferState.PENDING;
       this.ids = [];
       this.contextKey = key;
       this.params = params;
@@ -34,7 +40,7 @@ function queryBuffer(config, emitter, targetStore) {
     }
 
     run(cause) {
-      this.state = 1;
+      this.state = BufferState.RUNNING;
       clearTimeout(this.timer);
       emitter.emit('query', { cause, key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, contexts: this.contexts, ids: this.ids });
       const request = config.resolver(this.ids, this.params, this.contexts);
@@ -55,14 +61,14 @@ function queryBuffer(config, emitter, targetStore) {
     }
 
     handleQueryError(error) {
-      this.state = 2;
+      this.state = BufferState.COMPLETED;
       emitter.emit('queryFailed', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, error });
       this.handle.reject(error);
       buffers.splice(buffers.indexOf(this), 1);
     }
   
     handleQuerySuccess(entries) {
-      this.state = 2;
+      this.state = BufferState.COMPLETED;
       emitter.emit('querySuccess', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params });
       this.handle.resolve(entries);
       if (config.cache !== null) targetStore.set(contextRecordKey(this.contextKey), this.ids, entries || {});
@@ -94,7 +100,7 @@ function queryBuffer(config, emitter, targetStore) {
   }
 
   function assignQuery(key, id, params, context) {
-    let liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.state === 0);
+    let liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.state === BufferState.PENDING);
     if (!liveBuffer) {
       liveBuffer = new RequestBuffer(key, params);
       buffers.push(liveBuffer);
@@ -109,8 +115,8 @@ function queryBuffer(config, emitter, targetStore) {
 
   function size() {
     return {
-      pendingBuffers: buffers.filter(buffer => buffer.state === 0).length,
-      activeBuffers: buffers.filter(buffer => buffer.state === 1).length,
+      pendingBuffers: buffers.filter(buffer => buffer.state === BufferState.PENDING).length,
+      activeBuffers: buffers.filter(buffer => buffer.state === BufferState.RUNNING).length,
     }
   }
 
