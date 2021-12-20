@@ -48,8 +48,8 @@ function handleRequest(id, language) {
 }
 
 store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.size; });
-store.on('cacheHit', evt => { suite.cacheHits+=evt.found; });
-store.on('coalescedHit', evt => { suite.coalescedHit+=evt.found; });
+store.on('cacheHit', evt => { suite.cacheHits+=evt; });
+store.on('coalescedHit', evt => { suite.coalescedHit+=evt; });
 
 //End
 function complete() {
