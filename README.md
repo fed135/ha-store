@@ -78,7 +78,7 @@ batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;delay: 50,&#13;&#10;&nbsp;&nbsp;limi
 HA-store emits events to track cache hits, miss and outbound requests.
 
 Event | Format | Description
---- | ---
+--- | --- | ---
 cacheHit | `<number>` | When the requested item is present in the microcache, or is already being fetched. Prevents another request from being created.
 cacheMiss | `<number>` | When the requested item not cached or coalesced and must be fetched.
 coalescedHit | `<number>` | When a record query successfully hooks to the promise of the same record in transit.
