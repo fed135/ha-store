@@ -35,7 +35,7 @@ export interface HAStore extends EventEmitter {
   getMany<Response, Context>(id: string[], params?: Params, context?: Context): Promise<{status: string, value: Response}[]>
   set(items: { [id: string]: any }, ids: string[], params?: Params): boolean
   clear(ids: string[], params?: Params): void
-  size(): { contexts: number, queries: number, records: number }
+  size(): { pendingBuffers: number, activeBuffers: number, records: number }
   getStorageKey(id: string, params?: Params): string
 }
 

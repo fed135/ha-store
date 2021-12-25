@@ -46,19 +46,6 @@ function queryBuffer(config, emitter, targetStore) {
       emitter.emit('query', { cause, key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, contexts: this.contexts, ids: this.ids });
       const request = config.resolver(this.ids, this.params, this.contexts);
       (request instanceof Promise ? request : Promise.resolve(request)).then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
-      
-      if (numCached > 0) {
-        emitter.emit('cacheHit', numCached);
-        numCached = 0;
-      }
-      if (numMisses > 0) {
-        emitter.emit('cacheMiss', numMisses);
-        numMisses = 0;
-      }
-      if (numCoalesced > 0) {
-        emitter.emit('coalescedHit', numCoalesced);
-        numCoalesced = 0;
-      }
     }
 
     handleQueryError(error) {
@@ -95,6 +82,19 @@ function queryBuffer(config, emitter, targetStore) {
           handles[i] = assignQuery(key, ids[i], params, context).handle.promise.then(results => results[ids[i]]);
         }
       }
+    }
+
+    if (numCached > 0) {
+      emitter.emit('cacheHit', numCached);
+      numCached = 0;
+    }
+    if (numMisses > 0) {
+      emitter.emit('cacheMiss', numMisses);
+      numMisses = 0;
+    }
+    if (numCoalesced > 0) {
+      emitter.emit('coalescedHit', numCoalesced);
+      numCoalesced = 0;
     }
 
     return handles;
