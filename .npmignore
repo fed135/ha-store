@@ -1,5 +1,4 @@
 tests
-README.md
 .travis.yml
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
@@ -9,3 +8,5 @@ package-lock.json
 *.clinic*
 sample.txt
 .github
+logo.png
+yarn.lock

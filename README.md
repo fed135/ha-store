@@ -1,4 +1,6 @@
 <h1 align="center">
+  <img alt="HA-store" width="300px" src="./logo.png" />
+  <br/>
   High-Availability store
 </h1>
 <h3 align="center">
