@@ -19,10 +19,6 @@ class HaStore extends EventEmitter {
 
     this.config = hydrateConfig(initialConfig);
 
-    if (this.setMaxListeners) {
-      this.setMaxListeners(Infinity);
-    }
-
     this.store = this.config.cache ? this.config.store(this.config) : null;
     this.storeGetMulti = (key, ids) => this.store.getMulti(contextRecordKey(key), ids);
     this.storeGet = (key, id) => ([ this.store.get(recordKey(key, id)) ]);
