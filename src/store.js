@@ -5,7 +5,7 @@ const lru = require('lru-cache');
 function localStore(config) {
   const store = new lru({
     max: config.cache.limit,
-    maxAge: config.cache.ttl,
+    ttl: config.cache.ttl,
   });
 
   function get(key) {
@@ -30,14 +30,14 @@ function localStore(config) {
 
   function clear(key) {
     if (key === '*') {
-      store.reset();
+      store.clear();
       return true;
     }
-    return store.del(key);
+    return store.delete(key);
   }
 
   function size() {
-    return store.itemCount;
+    return store.size;
   }
 
   return { get, getMulti, set, clear, size };

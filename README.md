@@ -1,4 +1,6 @@
 <h1 align="center">
+  <img alt="HA-store" width="300px" src="./logo.png" />
+  <br/>
   High-Availability store
 </h1>
 <h3 align="center">
@@ -9,8 +11,7 @@
 
 [![ha-store](https://img.shields.io/npm/v/ha-store.svg)](https://www.npmjs.com/package/ha-store)
 [![Node](https://img.shields.io/badge/node->%3D14.0-blue.svg)](https://nodejs.org)
-[![Build Status](https://travis-ci.org/fed135/ha-store.svg?branch=master)](https://travis-ci.org/fed135/ha-store)
-[![Dependencies Status](https://david-dm.org/fed135/ha-store.svg)](https://david-dm.org/fed135/ha-store)
+[![Dependencies Status](https://img.shields.io/librariesio/release/npm/ha-store)](https://github.com/fed135/ha-store/security/dependabot)
 
 ---
 
@@ -110,5 +111,5 @@ I am always looking for more maintainers, as well.
 
 ## License 
 
-[Apache 2.0](LICENSE) (c) 2021 Frederic Charette
+[Apache 2.0](LICENSE) (c) Frederic Charette
 
