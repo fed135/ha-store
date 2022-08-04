@@ -13,6 +13,7 @@ const crypto = require('crypto');
 const suite = {
   completed: 0,
   cacheHits: 0,
+  localCacheHits: 0,
   coalescedHit: 0,
   sum: 0,
   timeouts: 0,
@@ -49,6 +50,7 @@ function handleRequest(id, language) {
 
 store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.size; });
 store.on('cacheHit', evt => { suite.cacheHits+=evt; });
+store.on('localCacheHit', evt => { suite.localCacheHits+=evt; });
 store.on('coalescedHit', evt => { suite.coalescedHit+=evt; });
 
 //End

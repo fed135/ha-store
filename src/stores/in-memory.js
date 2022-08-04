@@ -1,11 +1,9 @@
 const lru = require('lru-cache');
 
-/* Methods -------------------------------------------------------------------*/
-
 function localStore(config) {
   const store = new lru({
-    max: config.cache.limit,
-    ttl: config.cache.ttl,
+    max: config.limit,
+    ttl: config.ttl,
   });
 
   function get(key) {
@@ -40,9 +38,11 @@ function localStore(config) {
     return store.size;
   }
 
-  return { get, getMulti, set, clear, size };
-}
+  function _debug() {
+    return store.dump();
+  }
 
-/* Exports -------------------------------------------------------------------*/
+  return { get, getMulti, set, clear, size, local: true, _debug };
+}
 
 module.exports = localStore;

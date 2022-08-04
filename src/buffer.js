@@ -6,12 +6,10 @@ const BufferState = {
   COMPLETED: 2,
 };
 
-function queryBuffer(config, emitter, targetStore) {
+function queryBufferConstructor(config, emitter, caches) {
   const buffers = [];
 
   let numCoalesced = 0;
-  let numCached = 0;
-  let numMisses = 0;
 
   class RequestBuffer {
     constructor(key, params) {
@@ -59,45 +57,34 @@ function queryBuffer(config, emitter, targetStore) {
       this.state = BufferState.COMPLETED;
       emitter.emit('querySuccess', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params });
       this.handle.resolve(entries);
-      if (config.cache !== null) targetStore.set(contextRecordKey(this.contextKey), this.ids, entries || {});
+      if (config.cache !== null) caches.set(contextRecordKey(this.contextKey), this.ids, entries || {});
       buffers.splice(buffers.indexOf(this), 1);
     }
   }
 
-  function getHandles(key, ids, params, context, cacheResult) {
-    const handles = Array.from(new Array(ids.length));
-    for (let i = 0; i < ids.length; i++) {
-      if (cacheResult[i] !== undefined) {
-        numCached++;
-        handles[i] = cacheResult[i];
-      }
-      else {
-        const liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.ids.includes(ids[i]));
-        if (liveBuffer) {
-          numCoalesced++;
-          handles[i] = liveBuffer.handle.promise.then(results => results[ids[i]]);
+  function getHandles(key, ids, params, context) {
+    return caches.getMulti(contextRecordKey(key), ids.concat())
+      .then((handles) => {
+        for (let i = 0; i < ids.length; i++) {
+          if (handles[i] === undefined) {
+            const liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.ids.includes(ids[i]));
+            if (liveBuffer) {
+              numCoalesced++;
+              handles[i] = liveBuffer.handle.promise.then(results => results[ids[i]]);
+            }
+            else {
+              handles[i] = assignQuery(key, ids[i], params, context).handle.promise.then(results => results && results[ids[i]]);
+            }
+          }
         }
-        else {
-          numMisses++;
-          handles[i] = assignQuery(key, ids[i], params, context).handle.promise.then(results => results[ids[i]]);
+
+        if (numCoalesced > 0) {
+          emitter.track('coalescedHit', numCoalesced);
+          numCoalesced = 0;
         }
-      }
-    }
 
-    if (numCached > 0) {
-      emitter.emit('cacheHit', numCached);
-      numCached = 0;
-    }
-    if (numMisses > 0) {
-      emitter.emit('cacheMiss', numMisses);
-      numMisses = 0;
-    }
-    if (numCoalesced > 0) {
-      emitter.emit('coalescedHit', numCoalesced);
-      numCoalesced = 0;
-    }
-
-    return handles;
+        return handles;
+      });
   }
 
   function assignQuery(key, id, params, context) {
@@ -124,4 +111,4 @@ function queryBuffer(config, emitter, targetStore) {
   return { getHandles, size };
 }
 
-module.exports = queryBuffer;
+module.exports = queryBufferConstructor;

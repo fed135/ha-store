@@ -6,8 +6,8 @@
 
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const dao = require('./utils/dao.js');
-const store = require('../../src/index.js');
+const dao = require('./utils/dao');
+const store = require('../../src/index');
 
 /* Tests ---------------------------------------------------------------------*/
 
@@ -31,7 +31,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -42,7 +42,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -54,7 +54,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -66,7 +66,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -100,7 +100,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .once()
             .withArgs(['foo']);
@@ -113,7 +113,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .twice()
             .withArgs(['foo']);
@@ -141,7 +141,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -152,7 +152,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -180,7 +180,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -191,7 +191,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -220,7 +220,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -231,7 +231,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -298,6 +298,7 @@ describe('Caching', () => {
     beforeEach(() => {
       mockSource = sinon.mock(dao);
       testStore = store({
+        batch: {},
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
       });
@@ -306,7 +307,7 @@ describe('Caching', () => {
     it('should cache all the results on mixed responses', () => {
       return testStore.getMany(['abc', 'foo', 'bar'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });
           mockSource.expects('getPartialGroup')
             .once()
             .withArgs(['foo', 'bar', 'abc']);
@@ -318,7 +319,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('abc')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: undefined });
+          expect(result).to.deep.equal({ id: 'abc', language: null });
           mockSource.expects('getPartialGroup')
             .once()
             .withArgs(['abc']);

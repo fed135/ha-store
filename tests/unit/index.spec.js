@@ -3,9 +3,9 @@
  */
 
 /* Requires ------------------------------------------------------------------*/
-const {contextKey} = require('../../src/utils.js');
-const {noop} = require('./utils');
-const root = require('../../src/index.js');
+const {contextKey} = require('../../src/utils');
+const {noop} = require('./testUtils');
+const root = require('../../src/index');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
@@ -165,7 +165,29 @@ describe('index', () => {
       expect(sizeValue).to.deep.equal({
         activeBuffers: 0,
         pendingBuffers: 0,
-        records: 0,
+        records: {
+          local: 0,
+          remote: 0,
+        },
+      });
+      queueMock.expects('size').once();
+      storeMock.expects('size').once();
+    });
+
+    it('should return size value and status if cache is disabled', async () => {
+      const test = root({resolver: noop, cache: null});
+      const queueMock = sinon.mock(test.queue);
+      const storeMock = sinon.mock(test.store);
+      await test.get('123abc');
+      const sizeValue = await test.size();
+      expect(sizeValue).to.deep.equal({
+        activeBuffers: 0,
+        pendingBuffers: 0,
+        records: {
+          local: 0,
+          remote: 0,
+          status: 'disabled',
+        },
       });
       queueMock.expects('size').once();
       storeMock.expects('size').once();

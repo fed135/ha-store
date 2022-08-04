@@ -1,44 +1,27 @@
-const store = require('./store.js');
-
-/* Local variables -----------------------------------------------------------*/
+const inMemoryStore = require('./stores/in-memory');
 
 const defaultConfig = {
   batch: {
     delay: 50,
     limit: 100,
   },
-  cache: {
+  stores: [{
+    store: inMemoryStore,
     limit: 5000,
     ttl: 300000,
-  },
+  }],
 };
 
-/* Methods -------------------------------------------------------------------*/
-
-function hydrateIfNotNull(baseConfig, defaultConfig) {
-  if (baseConfig === null) {
-    return null;
-  }
-
-  if (!baseConfig) {
-    return {...defaultConfig};
-  }
-
-  return {
-    ...defaultConfig,
-    ...baseConfig,
-  };
-}
-
 function hydrateConfig(config = {}) {
+  if (typeof config.resolver !== 'function') {
+    throw new Error(`config.resolver [${config.resolver}] is not a function`);
+  }
+
   return {
     ...config,
-    store: config.store || store,
-    batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
-    cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
+    batch: config.batch && {...defaultConfig.batch, ...config.batch},
+    stores: config.stores && config.stores.map((store) =>({...defaultConfig.stores[0], ...store})) || defaultConfig.stores,
   };
 }
-
-/* Exports -------------------------------------------------------------------*/
 
 module.exports = {hydrateConfig};
