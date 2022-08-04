@@ -56,8 +56,9 @@ function cachesConstructor(config, emitter) {
     return settleAndLog(remotes.map((remote) => remote.getMulti(recordKey, keys)))
       .then((remoteValues) => {
         const responseValues = Object.assign(...remoteValues, localValues);
+        const foundRemotely = remoteValues.filter((value) => value !== undefined);
         const missingValues = responseValues.filter((value) => value === undefined);
-        emitter.track('cacheHit', remoteValues.length - missingValues.length);
+        emitter.track('cacheHit', foundRemotely.length);
         emitter.track('cacheMiss', missingValues.length);
         return responseValues;
       });
