@@ -24,7 +24,7 @@ function queryBufferConstructor(config, emitter, caches) {
     }
 
     tick() {
-      const sizeLimit = config.batch?.limit || 1;
+      const sizeLimit = config.batch.enabled && config.batch.limit || 1;
 
       if (this.ids.length >= sizeLimit) {
         this.run('limit');
@@ -32,7 +32,7 @@ function queryBufferConstructor(config, emitter, caches) {
       }
       
       if (this.timer === null) {
-        this.timer = setTimeout(this.run.bind(this, 'timeout'), config.batch?.delay || 0);
+        this.timer = setTimeout(this.run.bind(this, 'timeout'), config.batch.enabled && config.batch.delay || 0);
       }
 
       return this;
@@ -57,7 +57,7 @@ function queryBufferConstructor(config, emitter, caches) {
       this.state = BufferState.COMPLETED;
       emitter.emit('querySuccess', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params });
       this.handle.resolve(entries);
-      if (config.cache !== null) caches.set(contextRecordKey(this.contextKey), this.ids, entries || {});
+      if (config.cache.enabled) caches.set(contextRecordKey(this.contextKey), this.ids, entries || {});
       buffers.splice(buffers.indexOf(this), 1);
     }
   }

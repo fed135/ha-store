@@ -298,7 +298,7 @@ describe('Caching', () => {
     beforeEach(() => {
       mockSource = sinon.mock(dao);
       testStore = store({
-        batch: {},
+        batch: {enabled: true},
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
       });

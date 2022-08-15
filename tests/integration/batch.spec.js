@@ -305,11 +305,11 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
+        batch: { limit: 6, delay: 1 },
       });
     });
 
     it('should return the valid results mixed calls', () => {
-      testStore.config.batch = { limit: 6, delay: 1 };
       return testStore.getMany(['abc', 'foo', 'bar'])
         .then((result) => {
           expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });

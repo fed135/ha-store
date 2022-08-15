@@ -8,14 +8,14 @@ class HaStore extends DeferredEmitter {
   constructor(initialConfig) {
     super();
 
-    this.config = hydrateConfig(initialConfig);
+    this.config = Object.freeze(hydrateConfig(initialConfig));
 
-    this.store = caches(this.config, this);
+    this._store = caches(this.config, this);
 
-    this.queue = queue(
+    this._queue = queue(
       this.config,
       this,
-      this.store
+      this._store
     );
   }
 
@@ -23,7 +23,7 @@ class HaStore extends DeferredEmitter {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
 
-    return this.queue.getHandles(key, [id], params, agg)
+    return this._queue.getHandles(key, [id], params, agg)
       .then(handles => handles[0]);
   }
 
@@ -31,7 +31,7 @@ class HaStore extends DeferredEmitter {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
 
-    return this.queue.getHandles(key, ids, params, agg)
+    return this._queue.getHandles(key, ids, params, agg)
       .then((handles) => Promise.allSettled(handles)
         .then((outcomes) => ids.reduce((handles, id, index) => {
           handles[id] = outcomes[index];
@@ -42,22 +42,21 @@ class HaStore extends DeferredEmitter {
   set(items, ids, params = {}) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
     const key = contextKey(this.config.delimiter, params);
-    return this.store.set(contextRecordKey(key), ids, items);
+    return this._store.set(contextRecordKey(key), ids, items);
   }
 
   clear(ids, params) {
-    if (this.store === null) return true;
     if (Array.isArray(ids)) {
       return ids.map(id => this.clear(id, params));
     }
 
-    return this.store.clear(ids, params);
+    return this._store.clear(ids, params);
   }
 
   size() {
-    return this.store.size()
+    return this._store.size()
       .then(records => ({
-        ...this.queue.size(),
+        ...this._queue.size(),
         records,
       }));
   }

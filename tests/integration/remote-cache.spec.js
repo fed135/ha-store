@@ -148,10 +148,13 @@ describe('Remote Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
-        stores: [
-          {store: local},
-          {store: remote(Math.random().toString(36), '//0.0.0.0:6379')},
-        ],
+        cache: {
+          enabled: true,
+          tiers: [
+            {store: local},
+            {store: remote(Math.random().toString(36), '//0.0.0.0:6379')},
+          ],
+        },
       });
       await testStore.clear('*');
     });

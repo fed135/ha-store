@@ -1,13 +1,9 @@
 const {settleAndLog} = require('./utils');
 
 function cachesConstructor(config, emitter) {
-  const caches = isCacheEnabled() && config.stores.map(tier => tier.store(tier)) || [];
+  const caches = config.cache.enabled && config.cache.tiers.map(tier => tier.client(tier)) || [];
   const local = caches.find(cache => cache.local);
   const remotes = caches.filter(cache => !cache.local);
-
-  function isCacheEnabled() {
-    return config.cache !== null && config.cache !== false;
-  }
 
   function getLocal(key) {
     return local && local.get(key);
@@ -18,7 +14,7 @@ function cachesConstructor(config, emitter) {
   }
 
   function get(key) {
-    if (!isCacheEnabled()) return undefined;
+    if (!config.cache.enabled) return undefined;
 
     const localValue = getLocal(key);
     if (localValue !== undefined) {
@@ -41,7 +37,7 @@ function cachesConstructor(config, emitter) {
   }
 
   function getMulti(recordKey, keys) {
-    if (!isCacheEnabled()) return Promise.resolve(Array.from(new Array(keys.length), () => undefined));
+    if (!config.cache.enabled) return Promise.resolve(Array.from(new Array(keys.length), () => undefined));
 
     const localValues = getMultiLocal(recordKey, keys);
     const foundLocally = localValues && localValues.filter(value => value !== undefined).length;
@@ -76,7 +72,7 @@ function cachesConstructor(config, emitter) {
   }
 
   function size() {
-    if (!isCacheEnabled()) {
+    if (!config.cache.enabled) {
       return Promise.resolve({
         local: 0,
         remote: 0,
