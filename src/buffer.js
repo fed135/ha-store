@@ -24,7 +24,7 @@ function queryBufferConstructor(config, emitter, caches) {
     }
 
     tick() {
-      const sizeLimit = config.batch.enabled && config.batch.limit || 1;
+      const sizeLimit = (config.batch.enabled && config.batch.limit) || 1;
 
       if (this.ids.length >= sizeLimit) {
         this.run('limit');

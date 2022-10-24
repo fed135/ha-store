@@ -23,6 +23,14 @@ function hydrateConfig(config = {}) {
     throw new Error(`config.resolver [${config.resolver}] is not a function`);
   }
 
+  if (config.batch && config.batch.enabled == undefined) {
+    console.warn('Missing explicit `enabled` flag for ha-store batch config. Batching will not be enabled for this store.');
+  }
+
+  if (config.cache && config.cache.enabled == undefined) {
+    console.warn('Missing explicit `enabled` flag for ha-store cache config. Caching will not be enabled for this store.');
+  }
+
   if (config.cache?.enabled) {
     if (!config.cache?.tiers?.length) {
       config.cache.tiers = [defaultCacheConfig];

@@ -27,9 +27,12 @@ describe('Remote Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
-        stores: [{
-          store: remote(Math.random().toString(36), '//0.0.0.0:6379'),
-        }],
+        cache: {
+          enabled: true,
+          tiers: [
+            {store: remote(Math.random().toString(36), '//0.0.0.0:6379')},
+          ],
+        },
       });
       await testStore.clear('*');
     });
@@ -59,7 +62,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache single values without batching', async () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       await sleep(10);
       return testStore.get('foo')
@@ -72,7 +75,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache multi values without batching', async () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.getMany(['abc', 'foo'])
       await sleep(10);
       return testStore.getMany(['abc', 'foo'])
@@ -109,7 +112,7 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching after boot', async () => {
-      testStore.config.cache = null;
+      testStore.config.cache.enabled = false;
       testStore.get('foo');
       await sleep(10);
       return testStore.get('foo')
@@ -122,8 +125,8 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching and batching after boot', async () => {
-      testStore.config.cache = null;
-      testStore.config.batch = null;
+      testStore.config.cache.enabled = false;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       await sleep(10);
       return testStore.get('foo')
@@ -197,7 +200,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache single values without batching', async () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       await sleep(10);
       return testStore.get('foo')
@@ -210,7 +213,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache multi values without batching', async () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.getMany(['abc', 'foo'])
       await sleep(10);
       return testStore.getMany(['abc', 'foo'])
@@ -247,7 +250,7 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching after boot', async () => {
-      testStore.config.cache = null;
+      testStore.config.cache.enabled = false;
       testStore.get('foo');
       await sleep(10);
       return testStore.get('foo')
@@ -260,8 +263,8 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching and batching after boot', async () => {
-      testStore.config.cache = null;
-      testStore.config.batch = null;
+      testStore.config.cache.enabled = false;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       await sleep(10);
       return testStore.get('foo')
@@ -286,9 +289,12 @@ describe('Remote Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailedRequest,
-        stores: [{
-          store: remote(Math.random().toString(36), '//0.0.0.0:6379'),
-        }],
+        cache: {
+          enabled: true,
+          tiers: [
+            {store: remote(Math.random().toString(36), '//0.0.0.0:6379')},
+          ],
+        },
       });
       await testStore.clear('*');
     });
@@ -312,7 +318,7 @@ describe('Remote Caching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.deep.equal({ error: 'Something went wrong' });

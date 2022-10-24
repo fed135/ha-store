@@ -50,7 +50,7 @@ describe('Caching', () => {
     });
 
     it('should cache single values without batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
@@ -62,7 +62,7 @@ describe('Caching', () => {
     });
 
     it('should cache multi values without batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
@@ -96,7 +96,7 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching after boot', () => {
-      testStore.config.cache = null;
+      testStore.config.cache.enabled = false;
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
@@ -108,8 +108,8 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching and batching after boot', () => {
-      testStore.config.cache = null;
-      testStore.config.batch = null;
+      testStore.config.cache.enabled = false;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
@@ -276,7 +276,7 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('abc')
         .then((result) => {
@@ -299,6 +299,7 @@ describe('Caching', () => {
       mockSource = sinon.mock(dao);
       testStore = store({
         batch: {enabled: true},
+        cache: {enabled: true},
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
       });
@@ -314,8 +315,8 @@ describe('Caching', () => {
         });
     });
 
-    it('should support disabled caching', () => {
-      testStore.config.batch = null;
+    it('should support disabled batching', () => {
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('abc')
         .then((result) => {
@@ -361,7 +362,7 @@ describe('Caching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.deep.equal({ error: 'Something went wrong' });
@@ -388,7 +389,6 @@ describe('Caching', () => {
     });
 
     it('should not cache on rejected requests', () => {
-      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -398,8 +398,7 @@ describe('Caching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.retry = null;
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
