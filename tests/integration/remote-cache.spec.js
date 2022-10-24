@@ -14,7 +14,7 @@ const local = require('../../src/stores/in-memory');
 
 /* Tests ---------------------------------------------------------------------*/
 
-describe.only('Remote Caching', () => {
+describe('Remote Caching', () => {
   describe('Happy remote-only responses', () => {
     let testStore;
     let mockSource;
@@ -162,7 +162,7 @@ describe.only('Remote Caching', () => {
       await testStore.clear('*');
     });
 
-    it.only('remote cache should be populated', async () => {
+    it('remote cache should be populated', async () => {
       await testStore.get('foo');
       await sleep(10);
       return testStore.size()
