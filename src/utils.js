@@ -15,6 +15,14 @@ function recordKey(context, id) {
 
 const contextRecordKey = key => id => recordKey(key, id);
 
-/* Exports -------------------------------------------------------------------*/
+function settleAndLog(promises) {
+  return Promise.allSettled(promises).then((results) => {
+    const errors = results.filter((result) => result.status !== 'fulfilled').map((result) => result.reason);
+    if (errors.length > 0) {
+      console.error('Failed to get value from remote cache', errors);
+    }
+    return results.map((result) => result.value);
+  });
+}
 
-module.exports = { deferred, contextKey, recordKey, contextRecordKey };
+module.exports = { deferred, contextKey, recordKey, contextRecordKey, settleAndLog };

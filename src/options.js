@@ -1,44 +1,51 @@
-const store = require('./store.js');
+const inMemoryStore = require('./stores/in-memory');
 
-/* Local variables -----------------------------------------------------------*/
+const defaultCacheConfig = {
+  store: inMemoryStore,
+  limit: 5000,
+  ttl: 300000,
+};
 
 const defaultConfig = {
   batch: {
+    enabled: false,
     delay: 50,
     limit: 100,
   },
   cache: {
-    limit: 5000,
-    ttl: 300000,
+    enabled: false,
+    tiers: [],
   },
 };
 
-/* Methods -------------------------------------------------------------------*/
-
-function hydrateIfNotNull(baseConfig, defaultConfig) {
-  if (baseConfig === null) {
-    return null;
-  }
-
-  if (!baseConfig) {
-    return {...defaultConfig};
-  }
-
-  return {
-    ...defaultConfig,
-    ...baseConfig,
-  };
-}
-
 function hydrateConfig(config = {}) {
+  if (typeof config.resolver !== 'function') {
+    throw new Error(`config.resolver [${config.resolver}] is not a function`);
+  }
+
+  if (config.batch && config.batch.enabled == undefined) {
+    console.warn('Missing explicit `enabled` flag for ha-store batch config. Batching will not be enabled for this store.');
+  }
+
+  if (config.cache && config.cache.enabled == undefined) {
+    console.warn('Missing explicit `enabled` flag for ha-store cache config. Caching will not be enabled for this store.');
+  }
+
+  if (config.cache?.enabled) {
+    if (!config.cache?.tiers?.length) {
+      config.cache.tiers = [defaultCacheConfig];
+    }
+    else {
+      config.cache.tiers = config.cache.tiers.map((store) =>({...defaultCacheConfig, ...store}));
+    }
+  }
+  else config.cache = defaultConfig.cache;
+
   return {
     ...config,
-    store: config.store || store,
-    batch: hydrateIfNotNull(config.batch, defaultConfig.batch),
-    cache: hydrateIfNotNull(config.cache, defaultConfig.cache),
+    batch: {...defaultConfig.batch, ...config.batch},
+    cache: config.cache,
   };
 }
-
-/* Exports -------------------------------------------------------------------*/
 
 module.exports = {hydrateConfig};

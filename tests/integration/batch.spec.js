@@ -6,8 +6,8 @@
 
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const dao = require('./utils/dao.js');
-const store = require('../../src/index.js');
+const dao = require('./utils/dao');
+const store = require('../../src/index');
 
 /* Tests ---------------------------------------------------------------------*/
 
@@ -24,6 +24,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
+        batch: { enabled: true },
       });
     });
 
@@ -33,7 +34,7 @@ describe('Batching', () => {
         testStore.get('abc'),
       ])
         .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
+          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['foo', 'abc']);
@@ -43,7 +44,7 @@ describe('Batching', () => {
     it('should batch multi calls', () => {
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .once()
             .withArgs(['foo', 'abc']);
@@ -56,7 +57,7 @@ describe('Batching', () => {
         testStore.get('abc'),
       ])
         .then((result) => {
-          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: { id: 'bar', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } }, { id: 'abc', language: undefined }]);
+          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: { id: 'bar', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } }, { id: 'abc', language: null }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['foo', 'bar', 'abc']);
@@ -139,11 +140,11 @@ describe('Batching', () => {
       ])
         .then((result) => {
           expect(result).to.deep.equal([{
-            foo2: { status: 'fulfilled', value: { id: 'foo2', language: undefined } },
-            bar2: { status: 'fulfilled', value: { id: 'bar2', language: undefined } },
-            abc2: { status: 'fulfilled', value: { id: 'abc2', language: undefined } },
-            def2: { status: 'fulfilled', value: { id: 'def2', language: undefined } },
-            ghi2: { status: 'fulfilled', value: { id: 'ghi2', language: undefined } },
+            foo2: { status: 'fulfilled', value: { id: 'foo2', language: null } },
+            bar2: { status: 'fulfilled', value: { id: 'bar2', language: null } },
+            abc2: { status: 'fulfilled', value: { id: 'abc2', language: null } },
+            def2: { status: 'fulfilled', value: { id: 'def2', language: null } },
+            ghi2: { status: 'fulfilled', value: { id: 'ghi2', language: null } },
           },{
             foo: { status: 'fulfilled', value: { id: 'foo', language: 'en' } },
             bar: { status: 'fulfilled', value: { id: 'bar', language: 'en' } },
@@ -163,7 +164,7 @@ describe('Batching', () => {
         testStore.get('foo', null, '2345678901'),
       ])
         .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'foo', language: undefined }]);
+          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'foo', language: null }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['abc'], null, ['1234567890', '2345678901']);
@@ -171,13 +172,13 @@ describe('Batching', () => {
     });
 
     it('should accumulate batch data, when batching is disabled', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return Promise.all([
         testStore.get('foo'),
         testStore.get('abc', null, '1234567890'),
       ])
         .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
+          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['abc'], null, ['1234567890']);
@@ -185,13 +186,13 @@ describe('Batching', () => {
     });
 
     it('should support disabled batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
       ])
         .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: undefined }, { id: 'abc', language: undefined }]);
+          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
           mockSource.expects('getAssets')
             .once()
             .withArgs(['abc']);
@@ -214,6 +215,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getEmptyGroup,
+        batch: { enabled: true },
       });
     });
 
@@ -279,7 +281,7 @@ describe('Batching', () => {
     });
 
     it('should support disabled batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
@@ -305,14 +307,14 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
+        batch: { limit: 6, delay: 1, enabled: true },
       });
     });
 
     it('should return the valid results mixed calls', () => {
-      testStore.config.batch = { limit: 6, delay: 1 };
       return testStore.getMany(['abc', 'foo', 'bar'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });
           mockSource.expects('getPartialGroup')
             .once()
             .withArgs(['foo', 'bar', 'abc']);
@@ -332,6 +334,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailedRequest,
+        batch: { enabled: true },
       });
     });
 
@@ -354,7 +357,7 @@ describe('Batching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.deep.equal({ error: 'Something went wrong' });
@@ -377,6 +380,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getErroredRequest,
+        batch: { enabled: true },
       });
     });
 
@@ -406,7 +410,7 @@ describe('Batching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -429,7 +433,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailOnFoo,
-        batch: { limit: 1 },
+        batch: { limit: 1, enabled: true },
       });
     });
 

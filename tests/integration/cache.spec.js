@@ -6,8 +6,8 @@
 
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const dao = require('./utils/dao.js');
-const store = require('../../src/index.js');
+const dao = require('./utils/dao');
+const store = require('../../src/index');
 
 /* Tests ---------------------------------------------------------------------*/
 
@@ -31,7 +31,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -42,7 +42,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -50,11 +50,11 @@ describe('Caching', () => {
     });
 
     it('should cache single values without batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -62,11 +62,11 @@ describe('Caching', () => {
     });
 
     it('should cache multi values without batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -96,11 +96,11 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching after boot', () => {
-      testStore.config.cache = null;
+      testStore.config.cache.enabled = false;
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .once()
             .withArgs(['foo']);
@@ -108,12 +108,12 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching and batching after boot', () => {
-      testStore.config.cache = null;
-      testStore.config.batch = null;
+      testStore.config.cache.enabled = false;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .twice()
             .withArgs(['foo']);
@@ -141,7 +141,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -152,7 +152,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -180,7 +180,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -191,7 +191,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -220,7 +220,7 @@ describe('Caching', () => {
       testStore.get('foo');
       return testStore.get('foo')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'foo', language: undefined });
+          expect(result).to.deep.equal({ id: 'foo', language: null });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -231,7 +231,7 @@ describe('Caching', () => {
       testStore.getMany(['abc', 'foo'])
       return testStore.getMany(['abc', 'foo'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: { id: 'foo', language: undefined } } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
           mockSource.expects('getAssets')
             .exactly(1)
             .withArgs(['foo', 'abc']);
@@ -276,7 +276,7 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('abc')
         .then((result) => {
@@ -298,6 +298,8 @@ describe('Caching', () => {
     beforeEach(() => {
       mockSource = sinon.mock(dao);
       testStore = store({
+        batch: {enabled: true},
+        cache: {enabled: true},
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
       });
@@ -306,19 +308,19 @@ describe('Caching', () => {
     it('should cache all the results on mixed responses', () => {
       return testStore.getMany(['abc', 'foo', 'bar'])
         .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: undefined } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });
+          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });
           mockSource.expects('getPartialGroup')
             .once()
             .withArgs(['foo', 'bar', 'abc']);
         });
     });
 
-    it('should support disabled caching', () => {
-      testStore.config.batch = null;
+    it('should support disabled batching', () => {
+      testStore.config.batch.enabled = false;
       testStore.get('foo');
       return testStore.get('abc')
         .then((result) => {
-          expect(result).to.deep.equal({ id: 'abc', language: undefined });
+          expect(result).to.deep.equal({ id: 'abc', language: null });
           mockSource.expects('getPartialGroup')
             .once()
             .withArgs(['abc']);
@@ -360,7 +362,7 @@ describe('Caching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.deep.equal({ error: 'Something went wrong' });
@@ -387,7 +389,6 @@ describe('Caching', () => {
     });
 
     it('should not cache on rejected requests', () => {
-      testStore.config.retry = { base: 1, steps: 1, limit: 1 };
       return testStore.get('abc', { language: 'fr' })
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
@@ -397,8 +398,7 @@ describe('Caching', () => {
     });
 
     it('should properly reject with disabled batching', () => {
-      testStore.config.retry = null;
-      testStore.config.batch = null;
+      testStore.config.batch.enabled = false;
       return testStore.get('abc')
         .then(null, (error) => {
           expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');

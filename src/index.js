@@ -1,32 +1,21 @@
-const queue = require('./buffer.js');
-const {contextKey, recordKey, contextRecordKey} = require('./utils.js');
-const EventEmitter = require('events').EventEmitter;
+const queue = require('./buffer');
+const caches = require('./caches');
+const DeferredEmitter = require('./emitter');
+const {contextKey, recordKey, contextRecordKey} = require('./utils');
 const {hydrateConfig} = require('./options');
 
-/* Local variable ------------------------------------------------------------*/
-
-class HaStore extends EventEmitter {
-  constructor(initialConfig, emitter) {
+class HaStore extends DeferredEmitter {
+  constructor(initialConfig) {
     super();
 
-    if (typeof initialConfig.resolver !== 'function') {
-      throw new Error(`config.resolver [${initialConfig.resolver}] is not a function`);
-    }
+    this.config = Object.freeze(hydrateConfig(initialConfig));
 
-    if (!emitter?.emit) {
-      throw new Error(`${emitter} is not an EventEmitter`);
-    }
+    this._store = caches(this.config, this);
 
-    this.config = hydrateConfig(initialConfig);
-
-    this.store = this.config.cache ? this.config.store(this.config) : null;
-    this.storeGetMulti = (key, ids) => this.store.getMulti(contextRecordKey(key), ids);
-    this.storeGet = (key, id) => ([ this.store.get(recordKey(key, id)) ]);
-
-    this.queue = queue(
+    this._queue = queue(
       this.config,
       this,
-      this.store
+      this._store
     );
   }
 
@@ -34,8 +23,7 @@ class HaStore extends EventEmitter {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
 
-    return Promise.resolve(this.store && this.storeGet(key, id) || [])
-      .then((cacheResult) => this.queue.getHandles(key, [id], params, agg, cacheResult))
+    return this._queue.getHandles(key, [id], params, agg)
       .then(handles => handles[0]);
   }
 
@@ -43,8 +31,7 @@ class HaStore extends EventEmitter {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
 
-    return Promise.resolve(this.store && this.storeGetMulti(key, ids) || [])
-      .then((cacheResult) => this.queue.getHandles(key, ids, params, agg, cacheResult))
+    return this._queue.getHandles(key, ids, params, agg)
       .then((handles) => Promise.allSettled(handles)
         .then((outcomes) => ids.reduce((handles, id, index) => {
           handles[id] = outcomes[index];
@@ -55,23 +42,23 @@ class HaStore extends EventEmitter {
   set(items, ids, params = {}) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
     const key = contextKey(this.config.delimiter, params);
-    return this.store.set(contextRecordKey(key), ids, items);
+    return this._store.set(contextRecordKey(key), ids, items);
   }
 
   clear(ids, params) {
-    if (this.store === null) return true;
     if (Array.isArray(ids)) {
       return ids.map(id => this.clear(id, params));
     }
 
-    return this.store.clear(this.getStorageKey(ids, params));
+    return this._store.clear(ids, params);
   }
 
   size() {
-    return {
-      ...this.queue.size(),
-      records: (this.store) ? this.store.size() : 0,
-    };
+    return this._store.size()
+      .then(records => ({
+        ...this._queue.size(),
+        records,
+      }));
   }
 
   getStorageKey(id, params) {
@@ -79,10 +66,8 @@ class HaStore extends EventEmitter {
   }
 }
 
-/* Exports -------------------------------------------------------------------*/
-
-function make(initialConfig = {}, emitter = new EventEmitter()) {
-  return new HaStore(initialConfig, emitter);
+function make(initialConfig = {}) {
+  return new HaStore(initialConfig);
 }
 
 module.exports = make;
