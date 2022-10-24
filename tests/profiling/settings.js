@@ -12,7 +12,7 @@ module.exports = {
   },
   assert: {
     completed: [300000, 300000],
-    coalescedHit: [8000, 50000],
+    coalescedHit: [7000, 50000],
     cacheHits: [35000, 50000],
     timeouts: [0, 0],
     batches: [4800, 5300],
