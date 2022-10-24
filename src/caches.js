@@ -1,7 +1,7 @@
 const {settleAndLog} = require('./utils');
 
 function cachesConstructor(config, emitter) {
-  const caches = config.cache.enabled && config.cache.tiers.map(tier => tier.client(tier)) || [];
+  const caches = config.cache.enabled && config.cache.tiers.map(tier => tier.store(tier)) || [];
   const local = caches.find(cache => cache.local);
   const remotes = caches.filter(cache => !cache.local);
 
@@ -51,7 +51,7 @@ function cachesConstructor(config, emitter) {
 
     return settleAndLog(remotes.map((remote) => remote.getMulti(recordKey, keys)))
       .then((remoteValues) => {
-        const responseValues = Object.assign(...remoteValues, localValues);
+        const responseValues = Object.assign(...remoteValues, localValues).map((value) => (value === null || value === undefined) ? undefined : JSON.parse(value));
         const foundRemotely = remoteValues.filter((value) => value !== undefined);
         const missingValues = responseValues.filter((value) => value === undefined);
         emitter.track('cacheHit', foundRemotely.length);

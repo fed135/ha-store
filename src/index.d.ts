@@ -18,7 +18,7 @@ export interface HAStoreConfig {
   cache?: {
     enabled: boolean
     tiers: {
-      client: HAExternalStore
+      store: HAExternalStore
       limit?: number
       ttl?: number
     }

@@ -1,7 +1,7 @@
 const inMemoryStore = require('./stores/in-memory');
 
 const defaultCacheConfig = {
-  client: inMemoryStore,
+  store: inMemoryStore,
   limit: 5000,
   ttl: 300000,
 };
