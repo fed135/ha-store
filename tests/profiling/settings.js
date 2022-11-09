@@ -7,8 +7,8 @@ module.exports = {
   setup: {
     resolver: getAssets,
     delimiter: ['language'],
-    cache: { enabled: true },
-    batch: { enabled: true, delay: 10, limit: 50 },
+    cache: { enabled: true,  tiers: [{ limit: 6939, ttl: 300000000 }] }, //5% of the dataset assets
+    batch: { enabled: true, delay: 5, limit: 20 },
   },
   assert: {
     completed: [300000, 300000],
