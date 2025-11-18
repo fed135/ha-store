@@ -10,7 +10,7 @@
 <br/>
 
 [![ha-store](https://img.shields.io/npm/v/ha-store.svg)](https://www.npmjs.com/package/ha-store)
-[![Node](https://img.shields.io/badge/node->%3D14.0-blue.svg)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/node->%3D16.0-blue.svg)](https://nodejs.org)
 [![Dependencies Status](https://img.shields.io/librariesio/release/npm/ha-store)](https://github.com/fed135/ha-store/security/dependabot)
 
 ---
@@ -18,12 +18,12 @@
 **HA-store** is a wrapper for your data queries, it features: 
 
 - Smart TLRU cache for 'hot' information
-- Supports mutliple caching levels
+- Supports multiple caching levels
 - Request coalescing and batching (solves the [Thundering Herd problem](https://en.wikipedia.org/wiki/Thundering_herd_problem))
 - Insightful stats and [events](#Monitoring-and-events)
 - Lightweight, configurable, battle-tested
 
-Learn how you can improve your app's performance, design and resiliancy [here](https://github.com/fed135/ha-store/wiki)!
+Learn how you can improve your app's performance, design and resilience [here](https://github.com/fed135/ha-store/wiki)!
 
 
 ## Installing
@@ -47,7 +47,7 @@ function getItems(ids, params, contexts) {
   // Params will be the parameters for the request, which must be declared in the `delimiter` config of the store
   // Contexts will be the list of originating context information
 
-  // Now perform some exensive network call or database lookup...
+  // Now perform some expensive network call or database lookup...
 
   // Then, respond with your data formatted into this formats:
   // { '123': { language: 'fr', name: 'fred' } }

@@ -10,7 +10,7 @@ const dao = require('./utils/dao');
 const {sleep} = require('./utils/testUtils');
 const store = require('../../src/index');
 const remote = require('@ha-store/redis');
-const local = require('../../src/stores/in-memory');
+const local = require('../../src/stores/in-memory.ts');
 
 /* Tests ---------------------------------------------------------------------*/
 

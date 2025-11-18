@@ -1,18 +1,18 @@
 {
   "name": "ha-store",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Efficient data fetching",
-  "main": "src/index.js",
+  "main": "src/index.ts",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "yarn lint --fix",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "mocha ./tests/unit --exit",
     "test:integration": "mocha ./tests/integration --exit",
-    "bench": "node ./tests/profiling/index.js"
+    "bench": "node ./tests/profiling/index.ts"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "repository": {
     "type": "git",
@@ -45,6 +45,6 @@
   ],
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "lru-cache": "^7.13.0"
+    "lru-cache": "^11.2.0"
   }
 }

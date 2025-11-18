@@ -1,4 +1,4 @@
-const {getAssets} = require('./dao.js');
+const {getAssets} = require('./dao.ts');
 
 module.exports = {
   test: {

@@ -5,7 +5,7 @@
 /* Requires ------------------------------------------------------------------*/
 
 const settings = require('./settings');
-const HA = require('../../src/index.js');
+const HA = require('../../src/index.ts');
 const crypto = require('crypto');
 
 /* Local variables -----------------------------------------------------------*/
