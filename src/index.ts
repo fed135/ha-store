@@ -1,6 +1,6 @@
+import { EventEmitter } from 'node:events';
 import queue from './buffer';
-import caches from './caches';
-import DeferredEmitter from './emitter';
+import _caches from './caches';
 import { contextKey, recordKey, contextRecordKey } from './utils';
 import { hydrateConfig } from './options';
 
@@ -8,13 +8,13 @@ import inMemory from './stores/in-memory';
 
 import pgResolver from './resolvers/postgres';
 
-class HaStore extends DeferredEmitter {
+class HaStore extends EventEmitter {
   constructor(initialConfig = {}) {
     super();
 
-    this.config = Object.freeze(hydrateConfig(initialConfig));
+    this.config = hydrateConfig(initialConfig);
 
-    this._store = caches(this.config, this);
+    this._store = _caches(this.config, this);
 
     this._queue = queue(
       this.config,
@@ -72,7 +72,7 @@ class HaStore extends DeferredEmitter {
 
 export default config => new HaStore(config);
 
-export const stores = {
+export const caches = {
   inMemory,
 };
 

@@ -18,8 +18,8 @@ export default function cachesConstructor(config, emitter) {
 
     const localValue = getLocal(key);
     if (localValue !== undefined) {
-      emitter.track('localCacheHit', 1);
-      emitter.track('cacheHit', 1);
+      emitter.emit('localCacheHit', 1);
+      emitter.emit('cacheHit', 1);
       return localValue;
     }
 
@@ -27,10 +27,10 @@ export default function cachesConstructor(config, emitter) {
       .then((remoteValues) => {
         const responseValue = remoteValues.find(value => value !== undefined);
         if (responseValue !== undefined) {
-          emitter.track('cacheHit', 1);
+          emitter.emit('cacheHit', 1);
         }
         else {
-          emitter.track('cacheMiss', 1);
+          emitter.emit('cacheMiss', 1);
         }
         return remoteValues.find(response => response !== undefined);
       });
@@ -42,8 +42,8 @@ export default function cachesConstructor(config, emitter) {
     const localValues = getMultiLocal(recordKey, keys);
     const foundLocally = localValues && localValues.filter(value => value !== undefined).length;
     if (foundLocally) {
-      emitter.track('localCacheHit', foundLocally);
-      emitter.track('cacheHit', foundLocally);
+      emitter.emit('localCacheHit', foundLocally);
+      emitter.emit('cacheHit', foundLocally);
     }
     if (foundLocally && foundLocally === keys.length) {
       return Promise.resolve(localValues);
@@ -54,8 +54,8 @@ export default function cachesConstructor(config, emitter) {
         const responseValues = Object.assign(...remoteValues, localValues).map(value => (value === null || value === undefined) ? undefined : JSON.parse(value));
         const foundRemotely = remoteValues.filter(value => value !== undefined);
         const missingValues = responseValues.filter(value => value === undefined);
-        emitter.track('cacheHit', foundRemotely.length);
-        emitter.track('cacheMiss', missingValues.length);
+        emitter.emit('cacheHit', foundRemotely.length);
+        emitter.emit('cacheMiss', missingValues.length);
         return responseValues;
       });
   }

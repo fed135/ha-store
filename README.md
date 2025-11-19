@@ -30,22 +30,18 @@ Learn how you can improve your app's performance, design and resilience [here](h
 
 ```javascript
 // Create your store
-import store from 'ha-store';
-import inMemory from 'ha-store/stores/in-memory';
+import HAStore, {caches} from 'ha-store';
 
-const itemStore = store({
+const itemStore = HAStore({
   resolver: getItems,
   delimiter: ['language'],
-  cache: {
-    enabled: true,
-    tiers: [
-      {
-        store: inMemory(),
-        limit: 1000,  // Maximum number of cached items
-        ttl: 60000,   // Time to live: 60 seconds
-      },
-    ],
-  }
+  caches: [
+    {
+      store: stores.inMemory(),
+      limit: 1000,  // Maximum number of cached items
+      ttl: 60000,   // Time to live: 60 seconds
+    },
+  ],
 });
 
 // Define your resolver
@@ -74,8 +70,7 @@ itemStore.getMany(['123', '456'], { language: 'en' }, { requestId: '123' })
 HA-store has prebuilt resolvers for common use-cases:
 
 ```typescript
-import haStore from 'ha-store';
-import pgResolver from 'ha-store/resolvers/postgres';
+import HAStore, {resolvers} from 'ha-store';
 import { Pool } from 'pg';
 
 // PostgreSQL connection pool
@@ -86,34 +81,22 @@ const pool = new Pool({
 });
 
 const store = haStore({
-  resolver: pgResolver(),
-  delimiter: ['language', 'region'] as const,  // 'as const' enables intellisense
-  cache: { enabled: true }
-});
-
-// When calling methods, get autocomplete for delimiter fields
-await store.get('123', {
-  language: 'en',  // ✅ Suggested by intellisense
-  region: 'us'     // ✅ Suggested by intellisense
+  resolver: resolvers.postgres({
+    db: pool,
+    table: 'items',
+    identifier: 'id',
+  }),
+  delimiter: ['language', 'region'],
 });
 ```
-
-**Key Features:**
-- Delimiter fields appear in intellisense when using `as const`
-- Full type inference for resolver functions
-- Strongly typed responses and contexts
-- Typed event listeners
-
-See [TypeScript examples](./examples/typescript-usage.ts) and [detailed guide](./examples/TYPESCRIPT.md) for more.
-
 
 ## Options
 
 Name | Required | Default | Description
 --- | --- | --- | ---
 resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<function(ids, params)>`
-delimiter | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
-cache | false | <pre>{&#13;&#10;&nbsp;&nbsp;enabled: false,&#13;&#10;&nbsp;&nbsp;tiers: [&#13;&#10;&nbsp;&nbsp;{&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;store: &#60;instance of a store&#62;,&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;ttl: 300000&#13;&#10;&nbsp;&nbsp;}&#13;&#10;&nbsp;&nbsp;]&#13;&#10;}</pre> | A list of storage tiers for the data. The order indicates where to look first. It's recommended to keep an instance of an in-memory store, like `ha-store/stores/in-memory` as the first one, and then expend to external stores like [ha-store-redis](https://github.com/fed135/ha-redis-adapter). Caching options for the data - `limit` - the maximum number of records, and `ttl` - time to live for a record in milliseconds.
+delimiters | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
+caches | false | <pre>[&#13;&#10;&nbsp;&nbsp;{&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;store: &#60;instance of a store&#62;,&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;ttl: 300000&#13;&#10;&nbsp;&nbsp;}&#13;&#10;]</pre> | A list of storage tiers for the data. The order indicates where to look first. It's recommended to keep an instance of an in-memory store, like `ha-store/stores/in-memory` as the first one, and then expend to external stores like [ha-store-redis](https://github.com/fed135/ha-redis-adapter). Caching options for the data - `limit` - the maximum number of records, and `ttl` - time to live for a record in milliseconds.
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;enabled: false,&#13;&#10;&nbsp;&nbsp;delay: 50,&#13;&#10;&nbsp;&nbsp;limit: 100&#13;&#10;}</pre> | Batching options for the requests - `delay` is the amount of time to wait before sending the batch, `limit` is the maximum number of data items to send in a batch.
 
 *All options are in (ms)
@@ -151,10 +134,8 @@ Read instructions [here](./tests/profiling/README.md)
 
 Please do! This is an open source project - if you see something that you want, [open an issue](https://github.com/fed135/ha-store/issues/new) or file a pull request.
 
-I am always looking for more maintainers, as well.
-
 
 ## License 
 
-[Apache 2.0](LICENSE) (c) Frederic Charette
+[Apache 2.0](LICENSE) 2025 Frederic Charette
 

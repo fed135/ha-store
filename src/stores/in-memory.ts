@@ -1,7 +1,7 @@
-import lru from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 
 export default function inMemory(config) {
-  const store = new lru({
+  const store = new LRUCache({
     max: config.limit,
     ttl: config.ttl,
   });

@@ -79,7 +79,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
         }
 
         if (numCoalesced > 0) {
-          emitter.track('coalescedHit', numCoalesced);
+          emitter.emit('coalescedHit', numCoalesced);
           numCoalesced = 0;
         }
 

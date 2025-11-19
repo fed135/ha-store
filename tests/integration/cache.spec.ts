@@ -285,7 +285,7 @@ describe('Caching', () => {
       getPartialGroupSpy = jest.spyOn(dao, 'getPartialGroup');
       testStore = store({
         batch: { enabled: true },
-        cache: { enabled: true },
+        cache: { enabled: true, tiers: [ { }] },
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
       });

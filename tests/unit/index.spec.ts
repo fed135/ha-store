@@ -61,30 +61,30 @@ describe('index', () => {
       const test = root({ resolver: noop });
       const getHandlesSpy = jest.spyOn(test._queue, 'getHandles');
       test.get('123abc');
-      expect(getHandlesSpy).toHaveBeenCalledWith('', ['123abc'], {}, undefined);
+      expect(getHandlesSpy).toHaveBeenCalledWith('', ['123abc'], {}, null);
     });
 
     it('should handle single record queries with params', () => {
-      const test = root({ resolver: noop });
+      const test = root({ resolver: noop, delimiter: ['foo'] });
       const params = { foo: 'bar' };
       const getHandlesSpy = jest.spyOn(test._queue, 'getHandles');
       test.get('123abc', params);
-      expect(getHandlesSpy).toHaveBeenCalledWith('foo="bar"', ['123abc'], { foo: 'bar' }, undefined);
+      expect(getHandlesSpy).toHaveBeenCalledWith('foo="bar"', ['123abc'], { foo: 'bar' }, null);
     });
 
     it('should handle multi record queries', () => {
       const test = root({ resolver: noop });
       const getHandlesSpy = jest.spyOn(test._queue, 'getHandles');
-      test.get(['123abc', '456def', '789ghi']);
-      expect(getHandlesSpy).toHaveBeenCalledWith('', ['123abc', '456def', '789ghi'], {}, undefined);
+      test.getMany(['123abc', '456def', '789ghi']);
+      expect(getHandlesSpy).toHaveBeenCalledWith('', ['123abc', '456def', '789ghi'], {}, null);
     });
 
     it('should handle multi record queries with params', () => {
-      const test = root({ resolver: noop });
+      const test = root({ resolver: noop, delimiter: ['foo'] });
       const params = { foo: 'bar' };
       const getHandlesSpy = jest.spyOn(test._queue, 'getHandles');
-      test.get(['123abc', '456def', '789ghi'], params);
-      expect(getHandlesSpy).toHaveBeenCalledWith('foo="bar"', ['123abc', '456def', '789ghi'], { foo: 'bar' }, undefined);
+      test.getMany(['123abc', '456def', '789ghi'], params);
+      expect(getHandlesSpy).toHaveBeenCalledWith('foo="bar"', ['123abc', '456def', '789ghi'], { foo: 'bar' }, null);
     });
   });
 

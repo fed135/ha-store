@@ -1,8 +1,6 @@
 import express from 'express';
 import { Pool } from 'pg';
-import store from 'ha-store';
-import inMemory from 'ha-store/stores/in-memory';
-import pgResolver from 'ha-store/resolvers/postgres';
+import HAStore, {caches, resolvers} from 'ha-store';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,9 +13,9 @@ const pool = new Pool({
 });
 
 // Data loader
-const articleStore = store({
+const articleStore = HAStore({
   // The resolver function called when data needs to be fetched, in this case ha-store has a helper for postgres
-  resolver: pgResolver({
+  resolver: resolvers.postgres({
     identifier: 'slug',
     table: 'articles',
     db: pool,
@@ -33,7 +31,7 @@ const articleStore = store({
     enabled: true,
     tiers: [
       {
-        store: inMemory(),
+        store: caches.inMemory(),
         limit: 1000, // Maximum number of cached items
         ttl: 60000, // Time to live: 60 seconds
       },
