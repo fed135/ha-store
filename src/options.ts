@@ -1,21 +1,9 @@
-import inMemoryStore from './stores/in-memory';
-
-const defaultCacheConfig = {
-  store: inMemoryStore,
-  limit: 5000,
-  ttl: 300000,
-};
-
 const defaultConfig = {
   batch: {
-    enabled: false,
     delay: 50,
     limit: 100,
   },
-  cache: {
-    enabled: false,
-    tiers: [],
-  },
+  caches: [],
 };
 
 export function hydrateConfig(config = {}) {
@@ -23,27 +11,12 @@ export function hydrateConfig(config = {}) {
     throw new Error(`config.resolver [${config.resolver}] is not a function`);
   }
 
-  if (config.batch && config.batch.enabled == undefined) {
-    console.warn('Missing explicit `enabled` flag for ha-store batch config. Batching will not be enabled for this store.');
-  }
-
-  if (config.cache && config.cache.enabled == undefined) {
-    console.warn('Missing explicit `enabled` flag for ha-store cache config. Caching will not be enabled for this store.');
-  }
-
-  if (config.cache?.enabled) {
-    if (!config.cache?.tiers?.length) {
-      console.warn('Missing explicit `tiers` information for ha-store cache config. Caching will not be enabled for this store.');
-    }
-    else {
-      config.cache.tiers = config.cache.tiers.map(store => ({ ...defaultCacheConfig, ...store }));
-    }
-  }
-  else config.cache = defaultConfig.cache;
+  if (config.delimiter && (!Array.isArray(config.delimiter) || config.delimiter.some(d => typeof d !== 'string'))) throw new Error('delimiter is not an array of strings');
+  if (config.caches && (!Array.isArray(config.caches) || config.caches.some(d => typeof d?.local === 'undefined' || typeof d?.get !== 'function'))) throw new Error('invalid cache instance');
 
   return {
     ...config,
     batch: { ...defaultConfig.batch, ...config.batch },
-    cache: config.cache,
+    caches: config.caches,
   };
 }

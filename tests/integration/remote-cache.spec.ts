@@ -4,9 +4,8 @@
 
 import * as dao from './utils/dao';
 import { sleep } from './utils/testUtils';
-import store from '../../src/index';
+import store, {caches} from '../../src/index';
 import remote from '@ha-store/redis';
-import local from '../../src/stores/in-memory.ts';
 
 describe('Remote Caching', () => {
   describe('Happy remote-only responses', () => {
@@ -25,12 +24,9 @@ describe('Remote Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
-        cache: {
-          enabled: true,
-          tiers: [
-            { store: remote(Math.random().toString(36), '//0.0.0.0:6379') },
-          ],
-        },
+        caches: [
+          remote(Math.random().toString(36), '//0.0.0.0:6379'),
+        ],
       });
       await testStore.clear('*');
     });
@@ -99,7 +95,7 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching after boot', async () => {
-      testStore.config.cache.enabled = false;
+      testStore.config.caches = [];
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
@@ -109,7 +105,7 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching and batching after boot', async () => {
-      testStore.config.cache.enabled = false;
+      testStore.config.caches = [];
       testStore.config.batch.enabled = false;
       await testStore.get('foo');
       await sleep(10);
@@ -136,13 +132,10 @@ describe('Remote Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
-        cache: {
-          enabled: true,
-          tiers: [
-            { store: local },
-            { store: remote(Math.random().toString(36), '//0.0.0.0:6379') },
-          ],
-        },
+        caches: [
+          caches.inMemory(),
+          remote(Math.random().toString(36), '//0.0.0.0:6379'),
+        ],
       });
       await testStore.clear('*');
     });
@@ -219,7 +212,7 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching after boot', async () => {
-      testStore.config.cache.enabled = false;
+      testStore.config.caches = [];
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
@@ -229,7 +222,7 @@ describe('Remote Caching', () => {
     });
 
     it('should support disabled caching and batching after boot', async () => {
-      testStore.config.cache.enabled = false;
+      testStore.config.caches = [];
       testStore.config.batch.enabled = false;
       await testStore.get('foo');
       await sleep(10);
@@ -256,12 +249,9 @@ describe('Remote Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailedRequest,
-        cache: {
-          enabled: true,
-          tiers: [
-            { store: remote(Math.random().toString(36), '//0.0.0.0:6379') },
-          ],
-        },
+        caches: [
+          remote(Math.random().toString(36), '//0.0.0.0:6379'),
+        ],
       });
       await testStore.clear('*');
     });

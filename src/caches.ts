@@ -1,9 +1,8 @@
 import { settleAndLog } from './utils';
 
 export default function cachesConstructor(config, emitter) {
-  const caches = (config.cache.enabled && config.cache.tiers.map(tier => tier.store(tier))) || [];
-  const local = caches.find(cache => cache.local);
-  const remotes = caches.filter(cache => !cache.local);
+  const local = config.caches?.find(cache => cache.local);
+  const remotes = config.caches?.filter(cache => !cache.local);
 
   function getLocal(key) {
     return local && local.get(key);
@@ -14,7 +13,7 @@ export default function cachesConstructor(config, emitter) {
   }
 
   function get(key) {
-    if (!config.cache.enabled) return undefined;
+    if (!config.caches?.length) return undefined;
 
     const localValue = getLocal(key);
     if (localValue !== undefined) {
@@ -37,7 +36,7 @@ export default function cachesConstructor(config, emitter) {
   }
 
   function getMulti(recordKey, keys) {
-    if (!config.cache.enabled) return Promise.resolve(Array.from(new Array(keys.length), () => undefined));
+    if (!config.caches?.length) return Promise.resolve(Array.from(new Array(keys.length), () => undefined));
 
     const localValues = getMultiLocal(recordKey, keys);
     const foundLocally = localValues && localValues.filter(value => value !== undefined).length;
@@ -72,7 +71,7 @@ export default function cachesConstructor(config, emitter) {
   }
 
   function size() {
-    if (!config.cache.enabled) {
+    if (!config.caches?.length) {
       return Promise.resolve({
         local: 0,
         remote: 0,

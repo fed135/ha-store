@@ -22,7 +22,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
-        batch: { enabled: true },
+        batch: { limit: 100 },
       });
     });
 

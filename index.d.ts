@@ -45,10 +45,7 @@ declare module 'ha-store' {
 
     delimiter?: D
 
-    cache?: {
-      enabled: boolean
-      tiers?: CacheTier[]
-    }
+    caches?: CacheTier[]
 
     batch?: {
       enabled: boolean

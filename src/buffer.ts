@@ -57,7 +57,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
       this.state = BufferState.COMPLETED;
       emitter.emit('querySuccess', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params });
       this.handle.resolve(entries);
-      if (config.cache.enabled) caches.set(contextRecordKey(this.contextKey), this.ids, entries || {});
+      if (config.caches?.length) caches.set(contextRecordKey(this.contextKey), this.ids, entries || {});
       buffers.splice(buffers.indexOf(this), 1);
     }
   }

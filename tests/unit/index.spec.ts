@@ -25,7 +25,7 @@ describe('index', () => {
       const test = root({
         resolver: () => {},
         delimiter: ['a', 'b', 'c'],
-        cache: null,
+        caches: null,
         batch: null,
       });
       checkForPublicProperties(test);
@@ -35,7 +35,7 @@ describe('index', () => {
       const test = root({
         resolver: noop,
         delimiter: ['a', 'b', 'c'],
-        cache: true,
+        caches: [{}],
         batch: true,
       });
       checkForPublicProperties(test);
@@ -45,7 +45,7 @@ describe('index', () => {
       const test = root({
         resolver: noop,
         delimiter: ['a', 'b', 'c'],
-        cache: { enabled: true, tiers: [{ ttl: 1000 }] },
+        caches: [{ ttl: 1000 }],
         batch: { limit: 12 },
       });
       checkForPublicProperties(test);
@@ -156,7 +156,7 @@ describe('index', () => {
     });
 
     it('should return size value and status if cache is disabled', async () => {
-      const test = root({ resolver: noop, cache: null });
+      const test = root({ resolver: noop, caches: null });
       const sizeSpy = jest.spyOn(test._queue, 'size');
       const storeSizeSpy = jest.spyOn(test._store, 'size');
       await test.get('123abc');

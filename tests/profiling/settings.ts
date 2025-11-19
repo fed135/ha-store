@@ -7,7 +7,7 @@ export default {
   setup: {
     resolver: getAssets,
     delimiter: ['language'],
-    cache: { enabled: true },
+    caches: [{}],
     batch: { enabled: true, delay: 10, limit: 50 },
   },
   assert: {

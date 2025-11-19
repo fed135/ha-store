@@ -36,11 +36,10 @@ const itemStore = HAStore({
   resolver: getItems,
   delimiter: ['language'],
   caches: [
-    {
-      store: stores.inMemory(),
+    stores.inMemory({
       limit: 1000,  // Maximum number of cached items
       ttl: 60000,   // Time to live: 60 seconds
-    },
+    }),
   ],
 });
 
@@ -87,6 +86,10 @@ const store = haStore({
     identifier: 'id',
   }),
   delimiter: ['language', 'region'],
+  batch: {
+    delay: 50,
+    limit: 50,
+  }
 });
 ```
 
@@ -96,10 +99,17 @@ Name | Required | Default | Description
 --- | --- | --- | ---
 resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<function(ids, params)>`
 delimiters | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
-caches | false | <pre>[&#13;&#10;&nbsp;&nbsp;{&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;store: &#60;instance of a store&#62;,&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;&nbsp;&nbsp;ttl: 300000&#13;&#10;&nbsp;&nbsp;}&#13;&#10;]</pre> | A list of storage tiers for the data. The order indicates where to look first. It's recommended to keep an instance of an in-memory store, like `ha-store/stores/in-memory` as the first one, and then expend to external stores like [ha-store-redis](https://github.com/fed135/ha-redis-adapter). Caching options for the data - `limit` - the maximum number of records, and `ttl` - time to live for a record in milliseconds.
-batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;enabled: false,&#13;&#10;&nbsp;&nbsp;delay: 50,&#13;&#10;&nbsp;&nbsp;limit: 100&#13;&#10;}</pre> | Batching options for the requests - `delay` is the amount of time to wait before sending the batch, `limit` is the maximum number of data items to send in a batch.
+caches | false | <pre>[&#13;&#10;&nbsp;&nbsp; &#60;instance of a store&#62;,&#13;&#10;]</pre> | A list of storage tiers for the data. The order indicates where to look first. It's recommended to keep an instance of an in-memory store as the first one, and then expend to external stores like [ha-store-redis](https://github.com/fed135/ha-redis-adapter). Check below for storage configurations.
+batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;delay: 50,&#13;&#10;&nbsp;&nbsp;limit: 100&#13;&#10;}</pre> | Batching options for the requests - `delay` is the amount of time to wait before sending the batch, `limit` is the maximum number of data items to send in a batch.
 
 *All options are in (ms)
+
+## Caching storage
+
+Name | Default | Description
+--- | --- | ---
+inMemory | <pre>{&#13;&#10;&nbsp;&nbsp;limit: 5000,&#13;&#10;&nbsp;&nbsp;ttl: 300000&#13;&#10;}</pre> | Caching options for the data - `limit` - the maximum number of records, and `ttl` - time to live for a record in milliseconds
+[ha-store-redis](https://github.com/fed135/ha-redis-adapter) | <pre>{&#13;&#10;&nbsp;&nbsp;ttl: 300000,&#13;&#10;&nbsp;&nbsp;namespace: '',&#13;&#10;&nbsp;&nbsp;host: '0.0.0.0',&#13;&#10;&nbsp;&nbsp;path: null,&#13;&#10;&nbsp;&nbsp;connection: &#60;instance of redis connection&#62;&#13;&#10;}</pre> | Allows redis to act as a caching layer for ha-store. Keys are prefixed with the namespace. An existing connection handle can be passed. A new connection can be made via either `host` (IP, FQDN, etc) or `path` (Unix socket path)
 
 ## Monitoring and events
 

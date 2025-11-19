@@ -3,7 +3,7 @@
  */
 
 import * as dao from './utils/dao';
-import store from '../../src/index';
+import store, {caches} from '../../src/index';
 
 describe('Caching', () => {
   describe('Happy responses', () => {
@@ -22,6 +22,9 @@ describe('Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
+        caches: [
+          caches.inMemory()
+        ]
       });
     });
 
@@ -83,7 +86,7 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching after boot', async () => {
-      testStore.config.cache.enabled = false;
+      testStore.config.caches = [];
       await testStore.get('foo');
       const result = await testStore.get('foo');
 
@@ -92,7 +95,7 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching and batching after boot', async () => {
-      testStore.config.cache.enabled = false;
+      testStore.config.caches = [];
       testStore.config.batch.enabled = false;
       await testStore.get('foo');
       const result = await testStore.get('foo');
@@ -118,7 +121,7 @@ describe('Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
-        cache: null,
+        caches: null,
       });
     });
 
@@ -198,7 +201,7 @@ describe('Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
-        cache: null,
+        caches: null,
         batch: null,
       });
     });
@@ -285,7 +288,7 @@ describe('Caching', () => {
       getPartialGroupSpy = jest.spyOn(dao, 'getPartialGroup');
       testStore = store({
         batch: { enabled: true },
-        cache: { enabled: true, tiers: [ { }] },
+        caches: [{}],
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
       });
