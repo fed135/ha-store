@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img alt="HA-store" width="300px" src="https://ha-store.js.org/logo.png" />
+  <img alt="HA-store" width="300px" src="https://ha-store.js.org/images/logo.png" />
   <br/>
   High-Availability store
 </h1>
@@ -98,7 +98,7 @@ const store = haStore({
 Name | Required | Default | Description
 --- | --- | --- | ---
 resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<function(ids, params)>`
-delimiters | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
+delimiter | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
 caches | false | <pre>[&#13;&#10;&nbsp;&nbsp; &#60;instance of a store&#62;,&#13;&#10;]</pre> | A list of storage tiers for the data. The order indicates where to look first. It's recommended to keep an instance of an in-memory store as the first one, and then expend to external stores like [ha-store-redis](https://github.com/fed135/ha-redis-adapter). Check below for storage configurations.
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;delay: 50,&#13;&#10;&nbsp;&nbsp;limit: 100&#13;&#10;}</pre> | Batching options for the requests - `delay` is the amount of time to wait before sending the batch, `limit` is the maximum number of data items to send in a batch.
 

@@ -15,19 +15,25 @@ declare module 'ha-store' {
 
   type RequestIds = string[];
 
-  export interface HAExternalStore {
+  export interface HACacheStore {
     get<Response>(key: string): Promise<Response>
     getMulti<Response>(recordKey: (contextKey: string) => string, keys: RequestIds): Promise<Response[]>
     set<DataType>(recordKey: (contextKey: string) => string, keys: RequestIds, values: DataType): boolean
     clear(key: '*' | string): boolean
     size(): number
     connection?: any
+    local?: boolean
   }
 
-  export interface CacheTier {
-    store: HAExternalStore
+  export interface InMemoryCacheOptions {
     limit?: number
     ttl?: number
+  }
+
+  export interface PostgresResolverOptions {
+    db: any
+    table: string
+    identifier: string
   }
 
   // Generic config that captures delimiter type
@@ -45,10 +51,9 @@ declare module 'ha-store' {
 
     delimiter?: D
 
-    caches?: CacheTier[]
+    caches?: HACacheStore[]
 
     batch?: {
-      enabled: boolean
       delay?: number
       limit?: number
     }
@@ -132,6 +137,10 @@ declare module 'ha-store' {
   export default function haStore<D extends readonly string[] | undefined = undefined>(
     config: HAStoreConfig<D>,
   ): HAStore<D>;
+
+  export const caches: { inMemory: (options: InMemoryCacheOptions) => HACacheStore };
+
+  export const resolvers: { postgres: <Response>(options: PostgresResolverOptions) => (ids: string[], params?: Params) => Promise<{ [id: string]: Response }> };
 
   // Named export as well
   export function haStore<D extends readonly string[] | undefined = undefined>(

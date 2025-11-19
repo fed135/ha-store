@@ -22,7 +22,7 @@ const articleStore = HAStore({
   }),
 
   // These are delimiter columns, similar to a WHERE statement. Cache keys for individual items will have these delimiters
-  delimiters: ['language'],
+  delimiter: ['language'],
 
   // Enable caching with in-memory (TLRU) store
   caches: [
