@@ -1,26 +1,18 @@
 {
   "name": "ha-store-express-example",
   "version": "1.0.0",
-  "description": "Example Express server using ha-store for efficient data caching and batching",
-  "main": "server.js",
+  "type": "module",
+  "description": "Example Express server communicating with a db",
+  "main": "server.ts",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js"
   },
-  "keywords": [
-    "ha-store",
-    "express",
-    "example",
-    "caching"
-  ],
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
     "express": "^4.18.2",
-    "ha-store": "file:../.."
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "ha-store": "file:../../dist",
+    "pg": "^8.11.3"
   }
 }
