@@ -36,14 +36,14 @@ export function hydrateConfig(config = {}) {
       console.warn('Missing explicit `tiers` information for ha-store cache config. Caching will not be enabled for this store.');
     }
     else {
-      config.cache.tiers = config.cache.tiers.map((store) =>({...defaultCacheConfig, ...store}));
+      config.cache.tiers = config.cache.tiers.map(store => ({ ...defaultCacheConfig, ...store }));
     }
   }
   else config.cache = defaultConfig.cache;
 
   return {
     ...config,
-    batch: {...defaultConfig.batch, ...config.batch},
+    batch: { ...defaultConfig.batch, ...config.batch },
     cache: config.cache,
   };
 }

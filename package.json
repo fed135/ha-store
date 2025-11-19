@@ -48,8 +48,7 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "testMatch": [
-      "**/tests/**/*.ts",
-      "**/tests/**/*.js"
+      "**/tests/**/*.spec.ts"
     ],
     "transform": {
       "^.+\\.tsx?$": [

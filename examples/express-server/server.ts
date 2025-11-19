@@ -25,7 +25,7 @@ const articleStore = store({
 
   // These are delimiter columns, similar to a WHERE statement. Cache keys for individual items will have these delimiters
   delimiters: {
-    language: { default: 'en'}
+    language: { default: 'en' },
   },
 
   // Enable caching with in-memory (TLRU) store
@@ -34,8 +34,8 @@ const articleStore = store({
     tiers: [
       {
         store: inMemory(),
-        limit: 1000,  // Maximum number of cached items
-        ttl: 60000,   // Time to live: 60 seconds
+        limit: 1000, // Maximum number of cached items
+        ttl: 60000, // Time to live: 60 seconds
       },
     ],
   },
@@ -43,17 +43,17 @@ const articleStore = store({
   // Enable request batching: slows API responses by up to 40ms but reduces DB queries but up to 50x (not counting the cache).
   batch: {
     enabled: true,
-    delay: 40,   // Wait 40ms to collect requests
-    limit: 50,  // Maximum batch size
+    delay: 40, // Wait 40ms to collect requests
+    limit: 50, // Maximum batch size
   },
 });
 
 // Get a single article by ID is the typical use case. DB requests will be optimized and individual records cached in memory.
-app.get('/articles/:slug', (req, res) => {
+app.get('/articles/:slug', async (req, res) => {
   const slug = req.params.slug;
   const language = req.query.language;
 
-  const article = articleStore.get(slug, { language });
+  const article = await articleStore.get(slug, { language });
 
   if (!article) {
     return res.status(404).json({ error: 'Article not found' });

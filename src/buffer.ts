@@ -1,4 +1,4 @@
-import {contextRecordKey, deferred} from './utils';
+import { contextRecordKey, deferred } from './utils';
 
 const BufferState = {
   PENDING: 0,
@@ -30,9 +30,9 @@ export default function queryBufferConstructor(config, emitter, caches) {
         this.run('limit');
         return this;
       }
-      
+
       if (this.timer === null) {
-        this.timer = setTimeout(this.run.bind(this, 'timeout'), config.batch.enabled && config.batch.delay || 0);
+        this.timer = setTimeout(this.run.bind(this, 'timeout'), (config.batch.enabled && config.batch.delay) || 0);
       }
 
       return this;
@@ -52,7 +52,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
       this.handle.reject(error);
       buffers.splice(buffers.indexOf(this), 1);
     }
-  
+
     handleQuerySuccess(entries) {
       this.state = BufferState.COMPLETED;
       emitter.emit('querySuccess', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params });
@@ -105,7 +105,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
     return {
       pendingBuffers: buffers.filter(buffer => buffer.state === BufferState.PENDING).length,
       activeBuffers: buffers.filter(buffer => buffer.state === BufferState.RUNNING).length,
-    }
+    };
   }
 
   return { getHandles, size };

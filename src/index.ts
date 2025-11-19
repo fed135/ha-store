@@ -1,14 +1,14 @@
 import queue from './buffer';
 import caches from './caches';
 import DeferredEmitter from './emitter';
-import {contextKey, recordKey, contextRecordKey} from './utils';
-import {hydrateConfig} from './options';
+import { contextKey, recordKey, contextRecordKey } from './utils';
+import { hydrateConfig } from './options';
 
 import inMemory from './stores/in-memory';
 
 import pgResolver from './resolvers/postgres';
 
-export default class HaStore extends DeferredEmitter {
+class HaStore extends DeferredEmitter {
   constructor(initialConfig = {}) {
     super();
 
@@ -19,7 +19,7 @@ export default class HaStore extends DeferredEmitter {
     this._queue = queue(
       this.config,
       this,
-      this._store
+      this._store,
     );
   }
 
@@ -36,8 +36,8 @@ export default class HaStore extends DeferredEmitter {
     const key = contextKey(this.config.delimiter, params);
 
     return this._queue.getHandles(key, ids, params, agg)
-      .then((handles) => Promise.allSettled(handles)
-        .then((outcomes) => ids.reduce((handles, id, index) => {
+      .then(handles => Promise.allSettled(handles)
+        .then(outcomes => ids.reduce((handles, id, index) => {
           handles[id] = outcomes[index];
           return handles;
         }, {})));
@@ -70,10 +70,12 @@ export default class HaStore extends DeferredEmitter {
   }
 }
 
+export default config => new HaStore(config);
+
 export const stores = {
-  inMemory
+  inMemory,
 };
 
 export const resolvers = {
-  postgres: pgResolver
+  postgres: pgResolver,
 };

@@ -2,25 +2,23 @@
  * Batching feature integration tests
  */
 
-/* Requires ------------------------------------------------------------------*/
-
-const expect = require('chai').expect;
-const sinon = require('sinon');
-const dao = require('./utils/dao');
-const store = require('../../src/index');
-
-/* Tests ---------------------------------------------------------------------*/
+import * as dao from './utils/dao';
+import store from '../../src/index';
 
 describe('Batching', () => {
   describe('Happy responses', () => {
-    let testStore;
-    let mockSource;
+    let testStore: any;
+    let getAssetsSpy: jest.SpyInstance;
+
     afterEach(() => {
       testStore = null;
-      mockSource.restore();
+      if (getAssetsSpy) {
+        getAssetsSpy.mockRestore();
+      }
     });
+
     beforeEach(() => {
-      mockSource = sinon.mock(dao);
+      getAssetsSpy = jest.spyOn(dao, 'getAssets');
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
@@ -28,190 +26,167 @@ describe('Batching', () => {
       });
     });
 
-    it('should batch single calls', () => {
-      return Promise.all([
+    it('should batch single calls', async () => {
+      const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
-          mockSource.expects('getAssets')
-            .once()
-            .withArgs(['foo', 'abc']);
-        });
+      ]);
+
+      expect(result).toEqual([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
     });
 
-    it('should batch multi calls', () => {
-      return testStore.getMany(['abc', 'foo'])
-        .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } });
-          mockSource.expects('getAssets')
-            .once()
-            .withArgs(['foo', 'abc']);
-        });
+    it('should batch multi calls', async () => {
+      const result = await testStore.getMany(['abc', 'foo']);
+      expect(result).toEqual({
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
+        foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
+      });
     });
 
-    it('should batch mixed calls', () => {
-      return Promise.all([
+    it('should batch mixed calls', async () => {
+      const result = await Promise.all([
         testStore.getMany(['foo', 'bar']),
         testStore.get('abc'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: { id: 'bar', language: null } }, foo: { status: 'fulfilled', value: { id: 'foo', language: null } } }, { id: 'abc', language: null }]);
-          mockSource.expects('getAssets')
-            .once()
-            .withArgs(['foo', 'bar', 'abc']);
-        });
+      ]);
+
+      expect(result).toEqual([
+        {
+          bar: { status: 'fulfilled', value: { id: 'bar', language: null } },
+          foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
+        },
+        { id: 'abc', language: null },
+      ]);
     });
 
-    it('should mix unique params matches', () => {
-      return Promise.all([
+    it('should mix unique params matches', async () => {
+      const result = await Promise.all([
         testStore.getMany(['foo', 'bar'], { language: 'fr' }),
         testStore.get('abc', { language: 'fr' }),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: { id: 'bar', language: 'fr' } }, foo: { status: 'fulfilled', value: { id: 'foo', language: 'fr' } } }, { id: 'abc', language: 'fr' }]);
-          mockSource.expects('getAssets')
-            .once().withArgs(['foo', 'bar', 'abc'], { language: 'fr' });
-        });
+      ]);
+
+      expect(result).toEqual([
+        {
+          bar: { status: 'fulfilled', value: { id: 'bar', language: 'fr' } },
+          foo: { status: 'fulfilled', value: { id: 'foo', language: 'fr' } },
+        },
+        { id: 'abc', language: 'fr' },
+      ]);
     });
 
-    it('should not mix unique params mismatches', () => {
-      return Promise.all([
+    it('should not mix unique params mismatches', async () => {
+      const result = await Promise.all([
         testStore.getMany(['foo', 'bar'], { language: 'fr' }),
         testStore.get('abc', { language: 'en' }),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: { id: 'bar', language: 'fr' } }, foo: { status: 'fulfilled', value: { id: 'foo', language: 'fr' } } }, { id: 'abc', language: 'en' }]);
-          mockSource.expects('getAssets')
-            .once().withArgs(['abc'], { language: 'en' })
-            .once().withArgs(['foo', 'bar'], { language: 'fr' });
-        });
+      ]);
+
+      expect(result).toEqual([
+        {
+          bar: { status: 'fulfilled', value: { id: 'bar', language: 'fr' } },
+          foo: { status: 'fulfilled', value: { id: 'foo', language: 'fr' } },
+        },
+        { id: 'abc', language: 'en' },
+      ]);
     });
 
-    it('should coalesce duplicate entries', () => {
-      return Promise.all([
+    it('should coalesce duplicate entries', async () => {
+      const result = await Promise.all([
         testStore.get('foo', { language: 'fr' }),
         testStore.get('foo', { language: 'fr' }),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: 'fr' }, { id: 'foo', language: 'fr' }]);
-          mockSource.expects('getAssets')
-            .once().withArgs(['foo'], { language: 'fr' });
-        });
+      ]);
+
+      expect(result).toEqual([{ id: 'foo', language: 'fr' }, { id: 'foo', language: 'fr' }]);
     });
 
-    it('should maintain id ordering with numeric ids', () => {
-      return Promise.all([
+    it('should maintain id ordering with numeric ids', async () => {
+      const result = await Promise.all([
         testStore.get(2, { language: 'fr' }),
         testStore.get(1, { language: 'fr' }),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ id: 2, language: 'fr' }, { id: 1, language: 'fr' }]);
-          mockSource.expects('getAssets')
-            .once().withArgs(['2', '1'], { language: 'fr' });
-        });
+      ]);
+
+      expect(result).toEqual([{ id: 2, language: 'fr' }, { id: 1, language: 'fr' }]);
     });
 
-    it('should properly bucket large requests', () => {
+    it('should properly bucket large requests', async () => {
       testStore.config.batch = { limit: 2, delay: 1 };
-      return testStore.getMany(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' })
-        .then((result) => {
-          expect(result).to.deep.equal({
-            foo: { status: 'fulfilled', value: { id: 'foo', language: 'en' } },
-            bar: { status: 'fulfilled', value: { id: 'bar', language: 'en' } },
-            abc: { status: 'fulfilled', value: { id: 'abc', language: 'en' } },
-            def: { status: 'fulfilled', value: { id: 'def', language: 'en' } },
-            ghi: { status: 'fulfilled', value: { id: 'ghi', language: 'en' } },
-          });
+      const result = await testStore.getMany(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' });
 
-          mockSource.expects('getAssets')
-            .once().withArgs(['foo', 'bar'], { language: 'en' })
-            .once().withArgs(['abc', 'def'], { language: 'en' })
-            .once().withArgs(['ghi'], { language: 'en' });
-        });
+      expect(result).toEqual({
+        foo: { status: 'fulfilled', value: { id: 'foo', language: 'en' } },
+        bar: { status: 'fulfilled', value: { id: 'bar', language: 'en' } },
+        abc: { status: 'fulfilled', value: { id: 'abc', language: 'en' } },
+        def: { status: 'fulfilled', value: { id: 'def', language: 'en' } },
+        ghi: { status: 'fulfilled', value: { id: 'ghi', language: 'en' } },
+      });
     });
 
-    it('should properly bucket very large requests (optimal batch size)', () => {
+    it('should properly bucket very large requests (optimal batch size)', async () => {
       testStore.config.batch = { limit: 6, delay: 1 };
-      return Promise.all([
+      const result = await Promise.all([
         testStore.getMany(['foo2', 'bar2', 'abc2', 'def2', 'ghi2']),
         testStore.getMany(['foo', 'bar', 'abc', 'def', 'ghi'], { language: 'en' }),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{
-            foo2: { status: 'fulfilled', value: { id: 'foo2', language: null } },
-            bar2: { status: 'fulfilled', value: { id: 'bar2', language: null } },
-            abc2: { status: 'fulfilled', value: { id: 'abc2', language: null } },
-            def2: { status: 'fulfilled', value: { id: 'def2', language: null } },
-            ghi2: { status: 'fulfilled', value: { id: 'ghi2', language: null } },
-          },{
-            foo: { status: 'fulfilled', value: { id: 'foo', language: 'en' } },
-            bar: { status: 'fulfilled', value: { id: 'bar', language: 'en' } },
-            abc: { status: 'fulfilled', value: { id: 'abc', language: 'en' } },
-            def: { status: 'fulfilled', value: { id: 'def', language: 'en' } },
-            ghi: { status: 'fulfilled', value: { id: 'ghi', language: 'en' } },
-          }]);
-          mockSource.expects('getAssets')
-            .once().withArgs(['foo2', 'bar2', 'abc2', 'def2', 'ghi2', 'foo'])
-            .once().withArgs(['bar', 'abc', 'def', 'ghi'], { language: 'en' })
-        });
+      ]);
+
+      expect(result).toEqual([
+        {
+          foo2: { status: 'fulfilled', value: { id: 'foo2', language: null } },
+          bar2: { status: 'fulfilled', value: { id: 'bar2', language: null } },
+          abc2: { status: 'fulfilled', value: { id: 'abc2', language: null } },
+          def2: { status: 'fulfilled', value: { id: 'def2', language: null } },
+          ghi2: { status: 'fulfilled', value: { id: 'ghi2', language: null } },
+        },
+        {
+          foo: { status: 'fulfilled', value: { id: 'foo', language: 'en' } },
+          bar: { status: 'fulfilled', value: { id: 'bar', language: 'en' } },
+          abc: { status: 'fulfilled', value: { id: 'abc', language: 'en' } },
+          def: { status: 'fulfilled', value: { id: 'def', language: 'en' } },
+          ghi: { status: 'fulfilled', value: { id: 'ghi', language: 'en' } },
+        },
+      ]);
     });
 
-    it('should accumulate batch data', () => {
-      return Promise.all([
+    it('should accumulate batch data', async () => {
+      const result = await Promise.all([
         testStore.get('foo', null, '1234567890'),
         testStore.get('foo', null, '2345678901'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'foo', language: null }]);
-          mockSource.expects('getAssets')
-            .once()
-            .withArgs(['abc'], null, ['1234567890', '2345678901']);
-        });
+      ]);
+
+      expect(result).toEqual([{ id: 'foo', language: null }, { id: 'foo', language: null }]);
     });
 
-    it('should accumulate batch data, when batching is disabled', () => {
+    it('should accumulate batch data, when batching is disabled', async () => {
       testStore.config.batch.enabled = false;
-      return Promise.all([
+      const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc', null, '1234567890'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
-          mockSource.expects('getAssets')
-            .once()
-            .withArgs(['abc'], null, ['1234567890']);
-        });
+      ]);
+
+      expect(result).toEqual([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
     });
 
-    it('should support disabled batching', () => {
+    it('should support disabled batching', async () => {
       testStore.config.batch.enabled = false;
-      return Promise.all([
+      const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
-          mockSource.expects('getAssets')
-            .once()
-            .withArgs(['abc']);
-          mockSource.expects('getAssets')
-            .once()
-            .withArgs(['foo']);
-        });
+      ]);
+
+      expect(result).toEqual([{ id: 'foo', language: null }, { id: 'abc', language: null }]);
     });
   });
 
   describe('Empty responses', () => {
-    let testStore;
-    let mockSource;
+    let testStore: any;
+    let getEmptyGroupSpy: jest.SpyInstance;
+
     afterEach(() => {
       testStore = null;
-      mockSource.restore();
+      if (getEmptyGroupSpy) {
+        getEmptyGroupSpy.mockRestore();
+      }
     });
+
     beforeEach(() => {
-      mockSource = sinon.mock(dao);
+      getEmptyGroupSpy = jest.spyOn(dao, 'getEmptyGroup');
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getEmptyGroup,
@@ -219,91 +194,92 @@ describe('Batching', () => {
       });
     });
 
-    it('should batch single calls', () => {
-      return Promise.all([
+    it('should batch single calls', async () => {
+      const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([undefined, undefined]);
-          mockSource.expects('getEmptyGroup')
-            .once()
-            .withArgs(['foo', 'abc']);
-        });
+      ]);
+
+      expect(result).toEqual([undefined, undefined]);
     });
 
-    it('should batch multi calls', () => {
-      return testStore.getMany(['abc', 'foo'])
-        .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: undefined }, foo: { status: 'fulfilled', value: undefined } });
-          mockSource.expects('getEmptyGroup')
-            .once()
-            .withArgs(['foo', 'abc']);
-        });
+    it('should batch multi calls', async () => {
+      const result = await testStore.getMany(['abc', 'foo']);
+      expect(result).toEqual({
+        abc: { status: 'fulfilled', value: undefined },
+        foo: { status: 'fulfilled', value: undefined },
+      });
     });
 
-    it('should batch mixed calls', () => {
-      return Promise.all([
+    it('should batch mixed calls', async () => {
+      const result = await Promise.all([
         testStore.getMany(['foo', 'bar']),
         testStore.get('abc'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: undefined }, foo: { status: 'fulfilled', value: undefined } }, undefined]);
-          mockSource.expects('getEmptyGroup')
-            .once()
-            .withArgs(['foo', 'bar', 'abc']);
-        });
+      ]);
+
+      expect(result).toEqual([
+        {
+          bar: { status: 'fulfilled', value: undefined },
+          foo: { status: 'fulfilled', value: undefined },
+        },
+        undefined,
+      ]);
     });
 
-    it('should mix unique params matches', () => {
-      return Promise.all([
+    it('should mix unique params matches', async () => {
+      const result = await Promise.all([
         testStore.getMany(['foo', 'bar'], { language: 'fr' }),
         testStore.get('abc', { language: 'fr' }),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: undefined }, foo: { status: 'fulfilled', value: undefined } }, undefined]);
-          mockSource.expects('getEmptyGroup')
-            .once().withArgs(['foo', 'bar', 'abc'], { language: 'fr' });
-        });
+      ]);
+
+      expect(result).toEqual([
+        {
+          bar: { status: 'fulfilled', value: undefined },
+          foo: { status: 'fulfilled', value: undefined },
+        },
+        undefined,
+      ]);
     });
 
-    it('should not mix unique params mismatches', () => {
-      return Promise.all([
+    it('should not mix unique params mismatches', async () => {
+      const result = await Promise.all([
         testStore.getMany(['foo', 'bar'], { language: 'fr' }),
         testStore.get('abc', { language: 'en' }),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([{ bar: { status: 'fulfilled', value: undefined }, foo: { status: 'fulfilled', value: undefined } }, undefined]);
-          mockSource.expects('getEmptyGroup')
-            .once().withArgs(['abc'], { language: 'en' })
-            .once().withArgs(['foo', 'bar'], { language: 'fr' });
-        });
+      ]);
+
+      expect(result).toEqual([
+        {
+          bar: { status: 'fulfilled', value: undefined },
+          foo: { status: 'fulfilled', value: undefined },
+        },
+        undefined,
+      ]);
     });
 
-    it('should support disabled batching', () => {
+    it('should support disabled batching', async () => {
       testStore.config.batch.enabled = false;
-      return Promise.all([
+      const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
-      ])
-        .then((result) => {
-          expect(result).to.deep.equal([undefined,undefined]);
-          mockSource.expects('getEmptyGroup')
-            .once()
-            .withArgs(['abc']);
-        });
+      ]);
+
+      expect(result).toEqual([undefined, undefined]);
     });
   });
 
   describe('Partial responses', () => {
-    let testStore;
-    let mockSource;
+    let testStore: any;
+    let getPartialGroupSpy: jest.SpyInstance;
+
     afterEach(() => {
       testStore = null;
-      mockSource.restore();
+      if (getPartialGroupSpy) {
+        getPartialGroupSpy.mockRestore();
+      }
     });
+
     beforeEach(() => {
-      mockSource = sinon.mock(dao);
+      getPartialGroupSpy = jest.spyOn(dao, 'getPartialGroup');
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
@@ -311,26 +287,29 @@ describe('Batching', () => {
       });
     });
 
-    it('should return the valid results mixed calls', () => {
-      return testStore.getMany(['abc', 'foo', 'bar'])
-        .then((result) => {
-          expect(result).to.deep.equal({ abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, foo: { status: 'fulfilled', value: undefined }, bar: { status: 'fulfilled', value: undefined } });
-          mockSource.expects('getPartialGroup')
-            .once()
-            .withArgs(['foo', 'bar', 'abc']);
-        });
+    it('should return the valid results mixed calls', async () => {
+      const result = await testStore.getMany(['abc', 'foo', 'bar']);
+      expect(result).toEqual({
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
+        foo: { status: 'fulfilled', value: undefined },
+        bar: { status: 'fulfilled', value: undefined },
+      });
     });
   });
 
   describe('Rejected requests', () => {
-    let testStore;
-    let mockSource;
+    let testStore: any;
+    let getFailedRequestSpy: jest.SpyInstance;
+
     afterEach(() => {
       testStore = null;
-      mockSource.restore();
+      if (getFailedRequestSpy) {
+        getFailedRequestSpy.mockRestore();
+      }
     });
+
     beforeEach(() => {
-      mockSource = sinon.mock(dao);
+      getFailedRequestSpy = jest.spyOn(dao, 'getFailedRequest');
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailedRequest,
@@ -338,45 +317,36 @@ describe('Batching', () => {
       });
     });
 
-    it('should properly reject on single request', () => {
-      return testStore.get('abc', { language: 'fr' })
-        .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
-          mockSource.expects('getFailedRequest')
-            .once().withArgs(['abc'], { language: 'fr' });
-        });
+    it('should properly reject on single request', async () => {
+      await expect(testStore.get('abc', { language: 'fr' }))
+        .rejects.toEqual({ error: 'Something went wrong' });
     });
 
-    it('should properly reject on multi request', () => {
-      return testStore.getMany(['abc', 'foo'], { language: 'en' })
-        .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
-          mockSource.expects('getFailedRequest')
-            .once().withArgs(['abc', 'foo'], { language: 'en' });
-        });
+    it('should properly reject on multi request', async () => {
+      await expect(testStore.getMany(['abc', 'foo'], { language: 'en' }))
+        .rejects.toEqual({ error: 'Something went wrong' });
     });
 
-    it('should properly reject with disabled batching', () => {
+    it('should properly reject with disabled batching', async () => {
       testStore.config.batch.enabled = false;
-      return testStore.get('abc')
-        .then(null, (error) => {
-          expect(error).to.deep.equal({ error: 'Something went wrong' });
-          mockSource.expects('getFailedRequest')
-            .once()
-            .withArgs(['abc']);
-        });
+      await expect(testStore.get('abc'))
+        .rejects.toEqual({ error: 'Something went wrong' });
     });
   });
 
   describe('Failed requests', () => {
-    let testStore;
-    let mockSource;
+    let testStore: any;
+    let getErroredRequestSpy: jest.SpyInstance;
+
     afterEach(() => {
       testStore = null;
-      mockSource.restore();
+      if (getErroredRequestSpy) {
+        getErroredRequestSpy.mockRestore();
+      }
     });
+
     beforeEach(() => {
-      mockSource = sinon.mock(dao);
+      getErroredRequestSpy = jest.spyOn(dao, 'getErroredRequest');
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getErroredRequest,
@@ -384,52 +354,41 @@ describe('Batching', () => {
       });
     });
 
-    it('should properly reject on single request', () => {
-      return testStore.get('abc', { language: 'fr' })
-        .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
-          mockSource.expects('getErroredRequest')
-            .once().withArgs(['abc'], { language: 'fr' });
-        });
+    it('should properly reject on single request', async () => {
+      await expect(testStore.get('abc', { language: 'fr' }))
+        .rejects.toThrow('Something went wrong');
     });
 
-    it('should properly reject on multi request', () => {
-      return testStore.getMany(['abc', 'foo'], { language: 'en' })
-        .then((result) => {
-          //expect(result).to.deep.include({ abc: { status: 'rejected', reason: new Error('Something went wrong') }, foo: { status: 'rejected', reason: new Error('Something went wrong') } });
-          expect(result.abc.status).to.equal('rejected');
-          expect(result.abc.reason).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
-          expect(result.foo.status).to.equal('rejected');
-          expect(result.foo.reason).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
-        },
-        (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
-          mockSource.expects('getErroredRequest')
-            .once().withArgs(['abc', 'foo'], { language: 'en' });
-        });
+    it('should properly reject on multi request', async () => {
+      const result = await testStore.getMany(['abc', 'foo'], { language: 'en' });
+      expect(result.abc.status).toBe('rejected');
+      expect(result.abc.reason).toBeInstanceOf(Error);
+      expect(result.abc.reason.message).toBe('Something went wrong');
+      expect(result.foo.status).toBe('rejected');
+      expect(result.foo.reason).toBeInstanceOf(Error);
+      expect(result.foo.reason.message).toBe('Something went wrong');
     });
 
-    it('should properly reject with disabled batching', () => {
+    it('should properly reject with disabled batching', async () => {
       testStore.config.batch.enabled = false;
-      return testStore.get('abc')
-        .then(null, (error) => {
-          expect(error).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
-          mockSource.expects('getErroredRequest')
-            .once()
-            .withArgs(['abc']);
-        });
+      await expect(testStore.get('abc'))
+        .rejects.toThrow('Something went wrong');
     });
   });
 
   describe('Mixed multi requests', () => {
-    let testStore;
-    let mockSource;
+    let testStore: any;
+    let getFailOnFooSpy: jest.SpyInstance;
+
     afterEach(() => {
       testStore = null;
-      mockSource.restore();
+      if (getFailOnFooSpy) {
+        getFailOnFooSpy.mockRestore();
+      }
     });
+
     beforeEach(() => {
-      mockSource = sinon.mock(dao);
+      getFailOnFooSpy = jest.spyOn(dao, 'getFailOnFoo');
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailOnFoo,
@@ -437,13 +396,12 @@ describe('Batching', () => {
       });
     });
 
-    it('should properly return a mix of valid items and errors', () => {
-      return testStore.getMany(['abc', 'foo'], { language: 'en' })
-        .then((result) => {
-          expect(result.abc).to.deep.equal({ status: 'fulfilled', value: { id: 'abc', language: 'en' } });
-          expect(result.foo.status).to.equal('rejected');
-          expect(result.foo.reason).to.be.instanceOf(Error).with.property('message', 'Something went wrong');
-        });
+    it('should properly return a mix of valid items and errors', async () => {
+      const result = await testStore.getMany(['abc', 'foo'], { language: 'en' });
+      expect(result.abc).toEqual({ status: 'fulfilled', value: { id: 'abc', language: 'en' } });
+      expect(result.foo.status).toBe('rejected');
+      expect(result.foo.reason).toBeInstanceOf(Error);
+      expect(result.foo.reason.message).toBe('Something went wrong');
     });
   });
 });

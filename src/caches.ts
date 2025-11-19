@@ -1,7 +1,7 @@
-import {settleAndLog} from './utils';
+import { settleAndLog } from './utils';
 
 export default function cachesConstructor(config, emitter) {
-  const caches = config.cache.enabled && config.cache.tiers.map(tier => tier.store(tier)) || [];
+  const caches = (config.cache.enabled && config.cache.tiers.map(tier => tier.store(tier))) || [];
   const local = caches.find(cache => cache.local);
   const remotes = caches.filter(cache => !cache.local);
 
@@ -23,7 +23,7 @@ export default function cachesConstructor(config, emitter) {
       return localValue;
     }
 
-    return settleAndLog(remotes.map((remote) => remote.get(key)))
+    return settleAndLog(remotes.map(remote => remote.get(key)))
       .then((remoteValues) => {
         const responseValue = remoteValues.find(value => value !== undefined);
         if (responseValue !== undefined) {
@@ -32,7 +32,7 @@ export default function cachesConstructor(config, emitter) {
         else {
           emitter.track('cacheMiss', 1);
         }
-        return remoteValues.find((response) => response !== undefined);
+        return remoteValues.find(response => response !== undefined);
       });
   }
 
@@ -49,11 +49,11 @@ export default function cachesConstructor(config, emitter) {
       return Promise.resolve(localValues);
     }
 
-    return settleAndLog(remotes.map((remote) => remote.getMulti(recordKey, keys)))
+    return settleAndLog(remotes.map(remote => remote.getMulti(recordKey, keys)))
       .then((remoteValues) => {
-        const responseValues = Object.assign(...remoteValues, localValues).map((value) => (value === null || value === undefined) ? undefined : JSON.parse(value));
-        const foundRemotely = remoteValues.filter((value) => value !== undefined);
-        const missingValues = responseValues.filter((value) => value === undefined);
+        const responseValues = Object.assign(...remoteValues, localValues).map(value => (value === null || value === undefined) ? undefined : JSON.parse(value));
+        const foundRemotely = remoteValues.filter(value => value !== undefined);
+        const missingValues = responseValues.filter(value => value === undefined);
         emitter.track('cacheHit', foundRemotely.length);
         emitter.track('cacheMiss', missingValues.length);
         return responseValues;
@@ -61,13 +61,13 @@ export default function cachesConstructor(config, emitter) {
   }
 
   function set(recordKey, keys, values) {
-    local && local.set(recordKey, keys, values);
-    return Promise.all(remotes.map((remote) => remote.set(recordKey, keys, values))).catch((err) => console.log('error writing', err));
+    if (local) local.set(recordKey, keys, values);
+    return Promise.all(remotes.map(remote => remote.set(recordKey, keys, values))).catch(err => console.log('error writing', err));
   }
 
   function clear(key) {
-    local && local.clear(key);
-    remotes.forEach((remote) => remote.clear(key));
+    if (local) local.clear(key);
+    remotes.forEach(remote => remote.clear(key));
     return true;
   }
 
@@ -85,7 +85,7 @@ export default function cachesConstructor(config, emitter) {
         return {
           local: local && local.size(),
           remote: remoteItems || 0,
-        }
+        };
       });
   }
 

@@ -3,15 +3,15 @@ declare module 'ha-store' {
   type DelimiterKeys<T extends readonly string[]> = T[number];
 
   // Build params type from delimiter configuration
-  type ParamsFromDelimiters<D extends readonly string[] | undefined> =
-    D extends readonly string[]
+  type ParamsFromDelimiters<D extends readonly string[] | undefined>
+    = D extends readonly string[]
       ? { [K in DelimiterKeys<D>]?: string } & { [key: string]: string | undefined }
       : { [key: string]: string | undefined };
 
   // Generic params type when delimiters are not specified
   type Params = {
     [key: string]: string | undefined
-  }
+  };
 
   type RequestIds = string[];
 
@@ -66,7 +66,7 @@ declare module 'ha-store' {
     ids?: string[]
     cause?: 'limit' | 'timeout'
     error?: Error
-  }
+  };
 
   // Generic store interface that uses delimiter-specific params
   export interface HAStore<D extends readonly string[] | undefined = undefined> {
@@ -133,11 +133,11 @@ declare module 'ha-store' {
 
   // Main factory function with delimiter type inference
   export default function haStore<D extends readonly string[] | undefined = undefined>(
-    config: HAStoreConfig<D>
-  ): HAStore<D>
+    config: HAStoreConfig<D>,
+  ): HAStore<D>;
 
   // Named export as well
   export function haStore<D extends readonly string[] | undefined = undefined>(
-    config: HAStoreConfig<D>
-  ): HAStore<D>
+    config: HAStoreConfig<D>,
+  ): HAStore<D>;
 }

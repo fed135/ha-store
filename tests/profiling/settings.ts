@@ -1,6 +1,6 @@
-const {getAssets} = require('./dao.ts');
+import { getAssets } from './dao.ts';
 
-module.exports = {
+export default {
   test: {
     sampleFile: './sample.txt',
   },
@@ -19,4 +19,4 @@ module.exports = {
     rss: [50000, 80000],
     avgBatchSize: [45, 50],
   },
-}
+};

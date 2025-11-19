@@ -1,7 +1,2 @@
-const noop = () => {
-};
-
-
-module.exports = {
-  noop,
+export const noop = () => {
 };
