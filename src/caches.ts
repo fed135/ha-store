@@ -1,6 +1,6 @@
-const {settleAndLog} = require('./utils');
+import {settleAndLog} from './utils';
 
-function cachesConstructor(config, emitter) {
+export default function cachesConstructor(config, emitter) {
   const caches = config.cache.enabled && config.cache.tiers.map(tier => tier.store(tier)) || [];
   const local = caches.find(cache => cache.local);
   const remotes = caches.filter(cache => !cache.local);
@@ -99,5 +99,3 @@ function cachesConstructor(config, emitter) {
     size,
   };
 }
-
-module.exports = cachesConstructor;

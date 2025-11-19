@@ -1,6 +1,6 @@
-const EventEmitter = require('events').EventEmitter;
+import {EventEmitter} from 'node:events';
 
-class DeferredEmitter extends EventEmitter {
+export default class DeferredEmitter extends EventEmitter {
   constructor() {
     super();
     this._counters = {
@@ -22,5 +22,3 @@ class DeferredEmitter extends EventEmitter {
     this._counters[type] += number;
   }
 }
-
-module.exports = DeferredEmitter;

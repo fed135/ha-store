@@ -1,11 +1,15 @@
-const queue = require('./buffer');
-const caches = require('./caches');
-const DeferredEmitter = require('./emitter');
-const {contextKey, recordKey, contextRecordKey} = require('./utils');
-const {hydrateConfig} = require('./options');
+import queue from './buffer';
+import caches from './caches';
+import DeferredEmitter from './emitter';
+import {contextKey, recordKey, contextRecordKey} from './utils';
+import {hydrateConfig} from './options';
 
-class HaStore extends DeferredEmitter {
-  constructor(initialConfig) {
+import inMemory from './stores/in-memory';
+
+import pgResolver from './resolvers/postgres';
+
+export default class HaStore extends DeferredEmitter {
+  constructor(initialConfig = {}) {
     super();
 
     this.config = Object.freeze(hydrateConfig(initialConfig));
@@ -66,8 +70,10 @@ class HaStore extends DeferredEmitter {
   }
 }
 
-function make(initialConfig = {}) {
-  return new HaStore(initialConfig);
-}
+export const stores = {
+  inMemory
+};
 
-module.exports = make;
+export const resolvers = {
+  postgres: pgResolver
+};

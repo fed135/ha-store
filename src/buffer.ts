@@ -1,4 +1,4 @@
-const {contextRecordKey, deferred} = require('./utils');
+import {contextRecordKey, deferred} from './utils';
 
 const BufferState = {
   PENDING: 0,
@@ -6,7 +6,7 @@ const BufferState = {
   COMPLETED: 2,
 };
 
-function queryBufferConstructor(config, emitter, caches) {
+export default function queryBufferConstructor(config, emitter, caches) {
   const buffers = [];
 
   let numCoalesced = 0;

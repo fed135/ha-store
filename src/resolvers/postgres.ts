@@ -1,4 +1,4 @@
-function pgResolver(config) {
+export default function pgResolver(config) {
     if (typeof config.identifier !== 'string') throw new Error(`Invalid resolver config for "identifier". Must be a string that represents the identifier column for the record.`);
     if (typeof config.table !== 'string') throw new Error(`Invalid resolver config for "table". Must be a string.`);
     if (config.fields && config.fields.some((f) => typeof f !== 'string')) throw new Error(`Invalid resolver config for "fields". Must be an array of strings with the columns to return on SELECT. Ignore for "*"`);

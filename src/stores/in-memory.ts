@@ -1,6 +1,6 @@
-const lru = require('lru-cache');
+import lru from 'lru-cache';
 
-function localStore(config) {
+export default function inMemory(config) {
   const store = new lru({
     max: config.limit,
     ttl: config.ttl,
@@ -44,5 +44,3 @@ function localStore(config) {
 
   return { get, getMulti, set, clear, size, local: true, _debug };
 }
-
-module.exports = localStore;

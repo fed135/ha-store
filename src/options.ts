@@ -1,4 +1,4 @@
-const inMemoryStore = require('./stores/in-memory');
+import inMemoryStore from './stores/in-memory';
 
 const defaultCacheConfig = {
   store: inMemoryStore,
@@ -18,7 +18,7 @@ const defaultConfig = {
   },
 };
 
-function hydrateConfig(config = {}) {
+export function hydrateConfig(config = {}) {
   if (typeof config.resolver !== 'function') {
     throw new Error(`config.resolver [${config.resolver}] is not a function`);
   }
@@ -33,7 +33,7 @@ function hydrateConfig(config = {}) {
 
   if (config.cache?.enabled) {
     if (!config.cache?.tiers?.length) {
-      config.cache.tiers = [defaultCacheConfig];
+      console.warn('Missing explicit `tiers` information for ha-store cache config. Caching will not be enabled for this store.');
     }
     else {
       config.cache.tiers = config.cache.tiers.map((store) =>({...defaultCacheConfig, ...store}));
@@ -47,5 +47,3 @@ function hydrateConfig(config = {}) {
     cache: config.cache,
   };
 }
-
-module.exports = {hydrateConfig};

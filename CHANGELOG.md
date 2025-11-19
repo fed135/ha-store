@@ -2,13 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [5.0.0]
+
+### Added
+- Advanced TypeScript support with delimiter-based intellisense
+- Generic type parameters for type-safe delimiter configuration
+- Comprehensive TypeScript examples and documentation
 
 ### Changed
 - Migrated codebase to TypeScript file format (.ts extensions)
+- Enhanced type definitions with proper module declaration
 - Minimum Node.js version now 16.0.0 (added support for 20.x, 22.x)
 
 ## [4.0.0] - 2022-10-24

@@ -1,21 +1,16 @@
 <h1 align="center">
-  <img alt="HA-store" width="300px" src="./logo.png" />
+  <img alt="HA-store" width="300px" src="https://ha-store.js.org/logo.png" />
   <br/>
   High-Availability store
 </h1>
 <h3 align="center">
-  Efficient data fetching
+  Efficient data fetching to prevent thundering herds!
   <br/><br/><br/>
 </h3>
 <br/>
 
-[![ha-store](https://img.shields.io/npm/v/ha-store.svg)](https://www.npmjs.com/package/ha-store)
-[![Node](https://img.shields.io/badge/node->%3D16.0-blue.svg)](https://nodejs.org)
-[![Dependencies Status](https://img.shields.io/librariesio/release/npm/ha-store)](https://github.com/fed135/ha-store/security/dependabot)
 
----
-
-**HA-store** is a wrapper for your data queries, it features: 
+**HA-store** is a wrapper for your data queries, it features:
 
 - Smart TLRU cache for 'hot' information
 - Supports multiple caching levels
@@ -35,10 +30,22 @@ Learn how you can improve your app's performance, design and resilience [here](h
 
 ```javascript
 // Create your store
-const store = require('ha-store');
+import store from 'ha-store';
+import inMemory from 'ha-store/stores/in-memory';
+
 const itemStore = store({
   resolver: getItems,
-  delimiter: ['language']
+  delimiter: ['language'],
+  cache: {
+    enabled: true,
+    tiers: [
+      {
+        store: inMemory(),
+        limit: 1000,  // Maximum number of cached items
+        ttl: 60000,   // Time to live: 60 seconds
+      },
+    ],
+  }
 });
 
 // Define your resolver
@@ -61,6 +68,43 @@ itemStore.get('123', { language: 'fr' }, { requestId: '123' })
 itemStore.getMany(['123', '456'], { language: 'en' }, { requestId: '123' })
   .then(items => /* All the items you requested, in Promise.allSettled fashion */);
 ```
+
+### Prebuilt resolvers
+
+HA-store has prebuilt resolvers for common use-cases:
+
+```typescript
+import haStore from 'ha-store';
+import pgResolver from 'ha-store/resolvers/postgres';
+import { Pool } from 'pg';
+
+// PostgreSQL connection pool
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'ha_store_example',
+  user: process.env.DB_USER || 'postgres',
+});
+
+const store = haStore({
+  resolver: pgResolver(),
+  delimiter: ['language', 'region'] as const,  // 'as const' enables intellisense
+  cache: { enabled: true }
+});
+
+// When calling methods, get autocomplete for delimiter fields
+await store.get('123', {
+  language: 'en',  // ✅ Suggested by intellisense
+  region: 'us'     // ✅ Suggested by intellisense
+});
+```
+
+**Key Features:**
+- Delimiter fields appear in intellisense when using `as const`
+- Full type inference for resolver functions
+- Strongly typed responses and contexts
+- Typed event listeners
+
+See [TypeScript examples](./examples/typescript-usage.ts) and [detailed guide](./examples/TYPESCRIPT.md) for more.
 
 
 ## Options
