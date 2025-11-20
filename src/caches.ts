@@ -1,4 +1,4 @@
-import { settleAndLog } from './utils';
+import { settleAndLog } from './utils.js';
 
 export default function cachesConstructor(config, emitter) {
   const local = config.caches?.find(cache => cache.local);

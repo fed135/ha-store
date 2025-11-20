@@ -3,7 +3,7 @@
  */
 
 import { noop } from './testUtils';
-import root, {caches} from '../../src/index';
+import root, { caches } from '../../src/index';
 
 function checkForPublicProperties(store: any) {
   expect(store.get).toBeDefined();
@@ -38,7 +38,7 @@ describe('index', () => {
         caches: [{}],
         batch: true,
       });
-       expect(test).toThrow('invalid cache instance');
+      expect(test).toThrow('invalid cache instance');
     });
 
     it('should produce a batcher with all the merged config when called with custom requirements', () => {

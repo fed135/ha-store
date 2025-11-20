@@ -74,7 +74,7 @@ describe('Caching', () => {
 
       expect(result).toEqual({ id: 'foo', language: 'fr' });
       expect(getAssetsSpy).toHaveBeenCalledTimes(1);
-      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' });
+      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' }, [null]);
     });
 
     it('should not return cached values forunique params mismatches', async () => {
@@ -141,7 +141,7 @@ describe('Caching', () => {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      expect(getAssetsSpy).toHaveBeenCalledTimes(4);
     });
   });
 
@@ -161,6 +161,9 @@ describe('Caching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getAssets,
+        caches: [
+          caches.inMemory(),
+        ],
         batch: null,
       });
     });
@@ -222,7 +225,7 @@ describe('Caching', () => {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      expect(getAssetsSpy).toHaveBeenCalledTimes(4);
     });
   });
 
@@ -338,14 +341,17 @@ describe('Caching', () => {
       await expect(testStore.get('abc', { language: 'fr' }))
         .rejects.toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], { language: 'fr' });
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], { language: 'fr' }, [null]);
     });
 
     it('should not cache failed multi requests', async () => {
-      await expect(testStore.getMany(['abc', 'foo'], { language: 'en' }))
-        .rejects.toEqual({ error: 'Something went wrong' });
+      const result = await testStore.getMany(['abc', 'foo'], { language: 'en' });
+      expect(result.abc.status).toBe('rejected');
+      expect(result.abc.reason).toEqual({ error: 'Something went wrong' });
+      expect(result.foo.status).toBe('rejected');
+      expect(result.foo.reason).toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' });
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' }, [null, null]);
     });
 
     it('should properly reject with disabled batching', async () => {
@@ -353,7 +359,7 @@ describe('Caching', () => {
       await expect(testStore.get('abc'))
         .rejects.toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc']);
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], {}, [null]);
     });
   });
 
@@ -380,7 +386,7 @@ describe('Caching', () => {
       await expect(testStore.get('abc', { language: 'fr' }))
         .rejects.toThrow('Something went wrong');
       expect(getErroredRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getErroredRequestSpy).toHaveBeenCalledWith(['abc'], { language: 'fr' });
+      expect(getErroredRequestSpy).toHaveBeenCalledWith(['abc'], { language: 'fr' }, [null]);
     });
 
     it('should properly reject with disabled batching', async () => {
@@ -388,7 +394,7 @@ describe('Caching', () => {
       await expect(testStore.get('abc'))
         .rejects.toThrow('Something went wrong');
       expect(getErroredRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getErroredRequestSpy).toHaveBeenCalledWith(['abc']);
+      expect(getErroredRequestSpy).toHaveBeenCalledWith(['abc'], {}, [null]);
     });
   });
 });

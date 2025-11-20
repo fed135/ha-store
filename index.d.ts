@@ -30,6 +30,15 @@ declare module 'ha-store' {
     ttl?: number
   }
 
+  export interface RedisCacheOptions {
+    keyspace?: string
+    host?: string
+    port?: number
+    path?: string
+    connection?: any
+    ttl?: number
+  }
+
   export interface PostgresResolverOptions {
     db: any
     table: string
@@ -56,7 +65,7 @@ declare module 'ha-store' {
     batch?: {
       delay?: number
       limit?: number
-    }
+    } | null
   }
 
   export type QueryEvent = {
@@ -138,7 +147,10 @@ declare module 'ha-store' {
     config: HAStoreConfig<D>,
   ): HAStore<D>;
 
-  export const caches: { inMemory: (options: InMemoryCacheOptions) => HACacheStore };
+  export const caches: {
+    inMemory: (options: InMemoryCacheOptions) => HACacheStore
+    redis: (options: RedisCacheOptions) => HACacheStore
+  };
 
   export const resolvers: { postgres: <Response>(options: PostgresResolverOptions) => (ids: string[], params?: Params) => Promise<{ [id: string]: Response }> };
 

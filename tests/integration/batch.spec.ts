@@ -323,8 +323,11 @@ describe('Batching', () => {
     });
 
     it('should properly reject on multi request', async () => {
-      await expect(testStore.getMany(['abc', 'foo'], { language: 'en' }))
-        .rejects.toEqual({ error: 'Something went wrong' });
+      const result = await testStore.getMany(['abc', 'foo'], { language: 'en' });
+      expect(result.abc.status).toBe('rejected');
+      expect(result.abc.reason).toEqual({ error: 'Something went wrong' });
+      expect(result.foo.status).toBe('rejected');
+      expect(result.foo.reason).toEqual({ error: 'Something went wrong' });
     });
 
     it('should properly reject with disabled batching', async () => {

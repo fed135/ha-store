@@ -1,8 +1,8 @@
 {
-  "name": "ha-store-express-example",
+  "name": "ha-store-redis-example",
   "version": "1.0.0",
   "type": "module",
-  "description": "Example Express server communicating with a db",
+  "description": "Example Express server storing on redis",
   "main": "server.ts",
   "private": true,
   "scripts": {
@@ -13,6 +13,6 @@
   "dependencies": {
     "express": "^4.18.2",
     "ha-store": "file:../../",
-    "pg": "^8.11.3"
+    "redis": "^5.10.0"
   }
 }

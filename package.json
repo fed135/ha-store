@@ -3,6 +3,7 @@
   "version": "5.0.0",
   "description": "Efficient data fetching",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -68,7 +69,6 @@
   "author": "frederic charette <fredericcharette@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@ha-store/redis": "^4.0.1",
     "@stylistic/eslint-plugin": "^5.6.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",
@@ -80,6 +80,9 @@
     "ts-jest": "^29.4.0",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.47.0"
+  },
+  "peerDependencies": {
+    "redis": "^5.10.0"
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>",

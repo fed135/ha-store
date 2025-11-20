@@ -1,4 +1,4 @@
-import { contextRecordKey, deferred } from './utils';
+import { contextRecordKey, deferred } from './utils.js';
 
 const BufferState = {
   PENDING: 0,
@@ -110,5 +110,3 @@ export default function queryBufferConstructor(config, emitter, caches) {
 
   return { getHandles, size };
 }
-
-module.exports = queryBufferConstructor;

@@ -1,12 +1,13 @@
 import { EventEmitter } from 'node:events';
-import queue from './buffer';
-import _caches from './caches';
-import { contextKey, recordKey, contextRecordKey } from './utils';
-import { hydrateConfig } from './options';
+import queue from './buffer.js';
+import _caches from './caches.js';
+import { contextKey, recordKey, contextRecordKey } from './utils.js';
+import { hydrateConfig } from './options.js';
 
-import inMemory from './stores/in-memory';
+import inMemory from './stores/in-memory.js';
+import redis from './stores/redis.js';
 
-import pgResolver from './resolvers/postgres';
+import pgResolver from './resolvers/postgres.js';
 
 class HaStore extends EventEmitter {
   constructor(initialConfig = {}) {
@@ -74,6 +75,7 @@ export default config => new HaStore(config);
 
 export const caches = {
   inMemory,
+  redis,
 };
 
 export const resolvers = {

@@ -5,7 +5,6 @@
 import * as dao from './utils/dao';
 import { sleep } from './utils/testUtils';
 import store, { caches } from '../../src/index';
-import remote from '@ha-store/redis';
 
 describe('Remote Caching', () => {
   describe('Happy remote-only responses', () => {
@@ -25,7 +24,7 @@ describe('Remote Caching', () => {
         delimiter: ['language'],
         resolver: dao.getAssets,
         caches: [
-          remote(Math.random().toString(36), '//0.0.0.0:6379'),
+          caches.redis({ keyspace: Math.random().toString(36), host: '0.0.0.0', port: 6379 }),
         ],
       });
       await testStore.clear('*');
@@ -134,7 +133,7 @@ describe('Remote Caching', () => {
         resolver: dao.getAssets,
         caches: [
           caches.inMemory(),
-          remote(Math.random().toString(36), '//0.0.0.0:6379'),
+          caches.redis({ keyspace: Math.random().toString(36), host: '0.0.0.0', port: 6379 }),
         ],
       });
       await testStore.clear('*');
@@ -250,7 +249,7 @@ describe('Remote Caching', () => {
         delimiter: ['language'],
         resolver: dao.getFailedRequest,
         caches: [
-          remote(Math.random().toString(36), '//0.0.0.0:6379'),
+          caches.redis({ keyspace: Math.random().toString(36), host: '0.0.0.0', port: 6379 }),
         ],
       });
       await testStore.clear('*');
