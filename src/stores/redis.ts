@@ -28,8 +28,8 @@ export default function RedisCache({ keyspace, host, path, port, connection, ttl
     return instance.del(`${keyspace}:${key}`);
   }
 
-  function size(instance) {
-    return () => instance.sendCommand(['DBSIZE']);
+  function size() {
+    return instance.sendCommand(['DBSIZE']);
   }
 
   return {

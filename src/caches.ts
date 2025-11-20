@@ -60,11 +60,15 @@ export default function cachesConstructor(config, emitter) {
   }
 
   function set(recordKey, keys, values) {
+    if (!config.caches?.length) return undefined;
+
     if (local) local.set(recordKey, keys, values);
     return Promise.all(remotes.map(remote => remote.set(recordKey, keys, values))).catch(err => console.log('error writing', err));
   }
 
   function clear(key) {
+    if (!config.caches?.length) return undefined;
+    
     if (local) local.clear(key);
     remotes.forEach(remote => remote.clear(key));
     return true;

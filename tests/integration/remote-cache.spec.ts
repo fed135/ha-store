@@ -81,7 +81,7 @@ describe('Remote Caching', () => {
 
       expect(result).toEqual({ id: 'foo', language: 'fr' });
       expect(getAssetsSpy).toHaveBeenCalledTimes(1);
-      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' });
+      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' }, [null]);
     });
 
     it('should not return cached values forunique params mismatches', async () => {
@@ -198,7 +198,7 @@ describe('Remote Caching', () => {
 
       expect(result).toEqual({ id: 'foo', language: 'fr' });
       expect(getAssetsSpy).toHaveBeenCalledTimes(1);
-      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' });
+      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' }, [null]);
     });
 
     it('should not return cached values forunique params mismatches', async () => {
@@ -259,14 +259,17 @@ describe('Remote Caching', () => {
       await expect(testStore.get('abc', { language: 'fr' }))
         .rejects.toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], { language: 'fr' });
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], { language: 'fr' }, [null]);
     });
 
     it('should not cache failed multi requests', async () => {
-      await expect(testStore.getMany(['abc', 'foo'], { language: 'en' }))
-        .rejects.toEqual({ error: 'Something went wrong' });
+      const result = await testStore.getMany(['abc', 'foo'], { language: 'en' });
+      expect(result.abc.status).toBe('rejected');
+      expect(result.abc.reason).toEqual({ error: 'Something went wrong' });
+      expect(result.foo.status).toBe('rejected');
+      expect(result.foo.reason).toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' });
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' }, [null, null]);
     });
 
     it('should properly reject with disabled batching', async () => {
@@ -274,7 +277,7 @@ describe('Remote Caching', () => {
       await expect(testStore.get('abc'))
         .rejects.toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc']);
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], {}, [null]);
     });
   });
 });
