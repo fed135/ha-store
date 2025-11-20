@@ -3,7 +3,7 @@
  */
 
 import * as dao from './utils/dao';
-import store, {caches} from '../../src/index';
+import store, { caches } from '../../src/index';
 
 describe('Caching', () => {
   describe('Happy responses', () => {
@@ -23,8 +23,8 @@ describe('Caching', () => {
         delimiter: ['language'],
         resolver: dao.getAssets,
         caches: [
-          caches.inMemory()
-        ]
+          caches.inMemory(),
+        ],
       });
     });
 
@@ -48,7 +48,7 @@ describe('Caching', () => {
     });
 
     it('should cache single values without batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       const result = await testStore.get('foo');
 
@@ -57,7 +57,7 @@ describe('Caching', () => {
     });
 
     it('should cache multi values without batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.getMany(['abc', 'foo']);
       const result = await testStore.getMany(['abc', 'foo']);
 
@@ -96,7 +96,7 @@ describe('Caching', () => {
 
     it('should support disabled caching and batching after boot', async () => {
       testStore.config.caches = [];
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       const result = await testStore.get('foo');
 
@@ -264,7 +264,7 @@ describe('Caching', () => {
     });
 
     it('should support disabled caching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       const result = await testStore.get('abc');
 
@@ -287,8 +287,8 @@ describe('Caching', () => {
     beforeEach(() => {
       getPartialGroupSpy = jest.spyOn(dao, 'getPartialGroup');
       testStore = store({
-        batch: { enabled: true },
-        caches: [{}],
+        batch: {},
+        caches: [caches.inMemory()],
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
       });
@@ -306,7 +306,7 @@ describe('Caching', () => {
     });
 
     it('should support disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       const result = await testStore.get('abc');
 
@@ -349,7 +349,7 @@ describe('Caching', () => {
     });
 
     it('should properly reject with disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await expect(testStore.get('abc'))
         .rejects.toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
@@ -384,7 +384,7 @@ describe('Caching', () => {
     });
 
     it('should properly reject with disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await expect(testStore.get('abc'))
         .rejects.toThrow('Something went wrong');
       expect(getErroredRequestSpy).toHaveBeenCalledTimes(1);

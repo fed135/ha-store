@@ -2,7 +2,7 @@ import { settleAndLog } from './utils';
 
 export default function cachesConstructor(config, emitter) {
   const local = config.caches?.find(cache => cache.local);
-  const remotes = config.caches?.filter(cache => !cache.local);
+  const remotes = config.caches?.filter(cache => !cache.local) || [];
 
   function getLocal(key) {
     return local && local.get(key);

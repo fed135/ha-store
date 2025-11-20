@@ -154,7 +154,7 @@ describe('Batching', () => {
     });
 
     it('should accumulate batch data, when batching is disabled', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc', null, '1234567890'),
@@ -164,7 +164,7 @@ describe('Batching', () => {
     });
 
     it('should support disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
@@ -190,7 +190,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getEmptyGroup,
-        batch: { enabled: true },
+        batch: {},
       });
     });
 
@@ -257,7 +257,7 @@ describe('Batching', () => {
     });
 
     it('should support disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       const result = await Promise.all([
         testStore.get('foo'),
         testStore.get('abc'),
@@ -283,7 +283,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getPartialGroup,
-        batch: { limit: 6, delay: 1, enabled: true },
+        batch: { limit: 6, delay: 1 },
       });
     });
 
@@ -313,7 +313,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailedRequest,
-        batch: { enabled: true },
+        batch: {},
       });
     });
 
@@ -328,7 +328,7 @@ describe('Batching', () => {
     });
 
     it('should properly reject with disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await expect(testStore.get('abc'))
         .rejects.toEqual({ error: 'Something went wrong' });
     });
@@ -350,7 +350,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getErroredRequest,
-        batch: { enabled: true },
+        batch: {},
       });
     });
 
@@ -370,7 +370,7 @@ describe('Batching', () => {
     });
 
     it('should properly reject with disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await expect(testStore.get('abc'))
         .rejects.toThrow('Something went wrong');
     });
@@ -392,7 +392,7 @@ describe('Batching', () => {
       testStore = store({
         delimiter: ['language'],
         resolver: dao.getFailOnFoo,
-        batch: { limit: 1, enabled: true },
+        batch: { limit: 1 },
       });
     });
 

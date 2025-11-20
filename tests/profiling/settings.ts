@@ -8,7 +8,7 @@ export default {
     resolver: getAssets,
     delimiter: ['language'],
     caches: [{}],
-    batch: { enabled: true, delay: 10, limit: 50 },
+    batch: { delay: 10, limit: 50 },
   },
   assert: {
     completed: [300000, 300000],

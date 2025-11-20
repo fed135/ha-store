@@ -4,7 +4,7 @@
 
 import * as dao from './utils/dao';
 import { sleep } from './utils/testUtils';
-import store, {caches} from '../../src/index';
+import store, { caches } from '../../src/index';
 import remote from '@ha-store/redis';
 
 describe('Remote Caching', () => {
@@ -53,7 +53,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache single values without batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
@@ -63,7 +63,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache multi values without batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.getMany(['abc', 'foo']);
       await sleep(10);
       const result = await testStore.getMany(['abc', 'foo']);
@@ -106,7 +106,7 @@ describe('Remote Caching', () => {
 
     it('should support disabled caching and batching after boot', async () => {
       testStore.config.caches = [];
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
@@ -170,7 +170,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache single values without batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
@@ -180,7 +180,7 @@ describe('Remote Caching', () => {
     });
 
     it('should cache multi values without batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.getMany(['abc', 'foo']);
       await sleep(10);
       const result = await testStore.getMany(['abc', 'foo']);
@@ -223,7 +223,7 @@ describe('Remote Caching', () => {
 
     it('should support disabled caching and batching after boot', async () => {
       testStore.config.caches = [];
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
@@ -271,7 +271,7 @@ describe('Remote Caching', () => {
     });
 
     it('should properly reject with disabled batching', async () => {
-      testStore.config.batch.enabled = false;
+      testStore.config.batch = null;
       await expect(testStore.get('abc'))
         .rejects.toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);

@@ -16,7 +16,7 @@ export function hydrateConfig(config = {}) {
 
   return {
     ...config,
-    batch: { ...defaultConfig.batch, ...config.batch },
+    batch: config.batch ? { ...defaultConfig.batch, ...config.batch } : config.batch,
     caches: config.caches,
   };
 }

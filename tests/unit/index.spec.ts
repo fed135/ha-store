@@ -3,7 +3,7 @@
  */
 
 import { noop } from './testUtils';
-import root from '../../src/index';
+import root, {caches} from '../../src/index';
 
 function checkForPublicProperties(store: any) {
   expect(store.get).toBeDefined();
@@ -31,21 +31,21 @@ describe('index', () => {
       checkForPublicProperties(test);
     });
 
-    it('should produce a batcher with all the default config when called with true requirements', () => {
-      const test = root({
+    it('should throw an error when called with invalid cache config', () => {
+      const test = root.bind(null, {
         resolver: noop,
         delimiter: ['a', 'b', 'c'],
         caches: [{}],
         batch: true,
       });
-      checkForPublicProperties(test);
+       expect(test).toThrow('invalid cache instance');
     });
 
     it('should produce a batcher with all the merged config when called with custom requirements', () => {
       const test = root({
         resolver: noop,
         delimiter: ['a', 'b', 'c'],
-        caches: [{ ttl: 1000 }],
+        caches: [caches.inMemory({ ttl: 1000 })],
         batch: { limit: 12 },
       });
       checkForPublicProperties(test);
