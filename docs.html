@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HA-store - API Documentation</title>
+
+    <meta name="description" content="Complete API documentation for HA-store.">
+	<meta name="keywords" content="HA-store, n+1, thundering herd, loader, batching, caching, coalescing">
+	<meta name="author" content="fed135">
+	<meta name="robots" content="index, follow">
+	<link rel="canonical" href="https://ha-store.js.org/docs.html">
+
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://ha-store.js.org/docs.html">
+	<meta property="og:title" content="HA-store - API Documentation">
+	<meta property="og:description" content="Complete API documentation for HA-store.">
+	<meta property="og:image" content="https://ha-store.js.org/images/logo.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a5568;
+            --text-tertiary: #718096;
+            --border-color: #e2e8f0;
+            --accent-primary: #667eea;
+            --accent-secondary: #764ba2;
+            --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0f172a;
+                --bg-secondary: #1e293b;
+                --bg-tertiary: #334155;
+                --text-primary: #f1f5f9;
+                --text-secondary: #cbd5e1;
+                --text-tertiary: #94a3b8;
+                --border-color: #334155;
+                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+                --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+                --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--accent-primary);
+        }
+
+        /* Documentation Layout */
+        .docs-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Sidebar */
+        .docs-sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 0;
+            position: sticky;
+            top: 73px;
+            height: calc(100vh - 73px);
+            overflow-y: auto;
+        }
+
+        .docs-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .docs-sidebar::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .docs-sidebar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-section h4 {
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 1.5rem 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 0.5rem 1.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            color: var(--accent-primary);
+            background: var(--bg-tertiary);
+            border-left-color: var(--accent-primary);
+        }
+
+        /* Main Content */
+        .docs-content {
+            padding: 3rem 4rem;
+        }
+
+        .doc-section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 100px;
+        }
+
+        .doc-section h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .doc-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        .doc-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--accent-gradient);
+        }
+
+        .doc-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section ul {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .lead {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .method-signature {
+            background: var(--bg-tertiary);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-primary);
+            margin-bottom: 1.5rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 1rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            box-shadow: var(--shadow-sm);
+        }
+
+        pre code {
+            color: var(--text-primary);
+        }
+
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--accent-primary);
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        thead {
+            background: var(--bg-tertiary);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Info Boxes */
+        .info-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .info-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-box strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box p {
+            margin: 0;
+        }
+
+        @media (max-width: 1024px) {
+            .docs-container {
+                grid-template-columns: 250px 1fr;
+            }
+
+            .docs-content {
+                padding: 2rem 3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .docs-container {
+                grid-template-columns: 1fr;
+            }
+
+            .docs-sidebar {
+                position: relative;
+                top: 0;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .docs-content {
+                padding: 2rem 1rem;
+            }
+
+            .doc-section h1 {
+                font-size: 2rem;
+            }
+
+            .doc-section h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">HA-store</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/docs.html" class="nav-link active">Documentation</a>
+                <a href="https://github.com/fed135/ha-store" class="nav-link">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Documentation Layout -->
+    <div class="docs-container">
+        <!-- Sidebar Navigation -->
+        <aside class="docs-sidebar">
+            <div class="sidebar-section">
+                <h4>Getting Started</h4>
+                <a href="#installation" class="sidebar-link">Installation</a>
+                <a href="#quick-start" class="sidebar-link">Quick Start</a>
+            </div>
+
+            <div class="sidebar-section">
+                <h4>Core Concepts</h4>
+                <a href="#coalescing" class="sidebar-link">Coalescing</a>
+                <a href="#batching" class="sidebar-link">Batching</a>
+                <a href="#caching" class="sidebar-link">Caching</a>
+            </div>
+
+            <div class="sidebar-section">
+                <h4>API Reference</h4>
+                <a href="#constructor" class="sidebar-link">Constructor</a>
+                <a href="#get" class="sidebar-link">get()</a>
+                <a href="#getMany" class="sidebar-link">getMany()</a>
+                <a href="#set" class="sidebar-link">set()</a>
+                <a href="#clear" class="sidebar-link">clear()</a>
+                <a href="#size" class="sidebar-link">size()</a>
+            </div>
+
+            <div class="sidebar-section">
+                <h4>Configuration</h4>
+                <a href="#config-options" class="sidebar-link">Options</a>
+                <a href="#cache-config" class="sidebar-link">Cache Config</a>
+            </div>
+
+            <div class="sidebar-section">
+                <h4>Advanced</h4>
+                <a href="#stores" class="sidebar-link">Cache Stores</a>
+                <a href="#resolvers" class="sidebar-link">Resolvers</a>
+                <a href="#events" class="sidebar-link">Events</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="docs-content">
+            <!-- Introduction -->
+            <section id="introduction" class="doc-section">
+                <h1>HA-store API Documentation</h1>
+                <p class="lead">A high-availability data-fetching wrapper with smart coalescing, batching, and TLRU caching for optimal performance.</p>
+                <div class="info-box">
+                    <span class="info-icon">💡</span>
+                    <div>
+                        <strong>Key Benefits</strong>
+                        <p>Reduces database load through intelligent request coalescing and batching. TLRU caching optimized for Zipfian distribution patterns. Battle-tested and lightweight.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Installation -->
+            <section id="installation" class="doc-section">
+                <h2>Installation</h2>
+                <pre><code>npm install ha-store</code></pre>
+            </section>
+
+            <!-- Quick Start -->
+            <section id="quick-start" class="doc-section">
+                <h2>Quick Start</h2>
+                <p>Basic setup with a resolver function:</p>
+                <pre><code>import haStore from 'ha-store';
+
+const store = haStore({
+  resolver: async (ids, params) => {
+    // Fetch your data
+    const results = await db.users.find({
+      _id: { $in: ids }
+    });
+    return results;
+  },
+  tick: 50,
+  max: 100,
+  cache: {
+    ttl: 60000,
+    size: 1000
+  }
+});
+
+// Fetch single item
+const user = await store.get('user-123');
+
+// Fetch multiple items
+const users = await store.getMany(['user-1', 'user-2', 'user-3']);</code></pre>
+            </section>
+
+            <!-- Coalescing -->
+            <section id="coalescing" class="doc-section">
+                <h2>Coalescing</h2>
+                <p>Detects duplicate requests and reuses the original Promise handle instead of making redundant calls.</p>
+                <div class="info-box">
+                    <span class="info-icon">⚡</span>
+                    <div>
+                        <strong>How it works</strong>
+                        <p>When multiple identical requests are made simultaneously, HA-store recognizes duplicates and returns the same Promise to all callers, reducing load on your data source.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Batching -->
+            <section id="batching" class="doc-section">
+                <h2>Batching</h2>
+                <p>Buffers incoming requests for a set duration and bundles them together before sending to the data source.</p>
+                <h3>Configuration</h3>
+                <ul>
+                    <li><strong>tick:</strong> Time interval between batches (in milliseconds)</li>
+                    <li><strong>max:</strong> Maximum number of records per batch</li>
+                </ul>
+                <pre><code>const store = haStore({
+  resolver: myResolver,
+  tick: 50,    // Wait 50ms
+  max: 100     // Up to 100 items per batch
+});</code></pre>
+            </section>
+
+            <!-- Caching -->
+            <section id="caching" class="doc-section">
+                <h2>Caching</h2>
+                <p>Uses Time-aware Least Recently Used (TLRU) caching strategy, optimized for data following Zipfian distribution patterns.</p>
+                <div class="info-box">
+                    <span class="info-icon">🚀</span>
+                    <div>
+                        <strong>Smart Caching</strong>
+                        <p>Only frequently-accessed "hot" data benefits from caching. HA-store automatically manages cache based on access patterns, keeping your most-requested items instantly available.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Constructor -->
+            <section id="constructor" class="doc-section">
+                <h2>Constructor</h2>
+                <div class="method-signature">haStore(config: Config): HaStore</div>
+                <p>Creates a new HA-store instance with the provided configuration.</p>
+
+                <h3>Parameters</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>config</code></td>
+                            <td>Object</td>
+                            <td>Configuration object</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example</h3>
+                <pre><code>const store = haStore({
+  resolver: async (ids, params) => {
+    return await database.findByIds(ids, params);
+  },
+  tick: 50,
+  max: 100
+});</code></pre>
+            </section>
+
+            <!-- get() -->
+            <section id="get" class="doc-section">
+                <h2>get()</h2>
+                <div class="method-signature">store.get(id: string, params?: object, agg?: function): Promise</div>
+                <p>Fetches a single item by ID with automatic coalescing, batching, and caching.</p>
+
+                <h3>Parameters</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td>string</td>
+                            <td>-</td>
+                            <td>Unique identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>params</code></td>
+                            <td>object</td>
+                            <td>{}</td>
+                            <td>Context parameters passed to resolver</td>
+                        </tr>
+                        <tr>
+                            <td><code>agg</code></td>
+                            <td>function</td>
+                            <td>null</td>
+                            <td>Aggregation function</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example</h3>
+                <pre><code>const user = await store.get('user-123');
+const user = await store.get('user-123', { includeProfile: true });</code></pre>
+            </section>
+
+            <!-- getMany() -->
+            <section id="getMany" class="doc-section">
+                <h2>getMany()</h2>
+                <div class="method-signature">store.getMany(ids: string[], params?: object, agg?: function): Promise</div>
+                <p>Fetches multiple items by their IDs. Returns an object mapping each ID to its result.</p>
+
+                <h3>Parameters</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ids</code></td>
+                            <td>string[]</td>
+                            <td>-</td>
+                            <td>Array of unique identifiers</td>
+                        </tr>
+                        <tr>
+                            <td><code>params</code></td>
+                            <td>object</td>
+                            <td>{}</td>
+                            <td>Context parameters</td>
+                        </tr>
+                        <tr>
+                            <td><code>agg</code></td>
+                            <td>function</td>
+                            <td>null</td>
+                            <td>Aggregation function</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example</h3>
+                <pre><code>const users = await store.getMany(['user-1', 'user-2', 'user-3']);
+
+// Result format (uses Promise.allSettled):
+// {
+//   'user-1': { status: 'fulfilled', value: {...} },
+//   'user-2': { status: 'fulfilled', value: {...} },
+//   'user-3': { status: 'rejected', reason: Error(...) }
+// }</code></pre>
+            </section>
+
+            <!-- set() -->
+            <section id="set" class="doc-section">
+                <h2>set()</h2>
+                <div class="method-signature">store.set(items: any[], ids: string[], params?: object): Promise</div>
+                <p>Manually sets items in the cache. Useful for cache warming or updating cached values.</p>
+
+                <h3>Parameters</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>items</code></td>
+                            <td>any[]</td>
+                            <td>Array of items to cache</td>
+                        </tr>
+                        <tr>
+                            <td><code>ids</code></td>
+                            <td>string[]</td>
+                            <td>Array of IDs (required)</td>
+                        </tr>
+                        <tr>
+                            <td><code>params</code></td>
+                            <td>object</td>
+                            <td>Context parameters</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example</h3>
+                <pre><code>await store.set(
+  [{ name: 'Alice' }, { name: 'Bob' }],
+  ['user-1', 'user-2']
+);</code></pre>
+            </section>
+
+            <!-- clear() -->
+            <section id="clear" class="doc-section">
+                <h2>clear()</h2>
+                <div class="method-signature">store.clear(ids: string | string[], params?: object): any</div>
+                <p>Clears items from the cache.</p>
+
+                <h3>Example</h3>
+                <pre><code>// Clear single item
+await store.clear('user-123');
+
+// Clear multiple items
+await store.clear(['user-1', 'user-2', 'user-3']);</code></pre>
+            </section>
+
+            <!-- size() -->
+            <section id="size" class="doc-section">
+                <h2>size()</h2>
+                <div class="method-signature">store.size(): Promise&lt;object&gt;</div>
+                <p>Returns statistics about the current store state.</p>
+
+                <h3>Example</h3>
+                <pre><code>const stats = await store.size();
+console.log(stats);
+// {
+//   records: 150,
+//   queue: { ... }
+// }</code></pre>
+            </section>
+
+            <!-- Configuration -->
+            <section id="config-options" class="doc-section">
+                <h2>Configuration Options</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Option</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>resolver</code></td>
+                            <td>function</td>
+                            <td>-</td>
+                            <td>Data fetching function</td>
+                        </tr>
+                        <tr>
+                            <td><code>tick</code></td>
+                            <td>number</td>
+                            <td>50</td>
+                            <td>Batching interval (ms)</td>
+                        </tr>
+                        <tr>
+                            <td><code>max</code></td>
+                            <td>number</td>
+                            <td>100</td>
+                            <td>Max items per batch</td>
+                        </tr>
+                        <tr>
+                            <td><code>delimiter</code></td>
+                            <td>string</td>
+                            <td>'|'</td>
+                            <td>Key delimiter</td>
+                        </tr>
+                        <tr>
+                            <td><code>cache</code></td>
+                            <td>object</td>
+                            <td>-</td>
+                            <td>Cache configuration</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Cache Config -->
+            <section id="cache-config" class="doc-section">
+                <h2>Cache Configuration</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Option</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ttl</code></td>
+                            <td>number</td>
+                            <td>Time-to-live (ms)</td>
+                        </tr>
+                        <tr>
+                            <td><code>size</code></td>
+                            <td>number</td>
+                            <td>Maximum cached items</td>
+                        </tr>
+                        <tr>
+                            <td><code>store</code></td>
+                            <td>string | object</td>
+                            <td>'inMemory' or 'redis'</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example</h3>
+                <pre><code>const store = haStore({
+  resolver: myResolver,
+  cache: {
+    ttl: 60000,
+    size: 1000,
+    store: 'inMemory'
+  }
+});</code></pre>
+            </section>
+
+            <!-- Cache Stores -->
+            <section id="stores" class="doc-section">
+                <h2>Cache Stores</h2>
+
+                <h3>In-Memory Store</h3>
+                <p>Default cache store that keeps data in application memory.</p>
+                <pre><code>import haStore, { caches } from 'ha-store';
+
+const store = haStore({
+  resolver: myResolver,
+  cache: {
+    store: caches.inMemory
+  }
+});</code></pre>
+
+                <h3>Redis Store</h3>
+                <p>Distributed cache store using Redis.</p>
+                <pre><code>import haStore, { caches } from 'ha-store';
+
+const store = haStore({
+  resolver: myResolver,
+  cache: {
+    store: caches.redis,
+    redis: {
+      host: 'localhost',
+      port: 6379
+    }
+  }
+});</code></pre>
+            </section>
+
+            <!-- Resolvers -->
+            <section id="resolvers" class="doc-section">
+                <h2>Resolvers</h2>
+
+                <h3>PostgreSQL Resolver</h3>
+                <pre><code>import haStore, { resolvers } from 'ha-store';
+
+const store = haStore({
+  resolver: resolvers.postgres({
+    connection: {
+      host: 'localhost',
+      database: 'mydb'
+    },
+    table: 'users',
+    idColumn: 'id'
+  })
+});</code></pre>
+
+                <h3>Custom Resolver</h3>
+                <pre><code>const customResolver = async (ids, params, agg) => {
+  const results = await fetchFromAPI(ids, params);
+  return results;
+};
+
+const store = haStore({
+  resolver: customResolver
+});</code></pre>
+            </section>
+
+            <!-- Events -->
+            <section id="events" class="doc-section">
+                <h2>Events</h2>
+                <p>The store instance extends EventEmitter and emits events for monitoring:</p>
+                <pre><code>store.on('cache-hit', (data) => {
+  console.log('Cache hit:', data);
+});
+
+store.on('cache-miss', (data) => {
+  console.log('Cache miss:', data);
+});
+
+store.on('batch-sent', (data) => {
+  console.log('Batch sent:', data);
+});
+
+store.on('error', (error) => {
+  console.error('Error:', error);
+});</code></pre>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

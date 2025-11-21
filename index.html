@@ -1,74 +1,998 @@
 <!DOCTYPE html>
-<html lang="eng">
-
+<html lang="en">
 <head>
-	<title>HA-store - Efficient data fetching</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css" />
-	<style>
-		html,
-		body {
-			height: 100%;
-		}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-		body {
-			display: flex;
-			align-items: center;
-		}
+    <meta name="description" content="HA-store, smart data loading">
+	<meta name="keywords" content="HA-store, n+1, thundering herd, loader, batching, caching, coalescing">
+	<meta name="author" content="fed135">
+	<meta name="robots" content="index, follow">
+	<link rel="canonical" href="https://ha-store.js.org">
 
-		a.github-link {
-			padding-left: 2.5rem;
-		}
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://ha-store.js.org">
+	<meta property="og:title" content="HA-store - Smart data loading">
+	<meta property="og:description" content="Improve the performance of busy APIs with batching, caching and coalescing of requests.">
+	<meta property="og:image" content="https://ha-store.js.org/images/logo.png">
 
-		a.github-link>.github-icon {
-			position: absolute;
-			left: 0.4em;
-			top: 0.65em;
-			width: 2em;
-		}
+    <title>HA-store - Smart Data Fetching</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-		.noselect {
-			user-select: none;
-		}
-	</style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 2rem;
+            display: flex;
+            gap: 2rem;
+            z-index: 1000;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.7;
+        }
+
+        .nav-link svg {
+            display: block;
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .install-box {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 3rem;
+            border-radius: 50px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        .section-content {
+            max-width: 1400px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .text-content h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+        }
+
+        .text-content p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            opacity: 0.85;
+        }
+
+        /* Coalescing Animation */
+        .coalescing-demo {
+            position: relative;
+            height: 400px;
+        }
+
+        .client-group {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .client {
+            width: 60px;
+            height: 60px;
+            background: #667eea;
+            border-radius: 12px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .client::before {
+            content: '🖥️';
+            position: absolute;
+            font-size: 30px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .server {
+            width: 80px;
+            height: 80px;
+            background: #f093fb;
+            border-radius: 16px;
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 8px 30px rgba(240, 147, 251, 0.5);
+        }
+
+        .server::before {
+            content: '🗄️';
+            position: absolute;
+            font-size: 40px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .fork-container {
+            position: absolute;
+            left: 80px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: calc(100% - 180px);
+            height: 200px;
+        }
+
+        .fork-line {
+            position: absolute;
+            background: linear-gradient(90deg, #667eea, #f093fb);
+            animation: pulseFork 2s ease-in-out infinite;
+        }
+
+        /* Top line: horizontal then angle down */
+        .fork-line.top-h {
+            left: 0;
+            top: 20px;
+            width: 50%;
+            height: 3px;
+        }
+
+        .fork-line.top-v {
+            left: 50%;
+            top: 20px;
+            width: 3px;
+            height: 80px;
+        }
+
+        /* Middle line: straight through */
+        .fork-line.middle {
+            left: 0;
+            top: 100px;
+            width: 100%;
+            height: 5px;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Bottom line: horizontal then angle up */
+        .fork-line.bottom-h {
+            left: 0;
+            top: 180px;
+            width: 50%;
+            height: 3px;
+        }
+
+        .fork-line.bottom-v {
+            left: 50%;
+            top: 100px;
+            width: 3px;
+            height: 80px;
+        }
+
+        .merge-point {
+            position: absolute;
+            left: calc(50% - 20px);
+            top: 80px;
+            width: 40px;
+            height: 40px;
+            animation: pulseMerge 2s ease-in-out infinite;
+        }
+
+        .merge-point img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .request-label {
+            position: absolute;
+            font-size: 0.75rem;
+            font-family: 'Courier New', monospace;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
+            animation: pulseFork 2s ease-in-out infinite;
+        }
+
+        .request-label.top {
+            left: 5%;
+            top: 5px;
+        }
+
+        .request-label.middle {
+            left: 5%;
+            top: 85px;
+        }
+
+        .request-label.bottom {
+            left: 5%;
+            top: 165px;
+        }
+
+        @keyframes pulseFork {
+            0%, 100% {
+                opacity: 0.6;
+                filter: brightness(1);
+            }
+            50% {
+                opacity: 1;
+                filter: brightness(1.3);
+            }
+        }
+
+        @keyframes pulseMerge {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.6));
+            }
+            50% {
+                transform: scale(1.15);
+                filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.9));
+            }
+        }
+
+        /* Batching Animation */
+        .batching-demo {
+            position: relative;
+            height: 400px;
+        }
+
+        .request-queue {
+            position: absolute;
+            left: 100px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            height: 250px;
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .queue-label {
+            position: absolute;
+            top: -70px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .queue-logo {
+            width: 30px;
+            height: 30px;
+            margin: 0 auto 0.5rem;
+        }
+
+        .queue-text {
+            font-size: 0.9rem;
+            opacity: 0.6;
+            white-space: nowrap;
+        }
+
+        .mini-request {
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            opacity: 0;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+            position: relative;
+        }
+
+        .mini-request:nth-child(2) { animation: fillQueue1 5s infinite; }
+        .mini-request:nth-child(3) { animation: fillQueue2 5s infinite; }
+        .mini-request:nth-child(4) { animation: fillQueue3 5s infinite; }
+        .mini-request:nth-child(5) { animation: fillQueue4 5s infinite; }
+
+        @keyframes fillQueue1 {
+            0% { opacity: 0; left: -150px; }
+            8% { opacity: 1; left: 0; }
+            35% { opacity: 1; left: 0; }
+            45% { opacity: 1; left: 250px; }
+            50%, 100% { opacity: 0; left: 250px; }
+        }
+
+        @keyframes fillQueue2 {
+            0%, 6% { opacity: 0; left: -150px; }
+            14% { opacity: 1; left: 0; }
+            35% { opacity: 1; left: 0; }
+            45% { opacity: 1; left: 250px; }
+            50%, 100% { opacity: 0; left: 250px; }
+        }
+
+        @keyframes fillQueue3 {
+            0%, 12% { opacity: 0; left: -150px; }
+            20% { opacity: 1; left: 0; }
+            35% { opacity: 1; left: 0; }
+            45% { opacity: 1; left: 250px; }
+            50%, 100% { opacity: 0; left: 250px; }
+        }
+
+        @keyframes fillQueue4 {
+            0%, 18% { opacity: 0; left: -150px; }
+            26% { opacity: 1; left: 0; }
+            35% { opacity: 1; left: 0; }
+            45% { opacity: 1; left: 250px; }
+            50%, 100% { opacity: 0; left: 250px; }
+        }
+
+
+        /* Caching Animation */
+        .caching-demo {
+            position: relative;
+            height: 400px;
+        }
+
+        .cache-node {
+            position: absolute;
+            left: 50%;
+            top: 30%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cache-node img {
+            width: 60px;
+            height: 60px;
+            filter: drop-shadow(0 4px 20px rgba(102, 126, 234, 0.4));
+        }
+
+        .cache-node-label {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            text-transform: uppercase;
+        }
+
+        .db-node {
+            position: absolute;
+            right: 5%;
+            top: 35%;
+            transform: translateY(-50%);
+            width: 80px;
+            height: 80px;
+            background: #f093fb;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(240, 147, 251, 0.5);
+        }
+
+        .db-node::before {
+            content: '🗄️';
+            position: absolute;
+            font-size: 40px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .db-node-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            opacity: 0.6;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .cache-request {
+            position: absolute;
+            left: 80px;
+            top: calc(50% + 40px);
+            height: 4px;
+            opacity: 0;
+        }
+
+        .cache-request.to-cache {
+            background: linear-gradient(90deg, #46d77a, #46d77a88);
+            animation: hitCache 5s infinite;
+        }
+
+        .cache-request.to-db {
+            background: linear-gradient(90deg, #f5576c, #f5576c88);
+            animation: missCache 5s infinite;
+        }
+
+        .cache-label {
+            position: absolute;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            top: calc(50% + 20px);
+            opacity: 0;
+        }
+
+        .cache-label.hit {
+            left: 15%;
+            color: #46d77a;
+            animation: showHit 5s infinite;
+        }
+
+        .cache-label.miss {
+            left: 15%;
+            color: #f5576c;
+            animation: showMiss 5s infinite;
+        }
+
+        @keyframes hitCache {
+            0%, 5% {
+                width: 0;
+                opacity: 0;
+            }
+            10% {
+                width: 0;
+                opacity: 1;
+            }
+            15% {
+                width: calc(50% - 100px);
+                opacity: 1;
+            }
+            30% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes missCache {
+            0%, 45% {
+                width: 0;
+                opacity: 0;
+            }
+            50% {
+                width: 0;
+                opacity: 1;
+            }
+            70% {
+                width: calc(95% - 100px);
+                opacity: 1;
+            }
+            75% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes showHit {
+            0%, 8% { opacity: 0; }
+            12%, 32% { opacity: 1; }
+            37%, 100% { opacity: 0; }
+        }
+
+        @keyframes showMiss {
+            0%, 48% { opacity: 0; }
+            52%, 72% { opacity: 1; }
+            77%, 100% { opacity: 0; }
+        }
+
+        /* Background colors for sections */
+        .section:nth-child(2) {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .section:nth-child(3) {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+
+        .section:nth-child(4) {
+            background: linear-gradient(135deg, #2d1b69 0%, #1a1a2e 100%);
+        }
+
+        /* Footer section */
+        .footer-section {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .footer-section h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            font-weight: 800;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid white;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        @media (max-width: 968px) {
+            /* Ensure top nav stays fixed */
+            .top-nav {
+                position: absolute;
+                top: 0;
+                right: 0;
+                padding: 1rem;
+                backdrop-filter: blur(10px);
+            }
+
+            .nav-link {
+                font-size: 0.9rem;
+            }
+
+            .nav-link svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .section-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .text-content h2 {
+                font-size: 2rem;
+            }
+
+            .text-content p {
+                font-size: 1rem;
+            }
+
+            /* Mobile: Simplify animations */
+            .coalescing-demo,
+            .batching-demo,
+            .caching-demo {
+                height: 250px;
+                transform: scale(0.8);
+                margin: 2rem 0;
+            }
+
+            /* Coalescing - scale down */
+            .client-group {
+                left: -10px;
+            }
+
+            .client {
+                width: 45px;
+                height: 45px;
+                margin: 15px 0;
+            }
+
+            .client::before {
+                font-size: 24px;
+            }
+
+            .server {
+                width: 60px;
+                height: 60px;
+                right: -10px;
+            }
+
+            .server::before {
+                font-size: 30px;
+            }
+
+            .fork-container {
+                left: 60px;
+                width: calc(100% - 130px);
+                height: 150px;
+            }
+
+            .fork-line.top-h,
+            .fork-line.bottom-h {
+                width: 45%;
+            }
+
+            .fork-line.top-v,
+            .fork-line.bottom-v {
+                left: 45%;
+                height: 60px;
+            }
+
+            .fork-line.top-v {
+                top: 15px;
+            }
+
+            .fork-line.bottom-v {
+                top: 75px;
+            }
+
+            .fork-line.top-h {
+                top: 15px;
+            }
+
+            .fork-line.middle {
+                top: 75px;
+            }
+
+            .fork-line.bottom-h {
+                top: 135px;
+            }
+
+            .merge-point {
+                left: calc(45% - 15px);
+                top: 60px;
+                width: 30px;
+                height: 30px;
+            }
+
+            .request-label {
+                font-size: 0.6rem;
+            }
+
+            .request-label.top {
+                top: 2px;
+            }
+
+            .request-label.middle {
+                top: 62px;
+            }
+
+            .request-label.bottom {
+                top: 122px;
+            }
+
+            /* Batching - scale down */
+            .batching-demo .client {
+                left: -10px !important;
+                width: 45px;
+                height: 45px;
+            }
+
+            .batching-demo .client::before {
+                font-size: 24px;
+            }
+
+            .batching-demo .server {
+                right: 10px !important;
+                width: 60px;
+                height: 60px;
+            }
+
+            .batching-demo .server::before {
+                font-size: 30px;
+            }
+
+            .request-queue {
+                left: 70px;
+                width: 140px;
+                height: 180px;
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .queue-label {
+                top: -55px;
+            }
+
+            .queue-logo {
+                width: 24px;
+                height: 24px;
+            }
+
+            .queue-text {
+                font-size: 0.75rem;
+            }
+
+            .mini-request {
+                height: 32px;
+            }
+
+            @keyframes fillQueue1 {
+                0% { opacity: 0; left: -100px; }
+                8% { opacity: 1; left: 0; }
+                35% { opacity: 1; left: 0; }
+                45% { opacity: 1; left: 180px; }
+                50%, 100% { opacity: 0; left: 180px; }
+            }
+
+            @keyframes fillQueue2 {
+                0%, 6% { opacity: 0; left: -100px; }
+                14% { opacity: 1; left: 0; }
+                35% { opacity: 1; left: 0; }
+                45% { opacity: 1; left: 180px; }
+                50%, 100% { opacity: 0; left: 180px; }
+            }
+
+            @keyframes fillQueue3 {
+                0%, 12% { opacity: 0; left: -100px; }
+                20% { opacity: 1; left: 0; }
+                35% { opacity: 1; left: 0; }
+                45% { opacity: 1; left: 180px; }
+                50%, 100% { opacity: 0; left: 180px; }
+            }
+
+            @keyframes fillQueue4 {
+                0%, 18% { opacity: 0; left: -100px; }
+                26% { opacity: 1; left: 0; }
+                35% { opacity: 1; left: 0; }
+                45% { opacity: 1; left: 180px; }
+                50%, 100% { opacity: 0; left: 180px; }
+            }
+
+            /* Caching - scale down */
+            .caching-demo .client {
+                left: -10px !important;
+                width: 45px;
+                height: 45px;
+            }
+
+            .caching-demo .client::before {
+                font-size: 24px;
+            }
+
+            .cache-node {
+                left: 45%;
+                top: 28%;
+            }
+
+            .cache-node img {
+                width: 45px;
+                height: 45px;
+            }
+
+            .cache-node-label {
+                font-size: 0.65rem;
+            }
+
+            .db-node {
+                right: 2%;
+                width: 60px;
+                height: 60px;
+            }
+
+            .db-node::before {
+                font-size: 30px;
+            }
+
+            .db-node-label {
+                font-size: 0.65rem;
+                bottom: -20px;
+            }
+
+            .cache-request {
+                left: 50px;
+            }
+
+            .cache-label {
+                font-size: 0.65rem;
+                left: 10%;
+            }
+
+            @keyframes hitCache {
+                0%, 5% { width: 0; opacity: 0; }
+                10% { width: 0; opacity: 1; }
+                20% { width: calc(50% - 50px); opacity: 1; }
+                30% { opacity: 0; }
+                100% { opacity: 0; }
+            }
+
+            @keyframes missCache {
+                0%, 45% { width: 0; opacity: 0; }
+                50% { width: 0; opacity: 1; }
+                70% { width: calc(95% - 50px); opacity: 1; }
+                75% { opacity: 0; }
+                100% { opacity: 0; }
+            }
+        }
+    </style>
 </head>
+<body>
+    <nav class="top-nav">
+        <a href="/docs.html" class="nav-link">Docs</a>
+        <a href="https://github.com/fed135/ha-store" class="nav-link" title="GitHub">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+        </a>
+    </nav>
 
-<body class="mh2-m">
-	<main class="sans-serif w-100 mw6 center pv2-m">
-		<div class="tc bb bw1 b--light-gray">
-			<img src="/images/ha-store-logo.png" alt="ha-store logo" />
-			<h1 class="fw3 mt2 mb3">HA-store</h1>
-			<h2 class="fw3 mt0">Efficient data fetching</h2>
-			<div class="mt3 mb3">
-				<div class="bg-black-80 white w-100 pv3 br2">
-					<code class="ph2"><span class="noselect">$&nbsp;</span>npm install ha-store</code>
-				</div>
-			</div>
-		</div>
-		<p class="mb3 f5 lh-copy measure tl">
-			HA-store is a generic wrapper for your data queries, it features:
-			<br/>
-			<ul>
+    <div class="hero">
+        <h1>HA-store</h1>
+        <p>Smart data fetching that just works</p>
+        <div class="install-box">npm install ha-store</div>
+    </div>
 
-				<li>Smart TLRU cache for 'hot' information</li>
-				<li>Request coalescing and batching (solves the Thundering Herd problem)</li>
-				<li>Insightful stats and events</li>
-				<li>Lightweight, configurable, battle-tested</b></li>
-			</ul>
-		</p>
-		<div class="tc">
-			<a class="f6 link dim br2 ba pr3 pv3 dib mid-gray relative github-link" href="https://github.com/fed135/ha-store">
-				<svg aria-labelledby="simpleicons-github-dark-icon" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="github-icon">
-					<title id="simpleicons-github-icon" lang="en">
-						GitHub Dark icon
-					</title>
-					<path fill="rgba(0,0,0,.8)" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-					/>
-				</svg>Github
-			</a>
-		</div>
-	</main>
+    <div class="section">
+        <div class="section-content">
+            <div class="text-content">
+                <h2>Coalescing</h2>
+                <p>
+                    Multiple identical requests? We send just one. When your app asks for the same data
+                    simultaneously, we're smart enough to combine them. Less noise, less load,
+                    same results for everyone.
+                </p>
+            </div>
+            <div class="coalescing-demo">
+                <div class="client-group">
+                    <div class="client"></div>
+                    <div class="client"></div>
+                    <div class="client"></div>
+                </div>
+                <div class="fork-container">
+                    <div class="fork-line top-h"></div>
+                    <div class="fork-line top-v"></div>
+                    <div class="fork-line middle"></div>
+                    <div class="fork-line bottom-h"></div>
+                    <div class="fork-line bottom-v"></div>
+                    <div class="merge-point">
+                        <img src="/images/logo.png" alt="HA-store">
+                    </div>
+                    <div class="request-label top">GET /item/123</div>
+                    <div class="request-label middle">GET /item/123</div>
+                    <div class="request-label bottom">GET /item/123</div>
+                </div>
+                <div class="server"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-content">
+            <div class="batching-demo">
+                <div class="client" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%);"></div>
+                <div class="request-queue">
+                    <div class="queue-label">
+                        <img src="/images/logo.png" alt="HA-store" class="queue-logo">
+                        <div class="queue-text">Buffering...</div>
+                    </div>
+                    <div class="mini-request"></div>
+                    <div class="mini-request"></div>
+                    <div class="mini-request"></div>
+                    <div class="mini-request"></div>
+                </div>
+                <div class="server" style="left: auto; right: 20px;"></div>
+            </div>
+            <div class="text-content">
+                <h2>Batching</h2>
+                <p>
+                    Why make 100 trips when you can make one? We collect requests over a tiny window
+                    and bundle them together. Your database gets one efficient query instead of
+                    a stampede. Configure the timing to match your needs.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-content">
+            <div class="text-content">
+                <h2>Caching</h2>
+                <p>
+                    Hot data stays fast. Using time-aware LRU, we keep your most-requested data
+                    instantly available. Cache hits are lightning quick. Cache misses? We fetch
+                    and learn. Works with in-memory or Redis.
+                </p>
+            </div>
+            <div class="caching-demo">
+                <div class="client" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%);"></div>
+                <div class="cache-node">
+                    <img src="/images/logo.png" alt="HA-store Cache">
+                    <div class="cache-node-label">Cache</div>
+                </div>
+                <div class="db-node">
+                    <div class="db-node-label">Database</div>
+                </div>
+                <div class="cache-request to-cache"></div>
+                <div class="cache-request to-db"></div>
+                <div class="cache-label hit">HIT - 2ms ⚡</div>
+                <div class="cache-label miss">MISS - 250ms</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-section">
+        <h2>Ready to optimize?</h2>
+        <p style="font-size: 1.2rem; opacity: 0.9; max-width: 600px;">
+            Drop HA-store into your stack and watch your data fetching get smarter.
+            Battle-tested, lightweight, configurable.
+        </p>
+        <div class="cta-buttons">
+            <a href="https://github.com/fed135/ha-store" class="btn btn-primary">View on GitHub</a>
+            <a href="/docs.html" class="btn btn-secondary">Read the Docs</a>
+        </div>
+        <p style="margin-top: 3rem; opacity: 0.6; font-size: 0.9rem;">
+            Apache 2.0 license - 2025 Frederic Charette
+        </p>
+    </div>
 </body>
-
 </html>
