@@ -36,7 +36,7 @@ const itemStore = HAStore({
   resolver: getItems,
   delimiter: ['language'],
   caches: [
-    stores.inMemory({
+    caches.inMemory({
       limit: 1000,  // Maximum number of cached items
       ttl: 60000,   // Time to live: 60 seconds
     }),

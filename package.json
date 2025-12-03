@@ -10,7 +10,7 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "jest ./tests/unit",
     "test:integration": "jest ./tests/integration",
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc && node scripts/bundle-dts.js",
     "clean": "rm -rf ./dist/*",
     "bench": "node ./tests/profiling/index.ts",
     "prepublishOnly": "npm run build"
@@ -34,8 +34,7 @@
     "tlru"
   ],
   "files": [
-    "dist",
-    "index.d.ts"
+    "dist"
   ],
   "husky": {
     "hooks": {
@@ -95,7 +94,7 @@
     "tim mulqueen <tim.mulqueen@gmail.com>",
     "damon perron-laurin <damonperronlaurin@gmail.com>"
   ],
-  "typings": "./index.d.ts",
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "lru-cache": "^11.2.0"
   }

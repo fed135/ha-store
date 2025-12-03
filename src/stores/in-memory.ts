@@ -3,7 +3,7 @@ import { LRUCache } from 'lru-cache';
 const DEFAULT_LIMIT = 5000;
 const DEFAULT_TTL = 1000 * 60 * 60 * 2; // 2 hours
 
-export default function inMemory(config = {}) {
+export default function inMemory(config: any = {}) {
   const store = new LRUCache({
     max: config.limit || DEFAULT_LIMIT,
     ttl: config.ttl || DEFAULT_TTL,

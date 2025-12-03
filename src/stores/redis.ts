@@ -2,7 +2,7 @@ import { createClient } from 'redis';
 
 const DEFAULT_TTL = 0; // Disabled
 
-export default function RedisCache({ keyspace, host, path, port, connection, ttl } = {}) {
+export default function RedisCache({ keyspace, host, path, port, connection, ttl }: any = {}) {
   const instance = connection || createClient({ socket: { host, path, port } });
   instance.connect();
 

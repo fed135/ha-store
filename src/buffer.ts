@@ -12,6 +12,15 @@ export default function queryBufferConstructor(config, emitter, caches) {
   let numCoalesced = 0;
 
   class RequestBuffer {
+    uid: string;
+    state: number;
+    ids: string[];
+    contextKey: string;
+    params: any;
+    contexts: any[];
+    handle: any;
+    timer: NodeJS.Timeout | null;
+
     constructor(key, params) {
       this.uid = Math.random().toString(36);
       this.state = BufferState.PENDING;
@@ -24,7 +33,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
     }
 
     tick() {
-      const sizeLimit = (config.batch && config.batch.limit) || 1;
+      const sizeLimit = config.batch ? (config.batch.limit || 1) : Infinity;
 
       if (this.ids.length >= sizeLimit) {
         this.run('limit');

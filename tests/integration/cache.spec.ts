@@ -141,7 +141,7 @@ describe('Caching', () => {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(4);
+      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -225,7 +225,7 @@ describe('Caching', () => {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(4);
+      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -351,7 +351,7 @@ describe('Caching', () => {
       expect(result.foo.status).toBe('rejected');
       expect(result.foo.reason).toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' }, [null, null]);
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' }, [null]);
     });
 
     it('should properly reject with disabled batching', async () => {

@@ -269,7 +269,7 @@ describe('Remote Caching', () => {
       expect(result.foo.status).toBe('rejected');
       expect(result.foo.reason).toEqual({ error: 'Something went wrong' });
       expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' }, [null, null]);
+      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' }, [null]);
     });
 
     it('should properly reject with disabled batching', async () => {

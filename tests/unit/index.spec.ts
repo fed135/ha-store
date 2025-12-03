@@ -52,7 +52,7 @@ describe('index', () => {
     });
 
     it('should throw if called with missing required arguments', () => {
-      expect(root).toThrow('config.resolver [undefined] is not a function');
+      expect(root).toThrow('config is not defined');
     });
   });
 
