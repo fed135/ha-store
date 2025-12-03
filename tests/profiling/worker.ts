@@ -2,8 +2,8 @@
  * Test app worker - allows us to saturate the request generator without impacting the app
  */
 
-import settings from './settings';
-import HA from '../../src/index.ts';
+import settings from './settings.ts';
+import HA from '../../dist/index.js';
 import crypto from 'node:crypto';
 
 /* Local variables ----------------------------------------------------------- */

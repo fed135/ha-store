@@ -3,13 +3,16 @@
  * batching.
  */
 
-import settings from './settings';
+import settings from './settings.ts';
 import { fork } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import split2 from 'split2';
 
 // Setup
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = fork(path.resolve(__dirname, './worker.ts') /* { execArgv: ['--inspect=10245']} */);
 const stream = fs.createReadStream(path.resolve(settings.test.sampleFile), 'utf-8').pipe(split2());
 
