@@ -12,7 +12,7 @@
     "test:integration": "jest ./tests/integration",
     "build": "npm run clean && tsc && node scripts/bundle-dts.js",
     "clean": "rm -rf ./dist/*",
-    "bench": "node ./tests/profiling/index.ts",
+    "bench": "node --experimental-strip-types --experimental-transform-types ./tests/profiling/index.ts",
     "prepublishOnly": "npm run build"
   },
   "engines": {
