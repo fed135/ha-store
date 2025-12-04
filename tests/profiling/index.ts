@@ -36,7 +36,6 @@ app.on('message', async (suite) => {
       process.exit(1);
     }
   }
-  // process.exit(0);
 });
 
 stream.on('data', (chunk) => {
