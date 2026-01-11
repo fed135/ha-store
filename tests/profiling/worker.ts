@@ -2,13 +2,11 @@
  * Test app worker - allows us to saturate the request generator without impacting the app
  */
 
-/* Requires ------------------------------------------------------------------*/
+import settings from './settings.ts';
+import HA from '../../dist/index.js';
+import crypto from 'node:crypto';
 
-const settings = require('./settings');
-const HA = require('../../src/index.js');
-const crypto = require('crypto');
-
-/* Local variables -----------------------------------------------------------*/
+/* Local variables ----------------------------------------------------------- */
 
 const suite = {
   completed: 0,
@@ -24,7 +22,7 @@ const suite = {
 
 const store = HA(settings.setup);
 
-/* Methods -------------------------------------------------------------------*/
+/* Methods ------------------------------------------------------------------- */
 
 function handleRequest(id, language) {
   let finished = false;
@@ -45,15 +43,21 @@ function handleRequest(id, language) {
       suite.sum += (Date.now() - before);
       suite.completed++;
     }, () => {})
-    .catch((err) => { console.log(err); process.exit(1)} );
+    .catch((err) => {
+      console.log(err);
+      process.exit(1);
+    });
 }
 
-store.on('query', batch => { suite.batches++; suite.avgBatchSize += batch.size; });
-store.on('cacheHit', evt => { suite.cacheHits+=evt; });
-store.on('localCacheHit', evt => { suite.localCacheHits+=evt; });
-store.on('coalescedHit', evt => { suite.coalescedHit+=evt; });
+store.on('query', (batch) => {
+  suite.batches++;
+  suite.avgBatchSize += batch.size;
+});
+store.on('cacheHit', evt => suite.cacheHits += evt);
+store.on('localCacheHit', evt => suite.localCacheHits += evt);
+store.on('coalescedHit', evt => suite.coalescedHit += evt);
 
-//End
+// End
 function complete() {
   // give a chance to in-flight requests to complete
   setTimeout(async () => {
@@ -66,6 +70,6 @@ function complete() {
   }, 1000);
 }
 
-/* Init ----------------------------------------------------------------------*/
+/* Init ---------------------------------------------------------------------- */
 
-process.on('message', (msg) => msg === 'finish' ? complete() : handleRequest(msg.id, msg.language));
+process.on('message', msg => msg === 'finish' ? complete() : handleRequest(msg.id, msg.language));

@@ -3,18 +3,17 @@
  * batching.
  */
 
-/* Requires ------------------------------------------------------------------*/
-
-const settings = require('./settings');
-const {fork} = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const split2 = require('split2');
-
-/* Init ----------------------------------------------------------------------*/
+import settings from './settings.ts';
+import { fork } from 'node:child_process';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import split2 from 'split2';
 
 // Setup
-const app = fork(path.resolve(__dirname, './worker.js') /*{ execArgv: ['--inspect=10245']}*/);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const app = fork(path.resolve(__dirname, './worker.ts') /* { execArgv: ['--inspect=10245']} */);
 const stream = fs.createReadStream(path.resolve(settings.test.sampleFile), 'utf-8').pipe(split2());
 
 app.on('message', async (suite) => {
@@ -37,9 +36,6 @@ app.on('message', async (suite) => {
       process.exit(1);
     }
   }
-  //process.exit(0);
-
-
 });
 
 stream.on('data', (chunk) => {

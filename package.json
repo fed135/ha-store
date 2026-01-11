@@ -1,18 +1,26 @@
 {
   "name": "ha-store",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Efficient data fetching",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "lint": "eslint .",
-    "lint:fix": "yarn lint --fix",
+    "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "mocha ./tests/unit --exit",
-    "test:integration": "mocha ./tests/integration --exit",
-    "bench": "node ./tests/profiling/index.js"
+    "test:unit": "jest ./tests/unit",
+    "test:integration": "jest ./tests/integration",
+    "build": "npm run clean && tsc && node scripts/bundle-dts.js",
+    "clean": "rm -rf ./dist/*",
+    "bench": "node --experimental-strip-types --experimental-transform-types ./tests/profiling/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=20.0.0"
+  },
+  "funding": {
+    "type": "Github",
+    "url": "https://github.com/sponsors/fed135"
   },
   "repository": {
     "type": "git",
@@ -25,26 +33,69 @@
     "congestion",
     "tlru"
   ],
+  "files": [
+    "dist"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint"
+    }
+  },
   "bugs": {
     "url": "https://github.com/fed135/ha-store/issues"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.spec.ts"
+    ],
+    "extensionsToTreatAsEsm": [".ts"],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": false,
+          "useESM": true
+        }
+      ],
+      "^.+\\.jsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": false,
+          "useESM": true
+        }
+      ]
+    }
   },
   "author": "frederic charette <fredericcharette@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@ha-store/redis": "^4.0.1",
-    "chai": "^4.3.0",
-    "eslint": "^8.20.0",
-    "mocha": "^10.0.0",
-    "sinon": "^14.0.0",
-    "split2": "^4.1.0"
+    "@stylistic/eslint-plugin": "^5.6.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.10.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-jest": "^29.1.0",
+    "husky": "^9.1.0",
+    "jest": "^30.2.0",
+    "split2": "^4.2.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.47.0"
+  },
+  "peerDependencies": {
+    "redis": "^5.10.0"
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>",
     "tim mulqueen <tim.mulqueen@gmail.com>",
     "damon perron-laurin <damonperronlaurin@gmail.com>"
   ],
-  "typings": "./src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "dependencies": {
-    "lru-cache": "^7.13.0"
+    "lru-cache": "^11.2.0"
   }
 }

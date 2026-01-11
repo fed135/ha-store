@@ -1,9 +1,12 @@
-const lru = require('lru-cache');
+import { LRUCache } from 'lru-cache';
 
-function localStore(config) {
-  const store = new lru({
-    max: config.limit,
-    ttl: config.ttl,
+const DEFAULT_LIMIT = 5000;
+const DEFAULT_TTL = 1000 * 60 * 60 * 2; // 2 hours
+
+export default function inMemory(config: any = {}) {
+  const store = new LRUCache({
+    max: config.limit || DEFAULT_LIMIT,
+    ttl: config.ttl || DEFAULT_TTL,
   });
 
   function get(key) {
@@ -44,5 +47,3 @@ function localStore(config) {
 
   return { get, getMulti, set, clear, size, local: true, _debug };
 }
-
-module.exports = localStore;

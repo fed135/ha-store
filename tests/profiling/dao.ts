@@ -10,24 +10,19 @@ function calculateResponseTime(numItems) {
   return Math.round(30 + numItems * 0.5);
 }
 
-function getAssets(ids, { language }) {
+export function getAssets(ids, { language }) {
   return new Promise((resolve) => {
     simulateNetwork();
     setTimeout(() => resolve(ids.reduce((acc, id) => {
       acc[id] = { id, language };
       return acc;
-    }, {})
+    }, {}),
     ), calculateResponseTime(ids.length));
   });
 }
 
-function getErroredRequest() {
+export function getErroredRequest() {
   return new Promise(() => {
     throw new Error('Something went wrong');
   });
 }
-
-module.exports = {
-  getAssets,
-  getErroredRequest,
-};

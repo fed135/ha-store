@@ -1,0 +1,18 @@
+{
+  "name": "ha-store-express-example",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Example Express server communicating with a db",
+  "main": "server.ts",
+  "private": true,
+  "scripts": {
+    "start": "node server.ts"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ha-store": "file:../../",
+    "pg": "^8.11.3"
+  }
+}

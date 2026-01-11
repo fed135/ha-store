@@ -1,0 +1,18 @@
+{
+  "name": "ha-store-redis-example",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Example Express server storing on redis",
+  "main": "server.ts",
+  "private": true,
+  "scripts": {
+    "start": "node server.ts"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ha-store": "file:../../",
+    "redis": "^5.10.0"
+  }
+}

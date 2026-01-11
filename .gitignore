@@ -54,3 +54,5 @@ yarn.lock
 
 # benchmark samples
 sample.txt
+
+dist

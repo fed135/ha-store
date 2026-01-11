@@ -1,4 +1,4 @@
-const {contextRecordKey, deferred} = require('./utils');
+import { contextRecordKey, deferred } from './utils.js';
 
 const BufferState = {
   PENDING: 0,
@@ -6,12 +6,21 @@ const BufferState = {
   COMPLETED: 2,
 };
 
-function queryBufferConstructor(config, emitter, caches) {
+export default function queryBufferConstructor(config, emitter, caches) {
   const buffers = [];
 
   let numCoalesced = 0;
 
   class RequestBuffer {
+    uid: string;
+    state: number;
+    ids: string[];
+    contextKey: string;
+    params: any;
+    contexts: any[];
+    handle: any;
+    timer: NodeJS.Timeout | null;
+
     constructor(key, params) {
       this.uid = Math.random().toString(36);
       this.state = BufferState.PENDING;
@@ -24,15 +33,15 @@ function queryBufferConstructor(config, emitter, caches) {
     }
 
     tick() {
-      const sizeLimit = (config.batch.enabled && config.batch.limit) || 1;
+      const sizeLimit = config.batch ? (config.batch.limit || 1) : Infinity;
 
       if (this.ids.length >= sizeLimit) {
         this.run('limit');
         return this;
       }
-      
+
       if (this.timer === null) {
-        this.timer = setTimeout(this.run.bind(this, 'timeout'), config.batch.enabled && config.batch.delay || 0);
+        this.timer = setTimeout(this.run.bind(this, 'timeout'), (config.batch && config.batch.delay) || 0);
       }
 
       return this;
@@ -52,12 +61,12 @@ function queryBufferConstructor(config, emitter, caches) {
       this.handle.reject(error);
       buffers.splice(buffers.indexOf(this), 1);
     }
-  
+
     handleQuerySuccess(entries) {
       this.state = BufferState.COMPLETED;
       emitter.emit('querySuccess', { key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params });
       this.handle.resolve(entries);
-      if (config.cache.enabled) caches.set(contextRecordKey(this.contextKey), this.ids, entries || {});
+      if (config.caches?.length) caches.set(contextRecordKey(this.contextKey), this.ids, entries || {});
       buffers.splice(buffers.indexOf(this), 1);
     }
   }
@@ -79,7 +88,7 @@ function queryBufferConstructor(config, emitter, caches) {
         }
 
         if (numCoalesced > 0) {
-          emitter.track('coalescedHit', numCoalesced);
+          emitter.emit('coalescedHit', numCoalesced);
           numCoalesced = 0;
         }
 
@@ -105,10 +114,8 @@ function queryBufferConstructor(config, emitter, caches) {
     return {
       pendingBuffers: buffers.filter(buffer => buffer.state === BufferState.PENDING).length,
       activeBuffers: buffers.filter(buffer => buffer.state === BufferState.RUNNING).length,
-    }
+    };
   }
 
   return { getHandles, size };
 }
-
-module.exports = queryBufferConstructor;
