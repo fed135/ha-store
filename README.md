@@ -147,5 +147,5 @@ Please do! This is an open source project - if you see something that you want, 
 
 ## License 
 
-[Apache 2.0](LICENSE) 2025 Frederic Charette
+[Apache 2.0](LICENSE) 2026 Frederic Charette
 

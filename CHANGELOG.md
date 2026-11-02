@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.0.0]
+## [5.1.0] - 
+
+### Changed
+- Migrated testing toolkit to node core libraries (less 3rd party dependencies)
+- Changed custom export script to `esbuild`, which bundles in a single file and removes the need for ".js" imports in `src`
+- Removed `split2` dependency
+- Bumped `lru-cache` version
+- Changed `redis` peer dependency to allow more versions
+- Minimum Node.js version now 22.0.0
+
+
+## [5.0.0] - 2026-01-11
 
 ### Added
 - Advanced TypeScript support with delimiter-based intellisense
