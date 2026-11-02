@@ -8,13 +8,13 @@ import { fork } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import split2 from 'split2';
+import { createInterface } from 'node:readline';
 
 // Setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = fork(path.resolve(__dirname, './worker.ts') /* { execArgv: ['--inspect=10245']} */);
-const stream = fs.createReadStream(path.resolve(settings.test.sampleFile), 'utf-8').pipe(split2());
+processFile(path.resolve(settings.test.sampleFile));
 
 app.on('message', async (suite) => {
   console.log(`
@@ -38,11 +38,17 @@ app.on('message', async (suite) => {
   }
 });
 
-stream.on('data', (chunk) => {
-  const [id, language] = chunk.split(' ');
-  app.send({ id, language });
-});
+async function processFile(filename: string) {
+  const fileStream = fs.createReadStream(filename, 'utf-8');
 
-stream.on('end', () => {
+  const rl = createInterface({
+    input: fileStream,
+    crlfDelay: Infinity, // Identifies all CR LF (\r\n) variants as a single line break
+  });
+
+  for await (const line of rl) {
+    const [id, language] = line.split(' ');
+    app.send({ id, language });
+  }
   app.send('finish');
-});
+}

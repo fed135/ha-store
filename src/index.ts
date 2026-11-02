@@ -1,13 +1,13 @@
 import { EventEmitter } from 'node:events';
-import queue from './buffer.js';
-import _caches from './caches.js';
-import { contextKey, recordKey, contextRecordKey } from './utils.js';
-import { hydrateConfig } from './options.js';
+import queue from './buffer.ts';
+import _caches from './caches.ts';
+import { contextKey, recordKey, contextRecordKey } from './utils.ts';
+import { hydrateConfig } from './options.ts';
 
-import inMemory from './stores/in-memory.js';
-import redis from './stores/redis.js';
+import inMemory from './stores/in-memory.ts';
+import redis from './stores/redis.ts';
 
-import pgResolver from './resolvers/postgres.js';
+import pgResolver from './resolvers/postgres.ts';
 
 // Type definitions
 export type DelimiterKeys<T extends readonly string[]> = T[number];

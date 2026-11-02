@@ -1,6 +1,6 @@
 {
   "name": "ha-store",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "Efficient data fetching",
   "main": "dist/index.js",
   "type": "module",
@@ -8,15 +8,14 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "jest ./tests/unit",
-    "test:integration": "jest ./tests/integration",
-    "build": "npm run clean && tsc && node scripts/bundle-dts.js",
-    "clean": "rm -rf ./dist/*",
-    "bench": "node --experimental-strip-types --experimental-transform-types ./tests/profiling/index.ts",
+    "test:unit": "node --test --test \"./tests/unit/**/*.spec.ts\"",
+    "test:integration": "node --test --test --trace-uncaught \"./tests/integration/**/*.spec.ts\"",
+    "build": "rm -rf ./dist/* && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.js --target=esnext",
+    "bench": "node ./tests/profiling/index.ts",
     "prepublishOnly": "npm run build"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "funding": {
     "type": "Github",
@@ -44,50 +43,18 @@
   "bugs": {
     "url": "https://github.com/fed135/ha-store/issues"
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.spec.ts"
-    ],
-    "extensionsToTreatAsEsm": [".ts"],
-    "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1"
-    },
-    "transform": {
-      "^.+\\.tsx?$": [
-        "ts-jest",
-        {
-          "diagnostics": false,
-          "useESM": true
-        }
-      ],
-      "^.+\\.jsx?$": [
-        "ts-jest",
-        {
-          "diagnostics": false,
-          "useESM": true
-        }
-      ]
-    }
-  },
   "author": "frederic charette <fredericcharette@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^5.6.0",
-    "@types/jest": "^30.0.0",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^24.10.0",
+    "esbuild":"^0.28.2",
     "eslint": "^9.39.0",
-    "eslint-plugin-jest": "^29.1.0",
     "husky": "^9.1.0",
-    "jest": "^30.2.0",
-    "split2": "^4.2.0",
-    "ts-jest": "^29.4.0",
-    "typescript": "^5.9.0",
-    "typescript-eslint": "^8.47.0"
+    "typescript-eslint": "^8.72.0"
   },
   "peerDependencies": {
-    "redis": "^5.10.0"
+    "redis": ">5.0.0"
   },
   "contributors": [
     "frederic charette <fredericcharette@gmail.com>",
@@ -96,6 +63,6 @@
   ],
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "lru-cache": "^11.2.0"
+    "lru-cache": "^11.5.0"
   }
 }
