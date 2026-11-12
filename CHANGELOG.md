@@ -6,13 +6,18 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [5.1.0] - 
 
+### Added
+- Added SQLite adapter
+
 ### Changed
 - Migrated testing toolkit to node core libraries (less 3rd party dependencies)
 - Changed custom export script to `esbuild`, which bundles in a single file and removes the need for ".js" imports in `src`
 - Removed `split2` dependency
 - Bumped `lru-cache` version
 - Changed `redis` peer dependency to allow more versions
+- Added a check in redis adapter to prevent calling connect again on existing connection
 - Minimum Node.js version now 22.0.0
+- Hardened security around the PG resolver (avoid potential SQL injections) and added `allowedFilters` list of valid columns that can be passed in params
 
 
 ## [5.0.0] - 2026-01-11
