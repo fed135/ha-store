@@ -20,11 +20,15 @@ describe('sqlite resolver', () => {
     });
 
     test('should build a valid sql statement based on present params, allowed filters and specified field list', () => {
-      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', fields: ['id'], allowedFilters: ['foo', 'bar'] }, { foo: 'a', bar: 1 }), 'SELECT id FROM test WHERE id IN (SELECT value FROM json_each(?)) AND WHERE foo = ? AND WHERE bar = ?');
+      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', fields: ['id'], allowedFilters: ['foo', 'bar'] }, { foo: 'a', bar: 1 }), 'SELECT id FROM test WHERE id IN (SELECT value FROM json_each(?)) AND foo = ? AND bar = ?');
+    });
+
+    test('should build a valid sql statement with null parameter value', () => {
+      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', fields: ['id'], allowedFilters: ['foo', 'bar'] }, { foo: null }), 'SELECT id FROM test WHERE id IN (SELECT value FROM json_each(?)) AND foo IS NULL');
     });
 
     test('should correctly escape potential SQL injections', () => {
-      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', allowedFilters: ['foo', 'bar'] }, { 'foo': '; DROP TABLE test;', '; DROP TABLE test;': 'foo', 'bar': 'active\'; DROP TABLE users; --' }), 'SELECT * FROM test WHERE id IN (SELECT value FROM json_each(?)) AND WHERE foo = ? AND WHERE bar = ?');
+      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', allowedFilters: ['foo', 'bar'] }, { 'foo': '; DROP TABLE test;', '; DROP TABLE test;': 'foo', 'bar': 'active\'; DROP TABLE users; --' }), 'SELECT * FROM test WHERE id IN (SELECT value FROM json_each(?)) AND foo = ? AND bar = ?');
     });
   });
 
@@ -62,7 +66,7 @@ describe('sqlite resolver', () => {
       const preparedMock = mock.method(preparedQuery, 'all', () => [{ id: 1 }, { id: 2 }, { id: 3 }]);
 
       assert.deepStrictEqual(resolver({ identifier: 'id', table: 'test', allowedFilters: ['foo', 'bar'], db })([1, 2, 3], { foo: 'a', bar: 1 }), { 1: { id: 1 }, 2: { id: 2 }, 3: { id: 3 } });
-      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN (SELECT value FROM json_each(?)) AND WHERE foo = ? AND WHERE bar = ?']);
+      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN (SELECT value FROM json_each(?)) AND foo = ? AND bar = ?']);
       assert.deepStrictEqual(preparedMock.mock.calls[0].arguments, ['[1,2,3]', 'a', 1]);
     });
 
@@ -71,7 +75,7 @@ describe('sqlite resolver', () => {
       const preparedMock = mock.method(preparedQuery, 'all', () => [{ id: 1 }, { id: 2 }, { id: 3 }]);
 
       assert.deepStrictEqual(resolver({ identifier: 'id', table: 'test', allowedFilters: ['bar', 'foo'], db })([1, 2, 3], { foo: 'a', bar: 1 }), { 1: { id: 1 }, 2: { id: 2 }, 3: { id: 3 } });
-      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN (SELECT value FROM json_each(?)) AND WHERE bar = ? AND WHERE foo = ?']);
+      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN (SELECT value FROM json_each(?)) AND bar = ? AND foo = ?']);
       assert.deepStrictEqual(preparedMock.mock.calls[0].arguments, ['[1,2,3]', 1, 'a']);
     });
 

@@ -12,6 +12,7 @@
     "test:integration": "node --test --test --trace-uncaught \"./tests/integration/**/*.spec.ts\"",
     "build": "rm -rf ./dist/* && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.js --target=esnext",
     "bench": "node ./tests/profiling/index.ts",
+    "bench:sync": "node ./tests/profiling/sync.ts",
     "prepublishOnly": "npm run build"
   },
   "engines": {
@@ -33,7 +34,8 @@
     "tlru"
   ],
   "files": [
-    "dist"
+    "dist",
+    "types.d.ts"
   ],
   "husky": {
     "hooks": {
@@ -61,7 +63,7 @@
     "tim mulqueen <tim.mulqueen@gmail.com>",
     "damon perron-laurin <damonperronlaurin@gmail.com>"
   ],
-  "types": "./dist/index.d.ts",
+  "types": "./types.d.ts",
   "dependencies": {
     "lru-cache": "^11.5.0"
   }

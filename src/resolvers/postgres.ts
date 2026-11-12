@@ -1,12 +1,4 @@
-interface PGResolverConfig {
-  identifier: string
-  table: string
-  fields?: string[]
-  allowedFilters?: string[]
-  db: any
-}
-
-export default function pgResolver(config: PGResolverConfig) {
+export default function pgResolver(config: ConfigurableResolverConfig) {
   if (!config?.db?.query) throw new Error(`Invalid resolver config for "db". Must be a database instance with a "query" method which returns Promise<Rows>.`);
   if (typeof config.identifier !== 'string') throw new Error(`Invalid resolver config for "identifier". Must be a string that represents the identifier column for the record.`);
   if (typeof config.table !== 'string') throw new Error(`Invalid resolver config for "table". Must be a string.`);
@@ -22,11 +14,11 @@ export default function pgResolver(config: PGResolverConfig) {
   };
 }
 
-export function buildQuery(config: PGResolverConfig, params: Record<string, any>) {
+export function buildQuery(config: ConfigurableResolverConfig, params: Record<string, any>) {
   let i = 0;
   const filters = (config.allowedFilters || []).reduce((acc, curr) => {
     if (curr in params) {
-      acc.push(params[curr] === null ? `WHERE ${curr} IS NULL` : `WHERE ${curr} = $${++i + 1}`);
+      acc.push(params[curr] === null ? `${curr} IS NULL` : `${curr} = $${++i + 1}`);
     }
     return acc;
   }, []).join(' AND ');

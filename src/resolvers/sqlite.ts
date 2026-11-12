@@ -1,13 +1,3 @@
-import type { Database } from 'node:sqlite';
-
-interface SQLiteResolverConfig {
-  identifier: string
-  table: string
-  fields?: string[]
-  db: Database
-  allowedFilters?: string[]
-}
-
 const statementCache = new Map();
 
 function getPreparedQuery(db, sql) {
@@ -19,7 +9,7 @@ function getPreparedQuery(db, sql) {
   return statement;
 }
 
-export default function pgResolver(config: SQLiteResolverConfig) {
+export default function pgResolver(config: ConfigurableResolverConfig) {
   if (!config?.db?.exec) throw new Error(`Invalid resolver config for "db". Must be a database instance with an "exec" method which returns SQLOutputValue.`);
   if (typeof config.identifier !== 'string') throw new Error(`Invalid resolver config for "identifier". Must be a string that represents the identifier column for the record.`);
   if (typeof config.table !== 'string') throw new Error(`Invalid resolver config for "table". Must be a string.`);
@@ -37,10 +27,10 @@ export default function pgResolver(config: SQLiteResolverConfig) {
   };
 }
 
-export function buildQuery(config: SQLiteResolverConfig, params: Record<string, any>) {
+export function buildQuery(config: ConfigurableResolverConfig, params: Record<string, any>) {
   const filters = (config.allowedFilters || []).reduce((acc, curr) => {
     if (curr in params) {
-      acc.push(params[curr] === null ? `WHERE ${curr} IS NULL` : `WHERE ${curr} = ?`);
+      acc.push(params[curr] === null ? `${curr} IS NULL` : `${curr} = ?`);
     }
     return acc;
   }, []).join(' AND ');

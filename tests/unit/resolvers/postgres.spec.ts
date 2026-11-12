@@ -19,11 +19,15 @@ describe('postgres resolver', () => {
     });
 
     test('should build a valid sql statement based on present params, allowed filters and specified field list', () => {
-      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', fields: ['id'], allowedFilters: ['foo', 'bar'] }, { foo: 'a', bar: 1 }), 'SELECT id FROM test WHERE id IN($1) AND WHERE foo = $2 AND WHERE bar = $3');
+      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', fields: ['id'], allowedFilters: ['foo', 'bar'] }, { foo: 'a', bar: 1 }), 'SELECT id FROM test WHERE id IN($1) AND foo = $2 AND bar = $3');
+    });
+
+    test('should build a valid sql statement with null parameter value', () => {
+      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', fields: ['id'], allowedFilters: ['foo', 'bar'] }, { foo: null }), 'SELECT id FROM test WHERE id IN($1) AND foo IS NULL');
     });
 
     test('should correctly escape potential SQL injections', () => {
-      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', allowedFilters: ['foo', 'bar'] }, { 'foo': '; DROP TABLE test;', '; DROP TABLE test;': 'foo', 'bar': 'active\'; DROP TABLE users; --' }), 'SELECT * FROM test WHERE id IN($1) AND WHERE foo = $2 AND WHERE bar = $3');
+      assert.deepStrictEqual(buildQuery({ identifier: 'id', table: 'test', allowedFilters: ['foo', 'bar'] }, { 'foo': '; DROP TABLE test;', '; DROP TABLE test;': 'foo', 'bar': 'active\'; DROP TABLE users; --' }), 'SELECT * FROM test WHERE id IN($1) AND foo = $2 AND bar = $3');
     });
   });
 
@@ -59,13 +63,13 @@ describe('postgres resolver', () => {
     test('should inject only valid params', async () => {
       const dbMock = mock.method(db, 'query', (sql, p1) => Promise.resolve(p1.map(id => ({ id }))));
       assert.deepStrictEqual(await resolver({ identifier: 'id', table: 'test', allowedFilters: ['foo', 'bar'], db })([1, 2, 3], { foo: 'a', bar: 1 }), { 1: { id: 1 }, 2: { id: 2 }, 3: { id: 3 } });
-      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN($1) AND WHERE foo = $2 AND WHERE bar = $3', [1, 2, 3], 'a', 1]);
+      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN($1) AND foo = $2 AND bar = $3', [1, 2, 3], 'a', 1]);
     });
 
     test('should inject out of order params', async () => {
       const dbMock = mock.method(db, 'query', (sql, p1) => Promise.resolve(p1.map(id => ({ id }))));
       assert.deepStrictEqual(await resolver({ identifier: 'id', table: 'test', allowedFilters: ['bar', 'foo'], db })([1, 2, 3], { foo: 'a', bar: 1 }), { 1: { id: 1 }, 2: { id: 2 }, 3: { id: 3 } });
-      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN($1) AND WHERE bar = $2 AND WHERE foo = $3', [1, 2, 3], 1, 'a']);
+      assert.deepStrictEqual(dbMock.mock.calls[0].arguments, ['SELECT * FROM test WHERE id IN($1) AND bar = $2 AND foo = $3', [1, 2, 3], 1, 'a']);
     });
 
     test('should handle empty db response', async () => {
