@@ -15,15 +15,15 @@ export default function pgResolver(config: ConfigurableResolverConfig) {
 }
 
 export function buildQuery(config: ConfigurableResolverConfig, params: Record<string, any>) {
-  let i = 0;
-  const filters = (config.allowedFilters || []).reduce((acc, curr) => {
-    if (curr in params) {
-      acc.push(params[curr] === null ? `${curr} IS NULL` : `${curr} = $${++i + 1}`);
-    }
-    return acc;
-  }, []).join(' AND ');
+  const filters = [];
+  let n = 1;
+
+  for (const key of config.allowedFilters || []) {
+    if (!(key in params)) continue;
+    filters.push(params[key] === null ? `${key} IS NULL` : `${key} = $${++n}`);
+  }
 
   const fields = (config.fields || ['*']).join(',');
 
-  return `SELECT ${fields} FROM ${config.table} WHERE ${config.identifier} IN($1)${filters.length > 0 ? ` AND ${filters}` : ''}`;
+  return `SELECT ${fields} FROM ${config.table} WHERE ${config.identifier} IN($1)${filters.length > 0 ? ` AND ${filters.join(' AND ')}` : ''}`;
 }
