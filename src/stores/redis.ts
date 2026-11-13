@@ -4,7 +4,7 @@ const DEFAULT_TTL = 0; // Disabled
 
 export default function RedisCache({ keyspace, host, path, port, connection, ttl }: any = {}) {
   const instance = connection || createClient({ socket: { host, path, port } });
-  instance.connect();
+  if (!instance.isOpen) instance.connect();
 
   function get(key) {
     return instance.get(`${keyspace}:${key}`);
