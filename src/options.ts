@@ -1,4 +1,4 @@
-import { type HAStoreConfig } from './index';
+import { type HAStoreConfig } from './index.ts';
 
 const defaultConfig = {
   batch: {

@@ -1,4 +1,4 @@
-import { contextRecordKey, deferred } from './utils.js';
+import { contextRecordKey, deferred } from './utils.ts';
 
 const BufferState = {
   PENDING: 0,
@@ -40,6 +40,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
         return this;
       }
 
+      // TODO: think out and test out impacts of batch-disabled still going through a Timeout of 0.
       if (this.timer === null) {
         this.timer = setTimeout(this.run.bind(this, 'timeout'), (config.batch && config.batch.delay) || 0);
       }

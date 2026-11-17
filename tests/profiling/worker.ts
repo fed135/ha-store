@@ -3,7 +3,7 @@
  */
 
 import settings from './settings.ts';
-import HA from '../../dist/index.js';
+import HA from '../../src/index.ts';
 import crypto from 'node:crypto';
 
 /* Local variables ----------------------------------------------------------- */

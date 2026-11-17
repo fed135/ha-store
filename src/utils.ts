@@ -1,4 +1,4 @@
-import { type Params } from './index';
+import { type Params } from './index.ts';
 
 export function deferred<T>() {
   let resolve: (value?: T | PromiseLike<T>) => void;

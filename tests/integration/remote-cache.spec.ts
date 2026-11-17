@@ -1,283 +1,270 @@
 /**
  * Remote Caching feature integration tests
  */
+Error.stackTraceLimit = 20;
 
-import * as dao from './utils/dao';
-import { sleep } from './utils/testUtils';
-import store, { caches } from '../../src/index';
+import { describe, test, beforeEach, after } from 'node:test';
+import assert from 'node:assert/strict';
+import * as dao from './utils/dao.ts';
+import { sleep } from './utils/testUtils.ts';
+import redis from 'redis';
+import store, { caches } from '../../src/index.ts';
 
 describe('Remote Caching', () => {
+  const connection = redis.createClient({ socket: { host: '0.0.0.0', port: 6379 } });
+
+  after(async () => {
+    await connection.quit();
+  });
+
   describe('Happy remote-only responses', () => {
     let testStore: any;
-    let getAssetsSpy: jest.SpyInstance;
+    let getAssetsSpy: test.Mock<any>;
 
-    afterEach(() => {
-      testStore = null;
-      if (getAssetsSpy) {
-        getAssetsSpy.mockRestore();
-      }
-    });
-
-    beforeEach(async () => {
-      getAssetsSpy = jest.spyOn(dao, 'getAssets');
+    beforeEach(async (t) => {
+      getAssetsSpy = t.mock.fn(dao.getAssets);
       testStore = store({
         delimiter: ['language'],
-        resolver: dao.getAssets,
+        resolver: getAssetsSpy,
         caches: [
-          caches.redis({ keyspace: Math.random().toString(36), host: '0.0.0.0', port: 6379 }),
+          caches.redis({ keyspace: Math.random().toString(36), connection }),
         ],
       });
       await testStore.clear('*');
     });
 
-    it('should cache single values', async () => {
+    test('should cache single values', async () => {
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache multi values', async () => {
+    test('should cache multi values', async () => {
       await testStore.getMany(['abc', 'foo']);
       await sleep(10);
       const result = await testStore.getMany(['abc', 'foo']);
 
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache single values without batching', async () => {
+    test('should cache single values without batching', async () => {
       testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache multi values without batching', async () => {
+    test('should cache multi values without batching', async () => {
       testStore.config.batch = null;
       await testStore.getMany(['abc', 'foo']);
       await sleep(10);
       const result = await testStore.getMany(['abc', 'foo']);
 
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache single calls with params', async () => {
+    test('should cache single calls with params', async () => {
       await testStore.get('foo', { language: 'fr' });
       await sleep(10);
       const result = await testStore.get('foo', { language: 'fr' });
 
-      expect(result).toEqual({ id: 'foo', language: 'fr' });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
-      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' }, [null]);
+      assert.deepStrictEqual(result, { id: 'foo', language: 'fr' });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getAssetsSpy.mock.calls[0].arguments, [['foo'], { language: 'fr' }, [null]]);
     });
 
-    it('should not return cached values forunique params mismatches', async () => {
+    test('should not return cached values forunique params mismatches', async () => {
       await testStore.get('foo', { language: 'fr' });
       await sleep(10);
       const result = await testStore.get('foo', { language: 'en' });
 
-      expect(result).toEqual({ id: 'foo', language: 'en' });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      assert.deepStrictEqual(result, { id: 'foo', language: 'en' });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
     });
 
-    it('should support disabled caching after boot', async () => {
+    test('should support disabled caching after boot', async () => {
       testStore.config.caches = [];
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
     });
 
-    it('should support disabled caching and batching after boot', async () => {
+    test('should support disabled caching and batching after boot', async () => {
       testStore.config.caches = [];
       testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
     });
   });
 
   describe('Happy hybrid-caching responses', () => {
     let testStore: any;
-    let getAssetsSpy: jest.SpyInstance;
+    let getAssetsSpy: test.Mock<any>;
 
-    afterEach(() => {
-      testStore = null;
-      if (getAssetsSpy) {
-        getAssetsSpy.mockRestore();
-      }
-    });
-
-    beforeEach(async () => {
-      getAssetsSpy = jest.spyOn(dao, 'getAssets');
+    beforeEach(async (t) => {
+      getAssetsSpy = t.mock.fn(dao.getAssets);
       testStore = store({
         delimiter: ['language'],
-        resolver: dao.getAssets,
+        resolver: getAssetsSpy,
         caches: [
           caches.inMemory(),
-          caches.redis({ keyspace: Math.random().toString(36), host: '0.0.0.0', port: 6379 }),
+          caches.redis({ keyspace: Math.random().toString(36), connection }),
         ],
       });
       await testStore.clear('*');
     });
 
-    it('remote cache should be populated', async () => {
+    test('remote cache should be populated', async () => {
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.size();
 
-      expect(result.records.remote).toBeGreaterThanOrEqual(1);
+      assert.deepStrictEqual(result.records.remote, 1);
     });
 
-    it('should cache single values', async () => {
+    test('should cache single values', async () => {
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache multi values', async () => {
+    test('should cache multi values', async () => {
       await testStore.getMany(['abc', 'foo']);
       await sleep(10);
       const result = await testStore.getMany(['abc', 'foo']);
 
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache single values without batching', async () => {
+    test('should cache single values without batching', async () => {
       testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache multi values without batching', async () => {
+    test('should cache multi values without batching', async () => {
       testStore.config.batch = null;
       await testStore.getMany(['abc', 'foo']);
       await sleep(10);
       const result = await testStore.getMany(['abc', 'foo']);
 
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
         foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
       });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
     });
 
-    it('should cache single calls with params', async () => {
+    test('should cache single calls with params', async () => {
       await testStore.get('foo', { language: 'fr' });
       await sleep(10);
       const result = await testStore.get('foo', { language: 'fr' });
 
-      expect(result).toEqual({ id: 'foo', language: 'fr' });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(1);
-      expect(getAssetsSpy).toHaveBeenCalledWith(['foo'], { language: 'fr' }, [null]);
+      assert.deepStrictEqual(result, { id: 'foo', language: 'fr' });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getAssetsSpy.mock.calls[0].arguments, [['foo'], { language: 'fr' }, [null]]);
     });
 
-    it('should not return cached values forunique params mismatches', async () => {
+    test('should not return cached values forunique params mismatches', async () => {
       await testStore.get('foo', { language: 'fr' });
       await sleep(10);
       const result = await testStore.get('foo', { language: 'en' });
 
-      expect(result).toEqual({ id: 'foo', language: 'en' });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      assert.deepStrictEqual(result, { id: 'foo', language: 'en' });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
     });
 
-    it('should support disabled caching after boot', async () => {
+    test('should support disabled caching after boot', async () => {
       testStore.config.caches = [];
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
     });
 
-    it('should support disabled caching and batching after boot', async () => {
+    test('should support disabled caching and batching after boot', async () => {
       testStore.config.caches = [];
       testStore.config.batch = null;
       await testStore.get('foo');
       await sleep(10);
       const result = await testStore.get('foo');
 
-      expect(result).toEqual({ id: 'foo', language: null });
-      expect(getAssetsSpy).toHaveBeenCalledTimes(2);
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
     });
   });
 
   describe('Rejected remote requests', () => {
     let testStore: any;
-    let getFailedRequestSpy: jest.SpyInstance;
+    let getFailedRequestSpy: test.Mock<any>;
 
-    afterEach(() => {
-      testStore = null;
-      if (getFailedRequestSpy) {
-        getFailedRequestSpy.mockRestore();
-      }
-    });
-
-    beforeEach(async () => {
-      getFailedRequestSpy = jest.spyOn(dao, 'getFailedRequest');
+    beforeEach(async (t) => {
+      getFailedRequestSpy = t.mock.fn(dao.getFailedRequest);
       testStore = store({
         delimiter: ['language'],
-        resolver: dao.getFailedRequest,
+        resolver: getFailedRequestSpy,
         caches: [
-          caches.redis({ keyspace: Math.random().toString(36), host: '0.0.0.0', port: 6379 }),
+          caches.redis({ keyspace: Math.random().toString(36), connection }),
         ],
       });
       await testStore.clear('*');
     });
 
-    it('should not cache failed requests', async () => {
-      await expect(testStore.get('abc', { language: 'fr' }))
-        .rejects.toEqual({ error: 'Something went wrong' });
-      expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], { language: 'fr' }, [null]);
+    test('should not cache failed requests', async () => {
+      await assert.rejects(testStore.get('abc', { language: 'fr' }), { error: 'Something went wrong' });
+      assert.deepStrictEqual(getFailedRequestSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getFailedRequestSpy.mock.calls[0].arguments, [['abc'], { language: 'fr' }, [null]]);
     });
 
-    it('should not cache failed multi requests', async () => {
+    test('should not cache failed multi requests', async () => {
       const result = await testStore.getMany(['abc', 'foo'], { language: 'en' });
-      expect(result.abc.status).toBe('rejected');
-      expect(result.abc.reason).toEqual({ error: 'Something went wrong' });
-      expect(result.foo.status).toBe('rejected');
-      expect(result.foo.reason).toEqual({ error: 'Something went wrong' });
-      expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc', 'foo'], { language: 'en' }, [null]);
+      assert.deepStrictEqual(result.abc.status, 'rejected');
+      assert.deepStrictEqual(result.abc.reason, { error: 'Something went wrong' });
+      assert.deepStrictEqual(result.foo.status, 'rejected');
+      assert.deepStrictEqual(result.foo.reason, { error: 'Something went wrong' });
+      assert.deepStrictEqual(getFailedRequestSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getFailedRequestSpy.mock.calls[0].arguments, [['abc', 'foo'], { language: 'en' }, [null]]);
     });
 
-    it('should properly reject with disabled batching', async () => {
+    test('should properly reject with disabled batching', async () => {
       testStore.config.batch = null;
-      await expect(testStore.get('abc'))
-        .rejects.toEqual({ error: 'Something went wrong' });
-      expect(getFailedRequestSpy).toHaveBeenCalledTimes(1);
-      expect(getFailedRequestSpy).toHaveBeenCalledWith(['abc'], {}, [null]);
+      await assert.rejects(testStore.get('abc'), { error: 'Something went wrong' });
+      assert.deepStrictEqual(getFailedRequestSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getFailedRequestSpy.mock.calls[0].arguments, [['abc'], {}, [null]]);
     });
   });
 });

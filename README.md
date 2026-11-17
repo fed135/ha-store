@@ -97,7 +97,7 @@ const store = haStore({
 
 Name | Required | Default | Description
 --- | --- | --- | ---
-resolver | true | - | The method to wrap, and how to interpret the returned data. Uses the format `<function(ids, params)>`
+resolver | true | - | The method to wrap, and how to interpret the returned data. Prebuilt resolvers exist for `postgres` and `sqlite`.
 delimiter | false | `[]` | The list of parameters that, when passed, generate unique results. Ex: 'language', 'view', 'fields', 'country'. These will generate different combinations of cache keys.
 caches | false | <pre>[&#13;&#10;&nbsp;&nbsp; &#60;instance of a store&#62;,&#13;&#10;]</pre> | A list of storage tiers for the data. The order indicates where to look first. It's recommended to keep an instance of an in-memory store as the first one, and then expend to external stores like [redis](https://github.com/redis/node-redis). Check below for storage configurations.
 batch | false | <pre>{&#13;&#10;&nbsp;&nbsp;delay: 50,&#13;&#10;&nbsp;&nbsp;limit: 100&#13;&#10;}</pre> | Batching options for the requests - `delay` is the amount of time to wait before sending the batch, `limit` is the maximum number of data items to send in a batch.
@@ -147,5 +147,5 @@ Please do! This is an open source project - if you see something that you want, 
 
 ## License 
 
-[Apache 2.0](LICENSE) 2025 Frederic Charette
+[Apache 2.0](LICENSE) 2026 Frederic Charette
 
