@@ -30,6 +30,10 @@ export function getErroredRequest() {
   });
 }
 
+export function getSyncErroredRequest() {
+  throw new Error('Something went wrong');
+}
+
 export function getFailedRequest() {
   return new Promise((resolve, reject) => {
     setTimeout(() => reject({ error: 'Something went wrong' }), 10);

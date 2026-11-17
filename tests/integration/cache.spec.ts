@@ -378,4 +378,33 @@ describe('Caching', () => {
       assert.deepStrictEqual(getErroredRequestSpy.mock.calls[0].arguments, [['abc'], {}, [null]]);
     });
   });
+
+  describe('Failed requests sync', () => {
+    let testStore: any;
+    let getErroredRequestSpy: test.Mock<any>;
+
+    beforeEach((t) => {
+      getErroredRequestSpy = t.mock.fn(dao.getSyncErroredRequest);
+      testStore = store({
+        delimiter: ['language'],
+        resolver: getErroredRequestSpy,
+        caches: [
+          caches.inMemory(),
+        ],
+      });
+    });
+
+    test('should not cache on rejected requests', async () => {
+      await assert.rejects(testStore.get('abc', { language: 'fr' }), new Error('Something went wrong'));
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls[0].arguments, [['abc'], { language: 'fr' }, [null]]);
+    });
+
+    test('should properly reject with disabled batching', async () => {
+      testStore.config.batch = null;
+      await assert.rejects(testStore.get('abc'), new Error('Something went wrong'));
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls[0].arguments, [['abc'], {}, [null]]);
+    });
+  });
 });

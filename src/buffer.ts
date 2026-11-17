@@ -52,8 +52,16 @@ export default function queryBufferConstructor(config, emitter, caches) {
       this.state = BufferState.RUNNING;
       clearTimeout(this.timer);
       emitter.emit('query', { cause, key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, contexts: this.contexts, ids: this.ids });
-      const request = config.resolver(this.ids, this.params, this.contexts);
-      (request instanceof Promise ? request : Promise.resolve(request)).then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
+      try {
+        const request = config.resolver(this.ids, this.params, this.contexts);
+        if (request instanceof Promise) request.then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
+        else {
+          this.handleQuerySuccess(request);
+        }
+      }
+      catch (e) {
+        this.handleQueryError(e);
+      }
     }
 
     handleQueryError(error) {
