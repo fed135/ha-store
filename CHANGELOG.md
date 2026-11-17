@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1] - 
+
+### Fixed
+
+- Added peerDependencyMeta for `redis` to actually be optional
+- Fixed logic bug in coalesced buffering when response is falsy
+- Fixed bug with locally cached buffering on JSON object (moving JSON parsing in the redis cache module where it belongs)
+
 ## [5.1.0] - 2026-11-12
 
 ### Added

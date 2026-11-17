@@ -80,7 +80,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
             const liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.ids.includes(ids[i]));
             if (liveBuffer) {
               numCoalesced++;
-              handles[i] = liveBuffer.handle.promise.then(results => results[ids[i]]);
+              handles[i] = liveBuffer.handle.promise.then(results => results && results[ids[i]]);
             }
             else {
               handles[i] = assignQuery(key, ids[i], params, context).handle.promise.then(results => results && results[ids[i]]);

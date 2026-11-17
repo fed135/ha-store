@@ -50,7 +50,7 @@ export default function cachesConstructor(config, emitter) {
 
     return settleAndLog(remotes.map(remote => remote.getMulti(recordKey, keys)))
       .then((remoteValues) => {
-        const responseValues = Object.assign([], ...remoteValues, localValues).map(value => (value === null || value === undefined) ? undefined : JSON.parse(value));
+        const responseValues = Object.assign([], ...remoteValues, localValues).map(value => (value === null || value === undefined) ? undefined : value);
         const foundRemotely = remoteValues.filter(value => value !== undefined);
         const missingValues = responseValues.filter(value => value === undefined);
         emitter.emit('cacheHit', foundRemotely.length);

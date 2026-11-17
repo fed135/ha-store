@@ -7,11 +7,11 @@ export default function RedisCache({ keyspace, host, path, port, connection, ttl
   if (!instance.isOpen) instance.connect();
 
   function get(key) {
-    return instance.get(`${keyspace}:${key}`);
+    return instance.get(`${keyspace}:${key}`).then(val => typeof val === 'string' ? JSON.parse(val) : val);
   }
 
   function getMulti(recordKey, keys) {
-    return instance.mGet(keys.map(id => `${keyspace}:${recordKey(id)}`));
+    return instance.mGet(keys.map(id => `${keyspace}:${recordKey(id)}`)).then(result => result?.map(val => typeof val === 'string' ? JSON.parse(val) : val));
   }
 
   function set(recordKey, keys, values) {

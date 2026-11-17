@@ -267,6 +267,40 @@ describe('Caching', () => {
       assert.deepStrictEqual(getPartialGroupSpy.mock.calls.length, 1);
     });
 
+    test('should handle partial results on repeated calls', async () => {
+      const result = await testStore.getMany(['abc', 'foo', 'bar']);
+      const result2 = await testStore.getMany(['abc', 'foo', 'bar']);
+
+      assert.deepStrictEqual(result, {
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
+        foo: { status: 'fulfilled', value: undefined },
+        bar: { status: 'fulfilled', value: undefined },
+      });
+      assert.deepStrictEqual(result2, {
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, // Cached
+        foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
+        bar: { status: 'fulfilled', value: undefined },
+      });
+      assert.deepStrictEqual(getPartialGroupSpy.mock.calls.length, 2);
+    });
+
+    test('should handle partial results on seperate calls', async () => {
+      const req = testStore.get('abc');
+      const req2 = testStore.get('foo');
+      const req3 = testStore.get('bar');
+
+      const result = await Promise.all([req, req2, req3]);
+
+      // Make sure it's batched, for the test to be accurate
+      assert.deepStrictEqual(getPartialGroupSpy.mock.calls.length, 1);
+
+      assert.deepStrictEqual(result, [
+        { id: 'abc', language: null },
+        undefined,
+        undefined,
+      ]);
+    });
+
     test('should support disabled batching', async () => {
       testStore.config.batch = null;
       await testStore.get('foo');
