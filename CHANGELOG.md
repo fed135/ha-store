@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1] - 
+
+### Added
+
+- Added `disconnectRemotes` internal for cleanup. Could potentially be promoted to public interface if deemed important (graceful shutdowns, etc)
+
+### Fixed
+
+- Added peerDependencyMeta for `redis` to actually be optional
+- Fixed logic bug in coalesced buffering when response is falsy
+- Fixed bug with locally cached buffering on JSON object (moving JSON parsing in the redis cache module where it belongs)
+- Fixed redis connection path + wrapped import
+
 ## [5.1.0] - 2026-11-12
 
 ### Added

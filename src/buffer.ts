@@ -52,8 +52,14 @@ export default function queryBufferConstructor(config, emitter, caches) {
       this.state = BufferState.RUNNING;
       clearTimeout(this.timer);
       emitter.emit('query', { cause, key: this.contextKey, uid: this.uid, size: this.ids.length, params: this.params, contexts: this.contexts, ids: this.ids });
-      const request = config.resolver(this.ids, this.params, this.contexts);
-      (request instanceof Promise ? request : Promise.resolve(request)).then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
+      let request;
+      try {
+        request = Promise.resolve(config.resolver(this.ids, this.params, this.contexts));
+      }
+      catch (e) {
+        return this.handleQueryError(e);
+      }
+      request.then(this.handleQuerySuccess.bind(this), this.handleQueryError.bind(this));
     }
 
     handleQueryError(error) {
@@ -80,7 +86,7 @@ export default function queryBufferConstructor(config, emitter, caches) {
             const liveBuffer = buffers.find(buffer => buffer.contextKey === key && buffer.ids.includes(ids[i]));
             if (liveBuffer) {
               numCoalesced++;
-              handles[i] = liveBuffer.handle.promise.then(results => results[ids[i]]);
+              handles[i] = liveBuffer.handle.promise.then(results => results && results[ids[i]]);
             }
             else {
               handles[i] = assignQuery(key, ids[i], params, context).handle.promise.then(results => results && results[ids[i]]);

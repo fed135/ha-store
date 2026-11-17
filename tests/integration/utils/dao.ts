@@ -7,6 +7,13 @@ export function getAssets(ids: string[], { language }: any = {}) {
   });
 }
 
+export function getAssetsSync(ids: string[], { language }: any = {}) {
+  return ids.reduce((acc, id) => {
+    acc[id] = { id, language: language || null };
+    return acc;
+  }, {} as any);
+}
+
 export function getEmptyGroup() {
   return new Promise((resolve) => {
     setTimeout(() => resolve([]), 10);
@@ -28,6 +35,10 @@ export function getErroredRequest() {
   return new Promise(() => {
     throw new Error('Something went wrong');
   });
+}
+
+export function getSyncErroredRequest() {
+  throw new Error('Something went wrong');
 }
 
 export function getFailedRequest() {
