@@ -74,6 +74,10 @@ export default function cachesConstructor(config, emitter) {
     return true;
   }
 
+  function disconnectRemotes() {
+    remotes.forEach(remote => remote.disconnect?.());
+  }
+
   function size() {
     if (!config.caches?.length) {
       return Promise.resolve({
@@ -100,5 +104,6 @@ export default function cachesConstructor(config, emitter) {
     set,
     clear,
     size,
+    disconnectRemotes,
   };
 }

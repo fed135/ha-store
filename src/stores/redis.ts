@@ -1,9 +1,22 @@
-import { createClient } from 'redis';
+import { createRequire } from 'node:module';
+
+// Create a synchronous require function bound to the current file
+const require = createRequire(import.meta.url);
 
 const DEFAULT_TTL = 0; // Disabled
 
 export default function RedisCache({ keyspace, host, path, port, connection, ttl }: any = {}) {
-  const instance = connection || createClient({ socket: { host, path, port } });
+  let instance = connection;
+
+  if (!instance) {
+    if (!host && !path && !port) throw new Error('Missing redis connection options (`host`, `path`, `port`)');
+    try {
+      instance = require('redis').createClient({ socket: { host, path, port } });
+    }
+    catch (e) {
+      throw e;
+    }
+  }
   if (!instance.isOpen) instance.connect();
 
   function get(key) {
@@ -23,6 +36,10 @@ export default function RedisCache({ keyspace, host, path, port, connection, ttl
     return b.exec();
   }
 
+  function disconnect() {
+    instance?.quit?.();
+  }
+
   function clear(key) {
     if (key === '*') return instance.sendCommand(['FLUSHDB']);
     return instance.del(`${keyspace}:${key}`);
@@ -40,5 +57,6 @@ export default function RedisCache({ keyspace, host, path, port, connection, ttl
     size,
     store: instance,
     local: false,
+    disconnect,
   };
 }
