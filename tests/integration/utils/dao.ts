@@ -7,6 +7,13 @@ export function getAssets(ids: string[], { language }: any = {}) {
   });
 }
 
+export function getAssetsSync(ids: string[], { language }: any = {}) {
+  return ids.reduce((acc, id) => {
+    acc[id] = { id, language: language || null };
+    return acc;
+  }, {} as any);
+}
+
 export function getEmptyGroup() {
   return new Promise((resolve) => {
     setTimeout(() => resolve([]), 10);

@@ -1,8 +1,5 @@
 import { createRequire } from 'node:module';
 
-// Create a synchronous require function bound to the current file
-const require = createRequire(import.meta.url);
-
 const DEFAULT_TTL = 0; // Disabled
 
 export default function RedisCache({ keyspace, host, path, port, connection, ttl }: any = {}) {
@@ -11,6 +8,7 @@ export default function RedisCache({ keyspace, host, path, port, connection, ttl
   if (!instance) {
     if (!host && !path && !port) throw new Error('Missing redis connection options (`host`, `path`, `port`)');
     try {
+      const require = createRequire(import.meta.url);
       instance = require('redis').createClient({ socket: { host, path, port } });
     }
     catch (e) {
