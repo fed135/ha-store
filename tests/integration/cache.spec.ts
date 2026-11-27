@@ -99,6 +99,98 @@ describe('Caching', () => {
     });
   });
 
+  describe('Happy sync responses', () => {
+    let testStore: any;
+    let getAssetsSpy: test.Mock<any>;
+
+    beforeEach((t) => {
+      getAssetsSpy = t.mock.fn(dao.getAssetsSync);
+      testStore = store({
+        delimiter: ['language'],
+        resolver: getAssetsSpy,
+        caches: [
+          caches.inMemory(),
+        ],
+      });
+    });
+
+    test('should cache single values', async () => {
+      await testStore.get('foo');
+      const result = await testStore.get('foo');
+
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+    });
+
+    test('should cache multi values', async () => {
+      await testStore.getMany(['abc', 'foo']);
+      const result = await testStore.getMany(['abc', 'foo']);
+
+      assert.deepStrictEqual(result, {
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
+        foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
+      });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+    });
+
+    test('should cache single values without batching', async () => {
+      testStore.config.batch = null;
+      await testStore.get('foo');
+      const result = await testStore.get('foo');
+
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+    });
+
+    test('should cache multi values without batching', async () => {
+      testStore.config.batch = null;
+      await testStore.getMany(['abc', 'foo']);
+      const result = await testStore.getMany(['abc', 'foo']);
+
+      assert.deepStrictEqual(result, {
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
+        foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
+      });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+    });
+
+    test('should cache single calls with params', async () => {
+      await testStore.get('foo', { language: 'fr' });
+      const result = await testStore.get('foo', { language: 'fr' });
+
+      assert.deepStrictEqual(result, { id: 'foo', language: 'fr' });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getAssetsSpy.mock.calls[0].arguments, [['foo'], { language: 'fr' }, [null]]);
+    });
+
+    test('should not return cached values forunique params mismatches', async () => {
+      await testStore.get('foo', { language: 'fr' });
+      const result = await testStore.get('foo', { language: 'en' });
+
+      assert.deepStrictEqual(result, { id: 'foo', language: 'en' });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
+    });
+
+    test('should support disabled caching after boot', async () => {
+      testStore.config.caches = [];
+      await testStore.get('foo');
+      const result = await testStore.get('foo');
+
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
+    });
+
+    test('should support disabled caching and batching after boot', async () => {
+      testStore.config.caches = [];
+      testStore.config.batch = null;
+      await testStore.get('foo');
+      const result = await testStore.get('foo');
+
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 2);
+    });
+  });
+
   describe('Happy responses - disabled caching', () => {
     let testStore: any;
     let getAssetsSpy: test.Mock<any>;
@@ -267,6 +359,40 @@ describe('Caching', () => {
       assert.deepStrictEqual(getPartialGroupSpy.mock.calls.length, 1);
     });
 
+    test('should handle partial results on repeated calls', async () => {
+      const result = await testStore.getMany(['abc', 'foo', 'bar']);
+      const result2 = await testStore.getMany(['abc', 'foo', 'bar']);
+
+      assert.deepStrictEqual(result, {
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } },
+        foo: { status: 'fulfilled', value: undefined },
+        bar: { status: 'fulfilled', value: undefined },
+      });
+      assert.deepStrictEqual(result2, {
+        abc: { status: 'fulfilled', value: { id: 'abc', language: null } }, // Cached
+        foo: { status: 'fulfilled', value: { id: 'foo', language: null } },
+        bar: { status: 'fulfilled', value: undefined },
+      });
+      assert.deepStrictEqual(getPartialGroupSpy.mock.calls.length, 2);
+    });
+
+    test('should handle partial results on seperate calls', async () => {
+      const req = testStore.get('abc');
+      const req2 = testStore.get('foo');
+      const req3 = testStore.get('bar');
+
+      const result = await Promise.all([req, req2, req3]);
+
+      // Make sure it's batched, for the test to be accurate
+      assert.deepStrictEqual(getPartialGroupSpy.mock.calls.length, 1);
+
+      assert.deepStrictEqual(result, [
+        { id: 'abc', language: null },
+        undefined,
+        undefined,
+      ]);
+    });
+
     test('should support disabled batching', async () => {
       testStore.config.batch = null;
       await testStore.get('foo');
@@ -322,6 +448,35 @@ describe('Caching', () => {
 
     beforeEach((t) => {
       getErroredRequestSpy = t.mock.fn(dao.getErroredRequest);
+      testStore = store({
+        delimiter: ['language'],
+        resolver: getErroredRequestSpy,
+        caches: [
+          caches.inMemory(),
+        ],
+      });
+    });
+
+    test('should not cache on rejected requests', async () => {
+      await assert.rejects(testStore.get('abc', { language: 'fr' }), new Error('Something went wrong'));
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls[0].arguments, [['abc'], { language: 'fr' }, [null]]);
+    });
+
+    test('should properly reject with disabled batching', async () => {
+      testStore.config.batch = null;
+      await assert.rejects(testStore.get('abc'), new Error('Something went wrong'));
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls.length, 1);
+      assert.deepStrictEqual(getErroredRequestSpy.mock.calls[0].arguments, [['abc'], {}, [null]]);
+    });
+  });
+
+  describe('Failed requests sync', () => {
+    let testStore: any;
+    let getErroredRequestSpy: test.Mock<any>;
+
+    beforeEach((t) => {
+      getErroredRequestSpy = t.mock.fn(dao.getSyncErroredRequest);
       testStore = store({
         delimiter: ['language'],
         resolver: getErroredRequestSpy,

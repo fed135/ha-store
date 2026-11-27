@@ -1,17 +1,28 @@
-import { createClient } from 'redis';
+import { createRequire } from 'node:module';
 
 const DEFAULT_TTL = 0; // Disabled
 
 export default function RedisCache({ keyspace, host, path, port, connection, ttl }: any = {}) {
-  const instance = connection || createClient({ socket: { host, path, port } });
+  let instance = connection;
+
+  if (!instance) {
+    if (!host && !path && !port) throw new Error('Missing redis connection options (`host`, `path`, `port`)');
+    try {
+      const require = createRequire(import.meta.url);
+      instance = require('redis').createClient({ socket: { host, path, port } });
+    }
+    catch (e) {
+      throw e;
+    }
+  }
   if (!instance.isOpen) instance.connect();
 
   function get(key) {
-    return instance.get(`${keyspace}:${key}`);
+    return instance.get(`${keyspace}:${key}`).then(val => typeof val === 'string' ? JSON.parse(val) : val);
   }
 
   function getMulti(recordKey, keys) {
-    return instance.mGet(keys.map(id => `${keyspace}:${recordKey(id)}`));
+    return instance.mGet(keys.map(id => `${keyspace}:${recordKey(id)}`)).then(result => result?.map(val => typeof val === 'string' ? JSON.parse(val) : val));
   }
 
   function set(recordKey, keys, values) {
@@ -21,6 +32,10 @@ export default function RedisCache({ keyspace, host, path, port, connection, ttl
       b.set(`${keyspace}:${recordKey(id)}`, JSON.stringify(values[id]), 'PX', ttl || DEFAULT_TTL);
     });
     return b.exec();
+  }
+
+  function disconnect() {
+    instance?.quit?.();
   }
 
   function clear(key) {
@@ -40,5 +55,6 @@ export default function RedisCache({ keyspace, host, path, port, connection, ttl
     size,
     store: instance,
     local: false,
+    disconnect,
   };
 }

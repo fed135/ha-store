@@ -50,7 +50,7 @@ export default function cachesConstructor(config, emitter) {
 
     return settleAndLog(remotes.map(remote => remote.getMulti(recordKey, keys)))
       .then((remoteValues) => {
-        const responseValues = Object.assign([], ...remoteValues, localValues).map(value => (value === null || value === undefined) ? undefined : JSON.parse(value));
+        const responseValues = Object.assign([], ...remoteValues, localValues).map(value => (value === null || value === undefined) ? undefined : value);
         const foundRemotely = remoteValues.filter(value => value !== undefined);
         const missingValues = responseValues.filter(value => value === undefined);
         emitter.emit('cacheHit', foundRemotely.length);
@@ -72,6 +72,10 @@ export default function cachesConstructor(config, emitter) {
     if (local) local.clear(key);
     remotes.forEach(remote => remote.clear(key));
     return true;
+  }
+
+  function disconnectRemotes() {
+    remotes.forEach(remote => remote.disconnect?.());
   }
 
   function size() {
@@ -100,5 +104,6 @@ export default function cachesConstructor(config, emitter) {
     set,
     clear,
     size,
+    disconnectRemotes,
   };
 }

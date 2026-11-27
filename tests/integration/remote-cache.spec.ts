@@ -9,6 +9,7 @@ import * as dao from './utils/dao.ts';
 import { sleep } from './utils/testUtils.ts';
 import redis from 'redis';
 import store, { caches } from '../../src/index.ts';
+import { registerHooks } from 'node:module';
 
 describe('Remote Caching', () => {
   const connection = redis.createClient({ socket: { host: '0.0.0.0', port: 6379 } });
@@ -265,6 +266,48 @@ describe('Remote Caching', () => {
       await assert.rejects(testStore.get('abc'), { error: 'Something went wrong' });
       assert.deepStrictEqual(getFailedRequestSpy.mock.calls.length, 1);
       assert.deepStrictEqual(getFailedRequestSpy.mock.calls[0].arguments, [['abc'], {}, [null]]);
+    });
+  });
+
+  describe('Should handle missing connection parameter', () => {
+    test('should throw when redis isn\'t installed', (t) => {
+      const hooks = registerHooks({
+        resolve(specifier, context, nextResolve) {
+          if (specifier === 'redis') {
+            const err = new Error(`Cannot find package '${specifier}'`);
+            err.code = 'ERR_MODULE_NOT_FOUND';
+            throw err;
+          }
+          return nextResolve(specifier, context);
+        },
+      });
+
+      t.after(() => hooks.deregister());
+
+      assert(() => store({ delimiter: ['language'], resolver: () => {}, caches: [caches.redis({ keyspace: Math.random().toString(36) })] }), { message: 'Cannot find package \'redis\'' });
+    });
+
+    test('should throw when connection info is missing', () => {
+      assert.throws(() => caches.redis({ keyspace: Math.random().toString(36) }), { message: 'Missing redis connection options (`host`, `path`, `port`)' });
+    });
+
+    test('should create a new connection if not provided', async (t) => {
+      const getAssetsSpy: test.Mock<any> = t.mock.fn(dao.getAssets);
+      const testStore = store({
+        delimiter: ['language'],
+        resolver: getAssetsSpy,
+        caches: [
+          caches.redis({ keyspace: Math.random().toString(36), port: 6379, host: '0.0.0.0' }),
+        ],
+      });
+
+      await testStore.get('foo');
+      await sleep(10);
+      const result = await testStore.get('foo');
+
+      assert.deepStrictEqual(result, { id: 'foo', language: null });
+      assert.deepStrictEqual(getAssetsSpy.mock.calls.length, 1);
+      testStore._store.disconnectRemotes();
     });
   });
 });
