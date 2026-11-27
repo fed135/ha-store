@@ -1,8 +1,7 @@
-import { EventEmitter } from 'node:events';
-import queue from './buffer.ts';
-import _caches from './caches.ts';
-import { contextKey, recordKey, contextRecordKey } from './utils.ts';
-import { hydrateConfig } from './options.ts';
+import QueryBuffer from './buffer.ts';
+import Caches from './caches.ts';
+import { contextKey, recordKey, contextRecordKey, Signal, type StoreSignals } from './utils.ts';
+import { hydrateConfig, type HydratedConfig } from './options.ts';
 
 import inMemory from './stores/in-memory.ts';
 import redis from './stores/redis.ts';
@@ -10,30 +9,31 @@ import redis from './stores/redis.ts';
 import pgResolver from './resolvers/postgres.ts';
 import sqliteResolver from './resolvers/sqlite.ts';
 
-class HaStore extends EventEmitter {
-  config: any;
-  _store: any;
-  _queue: any;
+class HaStore implements StoreSignals {
+  readonly config: HydratedConfig;
 
-  constructor(initialConfig) {
-    super();
+  readonly cacheHit = new Signal<[number]>();
+  readonly cacheMiss = new Signal<[number]>();
+  readonly localCacheHit = new Signal<[number]>();
+  readonly coalescedHit = new Signal<[number]>();
+  readonly query = new Signal<[QueryEvent]>();
+  readonly queryFailed = new Signal<[QueryEvent]>();
+  readonly querySuccess = new Signal<[QueryEvent]>();
 
+  #caches: Caches;
+  #queue: QueryBuffer;
+
+  constructor(initialConfig: HAStoreConfig) {
     this.config = hydrateConfig(initialConfig);
-
-    this._store = _caches(this.config, this);
-
-    this._queue = queue(
-      this.config,
-      this,
-      this._store,
-    );
+    this.#caches = new Caches(this.config, this);
+    this.#queue = new QueryBuffer(this.config, this, this.#caches);
   }
 
   get(id, params = {}, agg = null) {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
 
-    return this._queue.getHandles(key, [id], params, agg)
+    return this.#queue.getHandles(key, [id], params, agg)
       .then(handles => handles[0]);
   }
 
@@ -41,7 +41,7 @@ class HaStore extends EventEmitter {
     if (params === null) params = {};
     const key = contextKey(this.config.delimiter, params);
 
-    return this._queue.getHandles(key, ids, params, agg)
+    return this.#queue.getHandles(key, ids, params, agg)
       .then(handles => Promise.allSettled(handles)
         .then(outcomes => ids.reduce((handles, id, index) => {
           handles[id] = outcomes[index];
@@ -52,7 +52,7 @@ class HaStore extends EventEmitter {
   set(items, ids, params = {}) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('Missing required argument id list in batcher #set. ');
     const key = contextKey(this.config.delimiter, params);
-    return this._store.set(contextRecordKey(key), ids, items);
+    return this.#caches.set(contextRecordKey(key), ids, items);
   }
 
   clear(ids, params) {
@@ -60,13 +60,13 @@ class HaStore extends EventEmitter {
       return ids.map(id => this.clear(id, params));
     }
 
-    return this._store.clear(ids, params);
+    return this.#caches.clear(ids);
   }
 
   size() {
-    return this._store.size()
+    return this.#caches.size()
       .then(records => ({
-        ...this._queue.size(),
+        ...this.#queue.size(),
         records,
       }));
   }

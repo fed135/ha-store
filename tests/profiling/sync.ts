@@ -33,13 +33,13 @@ const store = HA({
   batch: { delay: 10, limit: 50 },
 });
 
-store.on('query', (batch) => {
+store.query.on(batch => {
   suite.batches++;
   suite.avgBatchSize += batch.size;
 });
-store.on('cacheHit', evt => suite.cacheHits += evt);
-store.on('localCacheHit', evt => suite.localCacheHits += evt);
-store.on('coalescedHit', evt => suite.coalescedHit += evt);
+store.cacheHit.on(evt => suite.cacheHits += evt);
+store.localCacheHit.on(evt => suite.localCacheHits += evt);
+store.coalescedHit.on(evt => suite.coalescedHit += evt);
 
 const suite = {
   completed: 0,

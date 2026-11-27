@@ -1,5 +1,3 @@
-import { type Params } from './index.ts';
-
 export function deferred<T>() {
   let resolve: (value?: T | PromiseLike<T>) => void;
   let reject: (reason?: any) => void;
@@ -36,4 +34,32 @@ export function settleAndLog(promises) {
     }
     return results.filter(isFulfilled).map(result => result.value);
   });
+}
+
+export class Signal<Args extends unknown[] = unknown[]> {
+  #listeners = new Set<(...args: Args) => unknown>();
+
+  emit(...args: Args) {
+    for (const listener of this.#listeners) listener(...args);
+  }
+
+  on(listener: (...args: Args) => unknown) {
+    this.#listeners.add(listener);
+    return this;
+  }
+
+  off(listener: (...args: Args) => unknown) {
+    this.#listeners.delete(listener);
+    return this;
+  }
+}
+
+export interface StoreSignals {
+  cacheHit: Signal<[number]>
+  cacheMiss: Signal<[number]>
+  localCacheHit: Signal<[number]>
+  coalescedHit: Signal<[number]>
+  query: Signal<[QueryEvent]>
+  queryFailed: Signal<[QueryEvent]>
+  querySuccess: Signal<[QueryEvent]>
 }
