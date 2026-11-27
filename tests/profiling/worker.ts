@@ -4,7 +4,7 @@
 
 import settings from './settings.ts';
 import HA from '../../src/index.ts';
-import crypto from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 
 /* Local variables ----------------------------------------------------------- */
 
@@ -33,7 +33,7 @@ function handleRequest(id, language) {
       console.log(`request timed out: { id: ${id}, lang: ${language}}`);
     }
   }, 500);
-  store.get(id, { language }, crypto.randomBytes(8).toString('hex'))
+  store.get(id, { language }, randomUUID())
     .then((result) => {
       clearTimeout(timeout);
       finished = true;
@@ -49,13 +49,13 @@ function handleRequest(id, language) {
     });
 }
 
-store.on('query', (batch) => {
+store.query.on((batch) => {
   suite.batches++;
   suite.avgBatchSize += batch.size;
 });
-store.on('cacheHit', evt => suite.cacheHits += evt);
-store.on('localCacheHit', evt => suite.localCacheHits += evt);
-store.on('coalescedHit', evt => suite.coalescedHit += evt);
+store.cacheHit.on(evt => suite.cacheHits += evt);
+store.localCacheHit.on(evt => suite.localCacheHits += evt);
+store.coalescedHit.on(evt => suite.coalescedHit += evt);
 
 // End
 function complete() {

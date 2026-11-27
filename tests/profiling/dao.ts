@@ -16,8 +16,7 @@ export function getAssets(ids, { language }) {
     setTimeout(() => resolve(ids.reduce((acc, id) => {
       acc[id] = { id, language };
       return acc;
-    }, {}),
-    ), calculateResponseTime(ids.length));
+    }, {})), calculateResponseTime(ids.length));
   });
 }
 

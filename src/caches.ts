@@ -1,85 +1,88 @@
-import { settleAndLog } from './utils.ts';
+import { settleAndLog, type StoreSignals } from './utils.ts';
+import { type HydratedConfig } from './options.ts';
 
-export default function cachesConstructor(config, emitter) {
-  const local = config.caches?.find(cache => cache.local);
-  const remotes = config.caches?.filter(cache => !cache.local) || [];
+export default class Caches {
+  #signals: StoreSignals;
+  #enabled: boolean;
+  #local: HACacheStore | undefined;
+  #remotes: HACacheStore[];
 
-  function getLocal(key) {
-    return local && local.get(key);
+  constructor(config: HydratedConfig, signals: StoreSignals) {
+    this.#signals = signals;
+    this.#enabled = config.caches.length > 0;
+    this.#local = config.caches.find(cache => cache.local);
+    this.#remotes = config.caches.filter(cache => !cache.local);
   }
 
-  function getMultiLocal(recordKey, keys) {
-    return local && local.getMulti(recordKey, keys);
-  }
+  get(key) {
+    if (!this.#enabled) return undefined;
 
-  function get(key) {
-    if (!config.caches?.length) return undefined;
-
-    const localValue = getLocal(key);
+    const localValue = this.#local?.get(key);
     if (localValue !== undefined) {
-      emitter.emit('localCacheHit', 1);
-      emitter.emit('cacheHit', 1);
+      this.#signals.localCacheHit.emit(1);
+      this.#signals.cacheHit.emit(1);
       return localValue;
     }
 
-    return settleAndLog(remotes.map(remote => remote.get(key)))
+    return settleAndLog(this.#remotes.map(remote => remote.get(key)))
       .then((remoteValues) => {
         const responseValue = remoteValues.find(value => value !== undefined);
         if (responseValue !== undefined) {
-          emitter.emit('cacheHit', 1);
+          this.#signals.cacheHit.emit(1);
         }
         else {
-          emitter.emit('cacheMiss', 1);
+          this.#signals.cacheMiss.emit(1);
         }
-        return remoteValues.find(response => response !== undefined);
+        return responseValue;
       });
   }
 
-  function getMulti(recordKey, keys) {
-    if (!config.caches?.length) return Promise.resolve(Array.from(new Array(keys.length), () => undefined));
+  getMulti(recordKey, keys) {
+    if (!this.#enabled) return Promise.resolve(Array.from(new Array(keys.length), () => undefined));
 
-    const localValues = getMultiLocal(recordKey, keys);
+    const localValues = this.#local?.getMulti(recordKey, keys) as unknown[] | undefined;
     const foundLocally = localValues && localValues.filter(value => value !== undefined).length;
     if (foundLocally) {
-      emitter.emit('localCacheHit', foundLocally);
-      emitter.emit('cacheHit', foundLocally);
+      this.#signals.localCacheHit.emit(foundLocally);
+      this.#signals.cacheHit.emit(foundLocally);
     }
     if (foundLocally && foundLocally === keys.length) {
       return Promise.resolve(localValues);
     }
 
-    return settleAndLog(remotes.map(remote => remote.getMulti(recordKey, keys)))
+    // TODO: remove found local keys from remote query
+    return settleAndLog(this.#remotes.map(remote => remote.getMulti(recordKey, keys)))
       .then((remoteValues) => {
         const responseValues = Object.assign([], ...remoteValues, localValues).map(value => (value === null || value === undefined) ? undefined : value);
         const foundRemotely = remoteValues.filter(value => value !== undefined);
         const missingValues = responseValues.filter(value => value === undefined);
-        emitter.emit('cacheHit', foundRemotely.length);
-        emitter.emit('cacheMiss', missingValues.length);
+        this.#signals.cacheHit.emit(foundRemotely.length);
+        this.#signals.cacheMiss.emit(missingValues.length);
         return responseValues;
       });
   }
 
-  function set(recordKey, keys, values) {
-    if (!config.caches?.length) return undefined;
+  set(recordKey, keys, values) {
+    if (!this.#enabled) return undefined;
 
-    if (local) local.set(recordKey, keys, values);
-    return Promise.all(remotes.map(remote => remote.set(recordKey, keys, values))).catch(err => console.log('error writing', err));
+    this.#local?.set(recordKey, keys, values);
+    return Promise.all(this.#remotes.map(remote => remote.set(recordKey, keys, values))).catch(err => console.log('error writing', err));
   }
 
-  function clear(key) {
-    if (!config.caches?.length) return undefined;
+  clear(key) {
+    if (!this.#enabled) return undefined;
 
-    if (local) local.clear(key);
-    remotes.forEach(remote => remote.clear(key));
+    this.#local?.clear(key);
+    this.#remotes.forEach(remote => remote.clear(key));
     return true;
   }
 
-  function disconnectRemotes() {
-    remotes.forEach(remote => remote.disconnect?.());
+  disconnectRemotes() {
+    this.#remotes.forEach(remote => (remote as HACacheStore & { disconnect?: () => void }).disconnect?.());
   }
 
-  function size() {
-    if (!config.caches?.length) {
+  size() {
+    if (!this.#enabled) {
       return Promise.resolve({
         local: 0,
         remote: 0,
@@ -87,23 +90,12 @@ export default function cachesConstructor(config, emitter) {
       });
     }
 
-    return Promise.resolve(remotes[0] && remotes[0].size())
+    return Promise.resolve(this.#remotes[0]?.size())
       .then((remoteItems) => {
         return {
-          local: local && local.size(),
+          local: this.#local?.size(),
           remote: remoteItems || 0,
         };
       });
   }
-
-  return {
-    get,
-    getLocal,
-    getMulti,
-    getMultiLocal,
-    set,
-    clear,
-    size,
-    disconnectRemotes,
-  };
 }
